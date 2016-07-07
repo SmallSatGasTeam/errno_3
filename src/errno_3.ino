@@ -1,8 +1,7 @@
 #include <Arduino_FreeRTOS.h>
 
-#include <Wire.h>
-
-#include <Adafruit_MCP9808.h>
+//#include <Wire.h>
+//#include <Adafruit_MCP9808.h>
 
  
 // define two tasks for Blink & AnalogRead
@@ -88,21 +87,23 @@ void TaskAnalogRead(void *pvParameters)  // This is a task.
 void TaskSensorRead(void *pvParameters){
 
   // Setup I2C bus for sensors 
-  Wire.begin(); //Begining everying on our I2C Bus
+ // Wire.begin(); //Begining everying on our I2C Bus
   Serial.begin(9600);
   
   // Create sensor instances
-  Adafruit_MCP9808 sensor_temp = Adafruit_MCP9808(); 
+  //Adafruit_MCP9808 sensor_temp = Adafruit_MCP9808(); 
 
   // Initialize Sensors
-  if (!sensor_temp.begin()) {
+ // if (!sensor_temp.begin()) {
 //    Serial.println("Couldn't find MCP9808!");
-    while (1);
-  }
+ //   while (1);
+ // }
   
   for(;;){
-    delay(50);
-    Serial.println(sensor_temp.readTempC());
+    
+ Serial.println("ReadSensors");
+	delay(50);
+    //Serial.println(sensor_temp.readTempC());
   }
 }
 
