@@ -1,7 +1,7 @@
 #include <Arduino_FreeRTOS.h>
 
 #include <Wire.h>
-#include <Adafruit_MCP9808.h>
+//#include <Adafruit_MCP9808.h>
 #include <CoolSatBaro.h>
  
 // define two tasks for Blink & AnalogRead
@@ -97,6 +97,7 @@ void TaskSensorRead(void *pvParameters){
 
   for(;;){
    delay(1000);
+	myBaro.readBaro();
    Serial.println(myBaro.getPressure());
   }
 }
