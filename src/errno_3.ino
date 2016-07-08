@@ -97,6 +97,8 @@ void TaskSensorRead(void *pvParameters){
   Adafruit_MCP9808 sensor_temp = Adafruit_MCP9808();
   CoolSatBaro sensor_baro;
 
+  // Initialze sensors
+  // These functions should be defined in sensor.h 
   initialize_temp(&sensor_temp);
   initialize_baro(&sensor_baro);
 
