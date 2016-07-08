@@ -51,7 +51,7 @@ void loop()
  */
 
 void Read_Temp(Adafruit_MCP9808* sensor){
-  Serial.println(sensor.readTempC());
+  Serial.println(sensor->readTempC());
 }
 
 /*--------------------------------------------------*/
@@ -107,8 +107,8 @@ void TaskSensorRead(void *pvParameters){
     while (1);
   }
 
-  int[] readIntervals = {1000,10}; // How often to execute in milliseconds
-  unsigned int[2] lastRead; // To store last read time
+  int readIntervals[] = {1000,10}; // How often to execute in milliseconds
+  unsigned int lastRead[2]; // To store last read time
 
   for(;;){
     unsigned int now = millis();
