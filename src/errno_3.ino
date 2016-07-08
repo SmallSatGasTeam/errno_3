@@ -1,8 +1,8 @@
 #include <Arduino_FreeRTOS.h>
 
 #include <Wire.h>
+#include <CoolSatBaro.h>
 #include <Adafruit_MCP9808.h>
-
 
 // define two tasks for Blink & AnalogRead
 void TaskBlink( void *pvParameters );
@@ -100,12 +100,15 @@ void TaskSensorRead(void *pvParameters){
 
   // Create sensor instances
   Adafruit_MCP9808 sensor_temp = Adafruit_MCP9808();
+  CoolSatBaro myBaro;
 
   // Initialize Sensors
   if (!sensor_temp.begin()) {
     Serial.println("Couldn't find MCP9808!");
     while (1);
   }
+
+  myBaro.initial(0x76);
 
   int readIntervals[] = {1000,10}; // How often to execute in milliseconds
   unsigned int lastRead[2]; // To store last read time
@@ -117,13 +120,12 @@ void TaskSensorRead(void *pvParameters){
       readIntervals[0] = now;
 
       ReadTemp(&sensor_temp);
+      myBaro.readBaro();
+      Serial.println(myBaro.getPressure());
 
     } else if(now - lastRead[1] > readIntervals[1]) {
       readIntervals[1] = now;
 
     }
-
-
-    delay(1000);
   }
 }
