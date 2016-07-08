@@ -5,7 +5,7 @@
 #include <Adafruit_MCP9808.h>
 
 
-#include "sensor_read.h"
+#include "sensor.h"
 
 // define two tasks for Blink & AnalogRead
 void TaskBlink( void *pvParameters );
@@ -97,12 +97,8 @@ void TaskSensorRead(void *pvParameters){
   Adafruit_MCP9808 sensor_temp = Adafruit_MCP9808();
   CoolSatBaro sensor_baro;
 
-  // Initialize Sensors
-  if (!sensor_temp.begin()) {
-    Serial.println("Couldn't find MCP9808!");
-    while (1);
-  }
-  sensor_baro.initial(0x76);
+  initialize_temp(&sensor_temp);
+  initialize_baro(&sensor_baro);
 
   int readIntervals[] = {1000,10}; // How often to execute in milliseconds
   unsigned int lastRead[2]; // To store last read time
@@ -111,13 +107,13 @@ void TaskSensorRead(void *pvParameters){
     unsigned int now = millis();
 
     if(now - lastRead[0] > readIntervals[0]){
-      readIntervals[0] = now;
+      lastRead[0] = now;
 
       read_temp(&sensor_temp);
       read_baro(&sensor_baro);
 
     } else if(now - lastRead[1] > readIntervals[1]) {
-      readIntervals[1] = now;
+      lastRead[1] = now;
 
     }
   }
