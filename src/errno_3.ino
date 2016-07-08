@@ -50,7 +50,7 @@ void loop()
  * Sensor Read Functions
  */
 
-void Read_Temp(Adafruit_MCP9808* sensor){
+void read_temp(Adafruit_MCP9808* sensor){
   Serial.println(sensor->readTempC());
 }
 
@@ -107,7 +107,6 @@ void TaskSensorRead(void *pvParameters){
     Serial.println("Couldn't find MCP9808!");
     while (1);
   }
-
   myBaro.initial(0x76);
 
   int readIntervals[] = {1000,10}; // How often to execute in milliseconds
@@ -119,7 +118,7 @@ void TaskSensorRead(void *pvParameters){
     if(now - lastRead[0] > readIntervals[0]){
       readIntervals[0] = now;
 
-      ReadTemp(&sensor_temp);
+      read_temp(&sensor_temp);
       myBaro.readBaro();
       Serial.println(myBaro.getPressure());
 
