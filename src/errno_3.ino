@@ -4,6 +4,9 @@
 #include <CoolSatBaro.h>
 #include <Adafruit_MCP9808.h>
 
+
+#include "sensor_read.h"
+
 // define two tasks for Blink & AnalogRead
 void TaskBlink( void *pvParameters );
 void TaskAnalogRead( void *pvParameters );
@@ -44,14 +47,6 @@ xTaskCreate(
 void loop()
 {
   // Empty. Things are done in Tasks.
-}
-
-/**
- * Sensor Read Functions
- */
-
-void read_temp(Adafruit_MCP9808* sensor){
-  Serial.println(sensor->readTempC());
 }
 
 /*--------------------------------------------------*/
@@ -119,6 +114,8 @@ void TaskSensorRead(void *pvParameters){
       readIntervals[0] = now;
 
       read_temp(&sensor_temp);
+      // read_baro(&myBaro);
+
       myBaro.readBaro();
       Serial.println(myBaro.getPressure());
 
