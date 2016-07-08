@@ -95,14 +95,14 @@ void TaskSensorRead(void *pvParameters){
 
   // Create sensor instances
   Adafruit_MCP9808 sensor_temp = Adafruit_MCP9808();
-  CoolSatBaro myBaro;
+  CoolSatBaro sensor_baro;
 
   // Initialize Sensors
   if (!sensor_temp.begin()) {
     Serial.println("Couldn't find MCP9808!");
     while (1);
   }
-  myBaro.initial(0x76);
+  sensor_baro.initial(0x76);
 
   int readIntervals[] = {1000,10}; // How often to execute in milliseconds
   unsigned int lastRead[2]; // To store last read time
@@ -114,10 +114,7 @@ void TaskSensorRead(void *pvParameters){
       readIntervals[0] = now;
 
       read_temp(&sensor_temp);
-      // read_baro(&myBaro);
-
-      myBaro.readBaro();
-      Serial.println(myBaro.getPressure());
+      read_baro(&sensor_baro);
 
     } else if(now - lastRead[1] > readIntervals[1]) {
       readIntervals[1] = now;
