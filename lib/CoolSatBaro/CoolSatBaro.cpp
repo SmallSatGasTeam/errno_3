@@ -34,9 +34,6 @@ long CoolSatBaro::getVal(int address, byte code) {
 }
 
 void CoolSatBaro::initial(uint8_t address) {
-    Serial3.println();
-    Serial3.println("PROM COEFFICIENTS ivan");
-
     Wire.beginTransmission(address);
     Wire.write(0x1E); // reset
     Wire.endTransmission();
@@ -57,11 +54,8 @@ void CoolSatBaro::initial(uint8_t address) {
             C[i+1] = Wire.read() << 8 | Wire.read();
         }
         else {
-            Serial3.println("Error reading PROM 1"); // error reading the PROM or communicating with the device
         }
-        Serial3.println(C[i+1]);
     }
-    Serial3.println();
 }
 
 void CoolSatBaro::readBaro() {
