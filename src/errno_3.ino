@@ -4,7 +4,6 @@
 #include <CoolSatBaro.h>
 #include <Adafruit_MCP9808.h>
 
-
 #include "sensor.h"
 
 // define two tasks for Blink & AnalogRead
