@@ -22,11 +22,11 @@ void setup() {
 
   Serial.begin(9600);
 
-  if ( xSerialSemaphore == NULL )  // Check to confirm that the Serial Semaphore has not already been created.
+  if (xSerialSemaphore == NULL)  // Check to confirm that the Serial Semaphore has not already been created.
   {
     xSerialSemaphore = xSemaphoreCreateMutex();  // Create a mutex semaphore we will use to manage the Serial Port
     if (xSerialSemaphore){
-      xSemaphoreGive( ( xSerialSemaphore ) );  // Make the Serial Port available for use, by "Giving" the Semaphore.
+      xSemaphoreGive(xSerialSemaphore);  // Make the Serial Port available for use, by "Giving" the Semaphore.
     }
   }
 
@@ -122,13 +122,14 @@ void TaskSensorRead(void *pvParameters){
 
     if(now - lastRead[0] > readIntervals[0]){
       lastRead[0] = now;
-    if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+      if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+        // Safe to use serial print here
         read_temp(&sensor_temp);
       // read_baro(&sensor_baro); TODO fix
 
         Serial.println("Test Task Read Sensors");
-        xSemaphoreGive( xSerialSemaphore );  
-     }
+        xSemaphoreGive( xSerialSemaphore );
+      }
     } else if(now - lastRead[1] > readIntervals[1]) {
       lastRead[1] = now;
 
