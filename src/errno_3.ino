@@ -50,7 +50,7 @@ void setup() {
 xTaskCreate(
     TaskSensorRead
     ,  (const portCHAR *) "ReadSensors"
-    ,  128  // Stack size
+    ,  256  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -92,9 +92,9 @@ void TaskAnalogRead(void *pvParameters)  // This is a task.
 
     if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE )
     {
-      Serial.println("Analog read Test  Task Read");
+      Serial.println("Analog read Test Task Read");
       xSemaphoreGive( xSerialSemaphore ); // Now free or "Give" the Serial Port for others.
-    }
+    } 
     vTaskDelay(1);  // one tick delay (15ms) in between reads for stability
   }
 }
@@ -107,12 +107,12 @@ void TaskSensorRead(void *pvParameters){
 
   // Create sensor instances
   Adafruit_MCP9808 sensor_temp = Adafruit_MCP9808();
-  //CoolSatBaro sensor_baro;
+  CoolSatBaro sensor_baro;
 
   // Initialze sensors
   // These functions should be defined in sensor.h
   initialize_temp(&sensor_temp);
- // initialize_baro(&sensor_baro);
+  initialize_baro(&sensor_baro);
 
   int readIntervals[] = {1000,10}; // How often to execute in milliseconds
   unsigned int lastRead[2]; // To store last read time
@@ -125,9 +125,9 @@ void TaskSensorRead(void *pvParameters){
       if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
         // Safe to use serial print here
         read_temp(&sensor_temp);
-      // read_baro(&sensor_baro); TODO fix
-
+        read_baro(&sensor_baro);
         Serial.println("Test Task Read Sensors");
+
         xSemaphoreGive( xSerialSemaphore );
       }
     } else if(now - lastRead[1] > readIntervals[1]) {
