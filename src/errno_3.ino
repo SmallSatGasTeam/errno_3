@@ -1,4 +1,5 @@
 #include <Arduino_FreeRTOS.h>
+#include <semphr.h>  // add the FreeRTOS functions for Semaphores (or Flags).
 
 #include <Wire.h>
 #include <CoolSatBaro.h>
@@ -10,11 +11,24 @@
 // define two tasks for Blink & AnalogRead
 void TaskBlink( void *pvParameters );
 void TaskAnalogRead( void *pvParameters );
-
 void TaskSensorRead(void *pvParameters);
+
+// define semaphores
+SemaphoreHandle_t xSerialSemaphore;
+
 
 // the setup function runs once when you press reset or power the board
 void setup() {
+
+  Serial.begin(9600);
+
+  if (xSerialSemaphore == NULL)  // Check to confirm that the Serial Semaphore has not already been created.
+  {
+    xSerialSemaphore = xSemaphoreCreateMutex();  // Create a mutex semaphore we will use to manage the Serial Port
+    if (xSerialSemaphore){
+      xSemaphoreGive(xSerialSemaphore);  // Make the Serial Port available for use, by "Giving" the Semaphore.
+    }
+  }
 
   // Now set up two tasks to run independently.
   xTaskCreate(
@@ -25,18 +39,18 @@ void setup() {
     ,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
 
-//  xTaskCreate(
-//    TaskAnalogRead
-//    ,  (const portCHAR *) "AnalogRead"
-//    ,  128  // Stack size
-//    ,  NULL
-//    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-//    ,  NULL );
+ xTaskCreate(
+   TaskAnalogRead
+   ,  (const portCHAR *) "AnalogRead"
+   ,  128  // Stack size
+   ,  NULL
+   ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+   ,  NULL );
 
 xTaskCreate(
     TaskSensorRead
     ,  (const portCHAR *) "ReadSensors"
-    ,  128  // Stack size
+    ,  256  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -73,15 +87,14 @@ void TaskAnalogRead(void *pvParameters)  // This is a task.
 {
   (void) pvParameters;
 
-  // initialize serial communication at 9600 bits per second:
-  Serial.begin(9600);
-
   for (;;)
   {
-    // read the input on analog pin 0:
-    int sensorValue = analogRead(A0);
-    // print out the value you read:
-    Serial.println("Analog read");
+
+    if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE )
+    {
+      Serial.println("Analog read Test Task Read");
+      xSemaphoreGive( xSerialSemaphore ); // Now free or "Give" the Serial Port for others.
+    } 
     vTaskDelay(1);  // one tick delay (15ms) in between reads for stability
   }
 }
@@ -91,14 +104,13 @@ void TaskSensorRead(void *pvParameters){
 
   // Task Setup
   Wire.begin(); //Begining everying on our I2C Bus
-  Serial.begin(9600);
 
   // Create sensor instances
   Adafruit_MCP9808 sensor_temp = Adafruit_MCP9808();
   CoolSatBaro sensor_baro;
 
   // Initialze sensors
-  // These functions should be defined in sensor.h 
+  // These functions should be defined in sensor.h
   initialize_temp(&sensor_temp);
   initialize_baro(&sensor_baro);
 
@@ -110,10 +122,14 @@ void TaskSensorRead(void *pvParameters){
 
     if(now - lastRead[0] > readIntervals[0]){
       lastRead[0] = now;
+      if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+        // Safe to use serial print here
+        read_temp(&sensor_temp);
+        read_baro(&sensor_baro);
+        Serial.println("Test Task Read Sensors");
 
-      read_temp(&sensor_temp);
-      read_baro(&sensor_baro);
-
+        xSemaphoreGive( xSerialSemaphore );
+      }
     } else if(now - lastRead[1] > readIntervals[1]) {
       lastRead[1] = now;
 
