@@ -4,20 +4,23 @@
 #include <Wire.h>
 #include <CoolSatBaro.h>
 #include <Adafruit_MCP9808.h>
-
+#include <uCamII.h>
 
 #include "sensor.h"
+#include "messages.h" // Defines incoming data headers
 
-// define two tasks for Blink & AnalogRead
-void TaskBlink( void *pvParameters );
-void TaskAnalogRead( void *pvParameters );
+// define tasks
+void TaskBlink( void *pvParameters ); //TODO remove this test task
+void TaskAnalogRead( void *pvParameters ); //TODO remove this test task
 void TaskSensorRead(void *pvParameters);
+void TaskCamera(void *pvParameters);
 
 // define semaphores
 SemaphoreHandle_t xSerialSemaphore;
 
-
-// the setup function runs once when you press reset or power the board
+/**
+ * Global setup should occur here
+ */
 void setup() {
 
   Serial.begin(9600);
@@ -55,6 +58,13 @@ xTaskCreate(
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
 
+xTaskCreate(
+    TaskCamera
+    ,  (const portCHAR *) "Take Photos"
+    ,  128  // Stack size
+    ,  NULL
+    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  NULL );
   // Now the task scheduler, which takes over control of scheduling individual tasks, is automatically started.
 }
 
@@ -94,13 +104,14 @@ void TaskAnalogRead(void *pvParameters)  // This is a task.
     {
       Serial.println("Analog read Test Task Read");
       xSemaphoreGive( xSerialSemaphore ); // Now free or "Give" the Serial Port for others.
-    } 
+    }
     vTaskDelay(1);  // one tick delay (15ms) in between reads for stability
   }
 }
 
 
 void TaskSensorRead(void *pvParameters){
+  (void) pvParameters;
 
   // Task Setup
   Wire.begin(); //Begining everying on our I2C Bus
@@ -134,5 +145,56 @@ void TaskSensorRead(void *pvParameters){
       lastRead[1] = now;
 
     }
+  }
+}
+
+void TaskCamera(void *pvParameters){
+  (void) pvParameters;
+
+
+  UCAMII camera;
+  short x = 0;
+  int bytes;
+
+  bool taken = false; //HACK
+  for(;;){
+    // semaphore
+    //   if incomingMessage
+    //       // Take photo
+    //       // transmit back
+
+    if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+      // Safe to use serial print here
+
+      // if(Serial.peek() == TAKE_PHOTO){ //HACK
+      if(!taken){
+        taken = true; //HACK
+        //take photo
+        //transmit back
+        if (camera.init()) {
+          camera.takePicture();
+          Serial.print("Image size: ");
+          Serial.println(camera.imageSize, DEC);
+          Serial.print("number of packages: ");
+          Serial.println(camera.numberOfPackages(), DEC);
+
+          while ( bytes = camera.getData() ) {
+            for (x = 0; x < bytes; x++) {
+              Serial.print("0x");
+              Serial.print(camera.imgBuffer[x], HEX);
+              Serial.print(" ");
+            }
+            Serial.println("");
+          }
+          Serial.println("done downloading");
+
+        }
+
+      }
+
+      xSemaphoreGive( xSerialSemaphore );
+    }
+
+
   }
 }
