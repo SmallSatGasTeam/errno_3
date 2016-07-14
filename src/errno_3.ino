@@ -61,7 +61,7 @@ xTaskCreate(
 xTaskCreate(
     TaskCamera
     ,  (const portCHAR *) "Take Photos"
-    ,  128  // Stack size
+    ,  256  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -157,6 +157,7 @@ void TaskCamera(void *pvParameters){
   int bytes;
 
   bool taken = false; //HACK
+
   for(;;){
     // semaphore
     //   if incomingMessage
@@ -176,7 +177,7 @@ void TaskCamera(void *pvParameters){
           Serial.print("Image size: ");
           Serial.println(camera.imageSize, DEC);
           Serial.print("number of packages: ");
-          Serial.println(camera.numberOfPackages(), DEC);
+         // Serial.println(camera.numberOfPackages(), DEC);
 
           while ( bytes = camera.getData() ) {
             for (x = 0; x < bytes; x++) {
