@@ -13,7 +13,6 @@
 void TaskBlink( void *pvParameters ); //TODO remove this test task
 void TaskAnalogRead( void *pvParameters ); //TODO remove this test task
 void TaskSensorRead(void *pvParameters);
-void TaskCamera(void *pvParameters);
 
 // define semaphores
 SemaphoreHandle_t xSerialSemaphore;
@@ -58,13 +57,6 @@ xTaskCreate(
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
 
-xTaskCreate(
-    TaskCamera
-    ,  (const portCHAR *) "Take Photos"
-    ,  256  // Stack size
-    ,  NULL
-    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  NULL );
   // Now the task scheduler, which takes over control of scheduling individual tasks, is automatically started.
 }
 
@@ -145,57 +137,5 @@ void TaskSensorRead(void *pvParameters){
       lastRead[1] = now;
 
     }
-  }
-}
-
-void TaskCamera(void *pvParameters){
-  (void) pvParameters;
-
-
-  UCAMII camera;
-  short x = 0;
-  int bytes;
-
-  bool taken = false; //HACK
-
-  for(;;){
-    // semaphore
-    //   if incomingMessage
-    //       // Take photo
-    //       // transmit back
-
-    if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
-      // Safe to use serial print here
-
-      // if(Serial.peek() == TAKE_PHOTO){ //HACK
-      if(!taken){
-        taken = true; //HACK
-        //take photo
-        //transmit back
-        if (camera.init()) {
-          camera.takePicture();
-          Serial.print("Image size: ");
-          Serial.println(camera.imageSize, DEC);
-          Serial.print("number of packages: ");
-         // Serial.println(camera.numberOfPackages(), DEC);
-
-          while ( bytes = camera.getData() ) {
-            for (x = 0; x < bytes; x++) {
-              Serial.print("0x");
-              Serial.print(camera.imgBuffer[x], HEX);
-              Serial.print(" ");
-            }
-            Serial.println("");
-          }
-          Serial.println("done downloading");
-
-        }
-
-      }
-
-      xSemaphoreGive( xSerialSemaphore );
-    }
-
-
   }
 }
