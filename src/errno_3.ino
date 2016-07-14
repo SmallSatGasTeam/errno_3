@@ -94,7 +94,7 @@ void TaskAnalogRead(void *pvParameters)  // This is a task.
 
     if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE )
     {
-      Serial.println("Analog read Test Task Read");
+      //Serial.println("Analog read Test Task Read");
       xSemaphoreGive( xSerialSemaphore ); // Now free or "Give" the Serial Port for others.
     }
     vTaskDelay(1);  // one tick delay (15ms) in between reads for stability
@@ -120,6 +120,8 @@ void TaskSensorRead(void *pvParameters){
   int readIntervals[] = {1000,10}; // How often to execute in milliseconds
   unsigned int lastRead[2]; // To store last read time
 
+  Serial.println("\ttemp\tbaro\tlight");
+
   for(;;){
     unsigned int now = millis();
 
@@ -131,7 +133,8 @@ void TaskSensorRead(void *pvParameters){
         read_temp(&sensor_temp);
         read_baro(&sensor_baro);
 		  read_light();
-        Serial.println("Test Task Read Sensors");
+		  Serial.println();
+      //  Serial.println("Test Task Read Sensors");
 
         xSemaphoreGive( xSerialSemaphore );
       }

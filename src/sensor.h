@@ -9,8 +9,8 @@ void initialize_temp(Adafruit_MCP9808* sensor){
 }
 
 void read_temp(Adafruit_MCP9808* sensor){
-  Serial.print("temp:\t");
-  Serial.println(sensor->readTempC());
+  Serial.print("\t");
+  Serial.print(sensor->readTempC());
   // Serial3.println(sensor->readTempC()); TODO
 }
 
@@ -20,8 +20,8 @@ void initialize_baro(CoolSatBaro* sensor){
 
 void read_baro(CoolSatBaro* sensor){
   sensor->readBaro();
-  Serial.print("bar:\t");
-  Serial.println(sensor->getPressure());
+  Serial.print("\t");
+  Serial.print(sensor->getPressure());
 }
 
 void read_light(){
@@ -37,7 +37,7 @@ void read_light(){
    RLDR = (1000.0 * (5 - volt )) / volt;
 	lux = TOLUX * (pow(RLDR, TOLUXPWR));
 	
-	Serial.print("light:\t");
-   Serial.println(lux);
+	Serial.print("\t");
+   Serial.print(lux);
 }
 #endif
