@@ -112,7 +112,7 @@ void TaskSensorRead(void *pvParameters){
 
       read_temp(&sensor_temp);
       read_baro(&sensor_baro);
-
+		read_light();
     } else if(now - lastRead[1] > readIntervals[1]) {
       lastRead[1] = now;
 
