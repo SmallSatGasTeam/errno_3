@@ -141,20 +141,25 @@ boolean UCAMII::wait_for_bytes(byte command[6]) {
     Serial.print(command[i], HEX);
     Serial.print(" ");
   }
-  Serial.print("\r\nGOT : ");
   i = 0;
 #endif
 
+  Serial.println("\nBefore Loop");
+  Serial.print("Serial1: ");
+  Serial.println(Serial1.available());
   while (Serial1.available()) {
+    Serial.println("Before read");
     cam_reply = Serial1.read();
+   Serial.println("Cam reply: "); 
+   Serial.println(cam_reply);
     if (i < 6 ) {
       if ((cam_reply == command[i]) || command[i] == 0x00) {
         found_bytes++;
         i++;
       }
     }
-
 #ifdef cameraDebugSerial
+    Serial.print("\r\nGOT : ");
     Serial.print("0x");
     Serial.print(cam_reply, HEX);
     Serial.println(" ");
