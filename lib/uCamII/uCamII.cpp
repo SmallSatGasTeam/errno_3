@@ -33,6 +33,10 @@ UCAMII::UCAMII() {
 
 boolean UCAMII::init() 
 {
+  for (int i = 0; i < 6; i++) {
+      Serial1.write(_RESET[i]);
+  }
+delay(500);
 #ifdef cameraDebugSerial
   Serial.println("Intitial is starting to be sent");
 #endif
@@ -56,8 +60,8 @@ int UCAMII::attempt_sync()
 
   while (attempts < 60 && ack_success == 0) {
     // Flush
-    while (Serial1.available());
-    delay(200);
+    //while (Serial1.available());
+    delay(1000);
 #ifdef cameraDebugSerial
     Serial3.println("Trying...");
     Serial.println("Sending SYNC...");

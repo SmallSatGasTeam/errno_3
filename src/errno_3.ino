@@ -22,8 +22,37 @@ SemaphoreHandle_t xSerialSemaphore;
  * Global setup should occur here
  */
 void setup() {
-
+  
   Serial.begin(9600);
+
+/* 
+  UCAMII camera;
+  short x = 0;
+  int bytes;
+  delay(5000);
+	Serial.print("init: ");
+	bool a = camera.init();
+	Serial.print(a);
+        if (a) {
+          camera.takePicture();
+          Serial.print("Image size: ");
+          Serial.println(camera.imageSize, DEC);
+          Serial.print("number of packages: ");
+         // Serial.println(camera.numberOfPackages(), DEC);
+
+          while ( bytes = camera.getData() ) {
+            for (x = 0; x < bytes; x++) {
+              Serial.print("0x");
+              Serial.print(camera.imgBuffer[x], HEX);
+              Serial.print(" ");
+            }
+            Serial.println("");
+          }
+          Serial.println("done downloading");
+
+        }
+*/
+
   
   if (xSerialSemaphore == NULL)  // Check to confirm that the Serial Semaphore has not already been created.
   {
@@ -34,14 +63,14 @@ void setup() {
   }
 
   // Now set up two tasks to run independently.
- // xTaskCreate(
- //   TaskBlink
- //   ,  (const portCHAR *) "Blink"   // A name just for humans
- //   ,  128  // This stack size can be checked & adjusted by reading the Stack Highwater
- //   ,  NULL
- //   ,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
- //   ,  NULL );
-/*
+  xTaskCreate(
+    TaskBlink
+    ,  (const portCHAR *) "Blink"   // A name just for humans
+    ,  128  // This stack size can be checked & adjusted by reading the Stack Highwater
+    ,  NULL
+    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  NULL );
+
  xTaskCreate(
    TaskAnalogRead
    ,  (const portCHAR *) "AnalogRead"
@@ -54,18 +83,19 @@ void setup() {
 xTaskCreate(
     TaskSensorRead
     ,  (const portCHAR *) "ReadSensors"
-    ,  256  // Stack size
+    ,  300  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
-*/
+
 xTaskCreate(
     TaskCamera
     ,  (const portCHAR *) "Take Photos"
-    ,  500  // Stack size
+    ,  600  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
+
   // Now the task scheduler, which takes over control of scheduling individual tasks, is automatically started.
 }
 
@@ -77,6 +107,7 @@ void loop()
 /*--------------------------------------------------*/
 /*---------------------- Tasks ---------------------*/
 /*--------------------------------------------------*/
+
 
 void TaskBlink(void *pvParameters)  // This is a task.
 {
@@ -103,7 +134,7 @@ void TaskAnalogRead(void *pvParameters)  // This is a task.
 
     if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE )
     {
-     // Serial.println("Analog read Test Task Read");
+      Serial.println("Analog read Test Task Read");
       xSemaphoreGive( xSerialSemaphore ); // Now free or "Give" the Serial Port for others.
     }
     vTaskDelay(1);  // one tick delay (15ms) in between reads for stability
@@ -136,9 +167,9 @@ void TaskSensorRead(void *pvParameters){
       lastRead[0] = now;
       if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
         // Safe to use serial print here
-       // read_temp(&sensor_temp);
-       // read_baro(&sensor_baro);
-       // Serial.println("Test Task Read Sensors");
+        read_temp(&sensor_temp);
+        read_baro(&sensor_baro);
+        Serial.println("Test Task Read Sensors");
 
         xSemaphoreGive( xSerialSemaphore );
       }
@@ -151,34 +182,21 @@ void TaskSensorRead(void *pvParameters){
 
 void TaskCamera(void *pvParameters){
   (void) pvParameters;
-
-
+  
+  Serial1.begin(115200);
+	
   UCAMII camera;
   short x = 0;
   int bytes;
-  
-  Serial1.begin(115200);
- //Serial1.begin(57600);
-	
-  Serial.println("Before Loop");
-
+  bool taken = false;
   for(;;){
    
-    vTaskDelay(10); 
-    // semaphore
-    //   if incomingMessage
-    //       // Take photo
-    //       // transmit back
-    Serial.println("Outside Semaphore");
     if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
       // Safe to use serial print here
 
-      // if(Serial.peek() == TAKE_PHOTO){ //HACK
- //     if(true){
-        //take photo
-        //transmit back
-//	Serial.println("Pre-Print");
-	bool a = camera.init();
+       if(Serial.peek() == TAKE_PHOTO){
+ //      if(!taken){ taken = true;
+        bool a = camera.init();
 	Serial.print("init: ");
 	Serial.print(a);
         if (a) {
@@ -186,7 +204,7 @@ void TaskCamera(void *pvParameters){
           Serial.print("Image size: ");
           Serial.println(camera.imageSize, DEC);
           Serial.print("number of packages: ");
-         // Serial.println(camera.numberOfPackages(), DEC);
+          Serial.println(camera.numberOfPackages(), DEC);
 
           while ( bytes = camera.getData() ) {
             for (x = 0; x < bytes; x++) {
@@ -199,9 +217,8 @@ void TaskCamera(void *pvParameters){
           Serial.println("done downloading");
 
         }
-     // }
-    }
-  xSemaphoreGive( xSerialSemaphore );
-}
-
+      }
+    xSemaphoreGive( xSerialSemaphore );
+   }
+  }
 }
