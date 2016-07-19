@@ -17,8 +17,8 @@ void TaskSensorRead(void *pvParameters);
 // define semaphores
 SemaphoreHandle_t xSerialSemaphore;
 
-/*
-  Global setup should occur here
+/**
+ *Global setup should occur here
  */
 void setup() {
 
@@ -131,7 +131,7 @@ void TaskSensorRead(void *pvParameters){
   int readIntervals[] = {1000,10}; // How often to execute in milliseconds
   unsigned int lastRead[2]; // To store last read time
 
-  Serial.println("\ttmpEx\ttmpIn\tbaro\tlight");
+  Serial.println("\texTmp\tinTmp\tbaro\tlight\tUV");
 
   for(;;){
     unsigned int now = millis();
@@ -142,10 +142,11 @@ void TaskSensorRead(void *pvParameters){
 		if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
         // Safe to use serial print here
         read_temp(&sensor_temp_ex);
-	read_temp(&sensor_temp_in);
+        read_temp(&sensor_temp_in);
         read_baro(&sensor_baro);
-  		  read_light();
-  		  Serial.println();
+        read_light();
+        read_uv();
+        Serial.println();
       //  Serial.println("Test Task Read Sensors");
 
         xSemaphoreGive( xSerialSemaphore );
