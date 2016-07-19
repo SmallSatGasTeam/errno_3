@@ -1,9 +1,16 @@
 #ifndef SENSORS_H
 #define SENSORS_H
 
-void initialize_temp(Adafruit_MCP9808* sensor){
-  if (!sensor->begin()) {
-    Serial.println("Couldn't find MCP9808!");
+void initialize_temp_ex(Adafruit_MCP9808* sensor){
+  if (!sensor->begin(0x18)) {
+    Serial.println("Couldn't find external MCP9808!");
+    while (1);
+  }
+}
+
+void initialize_temp_in(Adafruit_MCP9808* sensor){
+  if (!sensor->begin(0x1D)) {
+    Serial.println("Couldn't find internal MCP9808!");
     while (1);
   }
 }
@@ -11,7 +18,6 @@ void initialize_temp(Adafruit_MCP9808* sensor){
 void read_temp(Adafruit_MCP9808* sensor){
   Serial.print("\t");
   Serial.print(sensor->readTempC());
-  // Serial3.println(sensor->readTempC()); TODO
 }
 
 void initialize_baro(CoolSatBaro* sensor){
