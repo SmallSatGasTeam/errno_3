@@ -76,7 +76,6 @@ void setup() {
    ,  128  // Stack size
    ,  NULL
    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-
    ,  NULL );
 
 xTaskCreate(
@@ -87,7 +86,7 @@ xTaskCreate(
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
 
-/*
+
 xTaskCreate(
     TaskCamera
     ,  (const portCHAR *) "Take Photos"
@@ -95,7 +94,7 @@ xTaskCreate(
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
-*/
+
   // Now the task scheduler, which takes over control of scheduling individual tasks, is automatically started.
 }
 
@@ -180,13 +179,13 @@ void TaskSensorRead(void *pvParameters){
   }
 }
 
-/*
+
 void TaskCamera(void *pvParameters){
   (void) pvParameters;
   
   Serial1.begin(115200);
 	
-  UCAMII camera;
+  UCAMII camera(Serial1, &Serial);
   short x = 0;
   int bytes;
   bool taken = false;
@@ -194,7 +193,6 @@ void TaskCamera(void *pvParameters){
    
     if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
       // Safe to use serial print here
-
        if(Serial.peek() == TAKE_PHOTO){
  //      if(!taken){ taken = true;
         bool a = camera.init();
@@ -223,4 +221,4 @@ void TaskCamera(void *pvParameters){
    }
   }
 }
-*/
+

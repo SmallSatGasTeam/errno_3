@@ -30,13 +30,6 @@ UCAMII::UCAMII(Stream& cameraSerial, Stream* debugSerial):
   this->package_no = 0;
 }
 
-/*
-UCAMII::UCAMII() {
-  this->image_pos = 0;
-  this->package_no = 0;
-}
-*/
-
 boolean UCAMII::init()
 {
   for (int i = 0; i < 6; i++) {
@@ -67,7 +60,7 @@ int UCAMII::attempt_sync()
 
   while (attempts < 60 && ack_success == 0) {
     // Flush
-    //while (camera_serial.available());
+    while (camera_serial.available());
     delay(1000);
 #ifdef cameraDebugSerial
     debug_serial->println("Trying...");
