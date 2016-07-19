@@ -24,18 +24,24 @@ byte _PACK_SIZE[6] = {0xAA, 0x06, 0x08, UCAMII_BUF_SIZE + 6, 0x00, 0x00};
 byte _SNAPSHOT[6] = {0xAA, 0x05, 0x00, 0x00, 0x00, 0x00};
 byte _GET_PICTURE[6] = {0xAA, 0x04, 0x01, 0x00, 0x00, 0x00};
 
+UCAMII::UCAMII(Stream& cameraSerial, Stream* debugSerial):
+  camera_serial(cameraSerial), debug_serial(debugSerial){
+  this->image_pos = 0;
+  this->package_no = 0;
+}
 
-
+/*
 UCAMII::UCAMII() {
   this->image_pos = 0;
   this->package_no = 0;
 }
+*/
 
 boolean UCAMII::init() 
 {
   for (int i = 0; i < 6; i++) {
       Serial1.write(_RESET[i]);
-  }
+}
 delay(500);
 #ifdef cameraDebugSerial
   Serial.println("Intitial is starting to be sent");
@@ -49,6 +55,7 @@ delay(500);
   }
   return false;
 }
+
 
 int UCAMII::attempt_sync() 
 {

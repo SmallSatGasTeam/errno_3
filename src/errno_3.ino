@@ -7,7 +7,7 @@
 #include <uCamII.h>
 
 #include "sensor.h"
-#include "messages.h" // Defines incoming data headers
+#include "messages.h" // Defines incoming data header
 
 // define tasks
 void TaskBlink( void *pvParameters ); //TODO remove this test task
@@ -24,7 +24,6 @@ SemaphoreHandle_t xSerialSemaphore;
 void setup() {
   
   Serial.begin(9600);
-
 /* 
   UCAMII camera;
   short x = 0;
@@ -88,6 +87,7 @@ xTaskCreate(
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
 
+/*
 xTaskCreate(
     TaskCamera
     ,  (const portCHAR *) "Take Photos"
@@ -95,7 +95,7 @@ xTaskCreate(
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
-
+*/
   // Now the task scheduler, which takes over control of scheduling individual tasks, is automatically started.
 }
 
@@ -180,6 +180,7 @@ void TaskSensorRead(void *pvParameters){
   }
 }
 
+/*
 void TaskCamera(void *pvParameters){
   (void) pvParameters;
   
@@ -222,3 +223,4 @@ void TaskCamera(void *pvParameters){
    }
   }
 }
+*/
