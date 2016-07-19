@@ -7,7 +7,7 @@
 #include <uCamII.h>
 
 #include "sensor.h"
-#include "messages.h" // Defines incoming data headers
+#include "messages.h" // Defines incoming data header
 
 // define tasks
 void TaskBlink( void *pvParameters ); //TODO remove this test task
@@ -38,7 +38,7 @@ void setup() {
     ,  (const portCHAR *) "Blink"   // A name just for humans
     ,  128  // This stack size can be checked & adjusted by reading the Stack Highwater
     ,  NULL
-    ,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
 
  xTaskCreate(
@@ -52,7 +52,15 @@ void setup() {
 xTaskCreate(
     TaskSensorRead
     ,  (const portCHAR *) "ReadSensors"
-    ,  256  // Stack size
+    ,  300  // Stack size
+    ,  NULL
+    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  NULL );
+
+xTaskCreate(
+    TaskCamera
+    ,  (const portCHAR *) "Take Photos"
+    ,  600  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -68,6 +76,7 @@ void loop()
 /*--------------------------------------------------*/
 /*---------------------- Tasks ---------------------*/
 /*--------------------------------------------------*/
+
 
 void TaskBlink(void *pvParameters)  // This is a task.
 {
@@ -135,8 +144,8 @@ void TaskSensorRead(void *pvParameters){
         read_temp(&sensor_temp_ex);
 	read_temp(&sensor_temp_in);
         read_baro(&sensor_baro);
-		  read_light();
-		  Serial.println();
+  		  read_light();
+  		  Serial.println();
       //  Serial.println("Test Task Read Sensors");
 
         xSemaphoreGive( xSerialSemaphore );
@@ -145,5 +154,43 @@ void TaskSensorRead(void *pvParameters){
       lastRead[1] = now;
 
     }
+  }
+}
+
+void TaskCamera(void *pvParameters){
+  (void) pvParameters;
+
+  Serial1.begin(115200);
+
+  UCAMII camera(Serial1, &Serial);
+  short x = 0;
+  int bytes;
+  bool taken = false;
+  for(;;){
+
+    if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+      // Safe to use serial print here
+       if(Serial.peek() == TAKE_PHOTO){
+        if (camera.init()) {
+          camera.takePicture();
+          Serial.print("Image size: ");
+          Serial.println(camera.imageSize, DEC);
+          Serial.print("number of packages: ");
+          Serial.println(camera.numberOfPackages(), DEC);
+
+          while ( bytes = camera.getData() ) {
+            for (x = 0; x < bytes; x++) {
+              Serial.print("0x");
+              Serial.print(camera.imgBuffer[x], HEX);
+              Serial.print(" ");
+            }
+            Serial.println("");
+          }
+          Serial.println("done downloading");
+
+        }
+      }
+    xSemaphoreGive( xSerialSemaphore );
+   }
   }
 }
