@@ -37,19 +37,19 @@ UCAMII::UCAMII() {
 }
 */
 
-boolean UCAMII::init() 
+boolean UCAMII::init()
 {
   for (int i = 0; i < 6; i++) {
-      Serial1.write(_RESET[i]);
+      camera_serial.write(_RESET[i]);
 }
 delay(500);
 #ifdef cameraDebugSerial
-  Serial.println("Intitial is starting to be sent");
+  debug_serial->println("Intitial is starting to be sent");
 #endif
-  if (this->attempt_sync()) 
+  if (this->attempt_sync())
   {
 #ifdef cameraDebugSerial
-	Serial.println("\n\rCam has ACKED the SYNC");
+	debug_serial->println("\n\rCam has ACKED the SYNC");
 #endif
     return true;
   }
@@ -57,7 +57,7 @@ delay(500);
 }
 
 
-int UCAMII::attempt_sync() 
+int UCAMII::attempt_sync()
 {
   int attempts = 0;
   byte cam_reply;
@@ -67,24 +67,24 @@ int UCAMII::attempt_sync()
 
   while (attempts < 60 && ack_success == 0) {
     // Flush
-    //while (Serial1.available());
+    //while (camera_serial.available());
     delay(1000);
 #ifdef cameraDebugSerial
-    Serial3.println("Trying...");
-    Serial.println("Sending SYNC...");
+    debug_serial->println("Trying...");
+    debug_serial->println("Sending SYNC...");
 #endif
     for (int i = 0; i < 6; i++) {
-      Serial1.write(_SYNC_COMMAND[i]);
+      camera_serial.write(_SYNC_COMMAND[i]);
     }
 
     if (this->wait_for_bytes(_SYNC_ACK_REPLY) ) {
       if (this->wait_for_bytes(_SYNC_ACK_REPLY_EXT)) {
         delay(5 + incrementTime);
 #ifdef cameraDebugSerial
-        Serial.println("\r\nSending FINAL SYNC...");
+        debug_serial->println("\r\nSending FINAL SYNC...");
 #endif
         for (int i = 0; i < 6; i++) {
-          Serial1.write(_SYNC_FINAL_COMMAND[i]);
+          camera_serial.write(_SYNC_FINAL_COMMAND[i]);
         }
         return 1;
       }
@@ -94,7 +94,7 @@ int UCAMII::attempt_sync()
   }
   attempts = 0;
   incrementTime = 0;
-  Serial3.println("Failed!");
+  debug_serial->println("Failed!");
   return 0;
 }
 
@@ -108,29 +108,29 @@ int UCAMII::numberOfPackages() {
 int UCAMII::send_initial() {
 
   // flush
-  while (Serial1.available() > 0) {
-    Serial1.read();
+  while (camera_serial.available() > 0) {
+    camera_serial.read();
   }
 
   delay(100);
 
 #ifdef cameraDebugSerial
-  Serial.println("Sending INITIALISE...");
+  debug_serial->println("Sending INITIALISE...");
 #endif
   for (int i = 0; i < 6; i++) {
-    Serial1.write(_INITIAL_COMMAND[i]);
+    camera_serial.write(_INITIAL_COMMAND[i]);
   }
   // @todo why 500 delay?
   delay(500);
   if (this->wait_for_bytes(_GENERIC_ACK_REPLY)) {
 #ifdef cameraDebugSerial
-    Serial.println("INITIALISE success");
+    debug_serial->println("INITIALISE success");
 #endif
     return 1;
   }
 
 #ifdef cameraDebugSerial
-  Serial.println("INITIALISE fail");
+  debug_serial->println("INITIALISE fail");
 #endif
 
   return 0;
@@ -146,23 +146,23 @@ boolean UCAMII::wait_for_bytes(byte command[6]) {
   // unsigned long start = millis();
 
 #ifdef cameraDebugSerial
-  Serial.print("\r\nWAIT: ");
+  debug_serial->print("\r\nWAIT: ");
   for (i = 0; i < 6; i++) {
-    Serial.print("0x");
-    Serial.print(command[i], HEX);
-    Serial.print(" ");
+    debug_serial->print("0x");
+    debug_serial->print(command[i], HEX);
+    debug_serial->print(" ");
   }
   i = 0;
 #endif
 
-  Serial.println("\nBefore Loop");
-  Serial.print("Serial1: ");
-  Serial.println(Serial1.available());
-  while (Serial1.available()) {
-    Serial.println("Before read");
-    cam_reply = Serial1.read();
-   Serial.println("Cam reply: "); 
-   Serial.println(cam_reply);
+  debug_serial->println("\nBefore Loop");
+  debug_serial->print("Serial1: ");
+  debug_serial->println(camera_serial.available());
+  while (camera_serial.available()) {
+    debug_serial->println("Before read");
+    cam_reply = camera_serial.read();
+   debug_serial->println("Cam reply: ");
+   debug_serial->println(cam_reply);
     if (i < 6 ) {
       if ((cam_reply == command[i]) || command[i] == 0x00) {
         found_bytes++;
@@ -170,10 +170,10 @@ boolean UCAMII::wait_for_bytes(byte command[6]) {
       }
     }
 #ifdef cameraDebugSerial
-    Serial.print("\r\nGOT : ");
-    Serial.print("0x");
-    Serial.print(cam_reply, HEX);
-    Serial.println(" ");
+    debug_serial->print("\r\nGOT : ");
+    debug_serial->print("0x");
+    debug_serial->print(cam_reply, HEX);
+    debug_serial->println(" ");
 #endif
     received++;
     if (found_bytes == 6) {
@@ -205,14 +205,14 @@ int UCAMII::set_package_size() {
   delay(100);
 
 #ifdef cameraDebugSerial
-  Serial.println("Sending packet size...");
+  debug_serial->println("Sending packet size...");
 #endif
 
   for (int i = 0; i < 6; i++) {
-    Serial1.write(_PACK_SIZE[i]);
+    camera_serial.write(_PACK_SIZE[i]);
 #ifdef cameraDebugSerial
-    Serial.print(_PACK_SIZE[i], HEX);
-    Serial.print(" ");
+    debug_serial->print(_PACK_SIZE[i], HEX);
+    debug_serial->print(" ");
 #endif
 
   }
@@ -220,13 +220,13 @@ int UCAMII::set_package_size() {
   delay(500);
   if (this->wait_for_bytes(ack)) {
 #ifdef cameraDebugSerial
-    Serial.println("\r\npacket size success");
+    debug_serial->println("\r\npacket size success");
 #endif
     return 1;
   }
 
 #ifdef cameraDebugSerial
-  Serial.println("packet size fail");
+  debug_serial->println("packet size fail");
 #endif
 
   return 0;
@@ -239,25 +239,25 @@ int UCAMII::do_snapshot() {
   delay(100);
 
 #ifdef cameraDebugSerial
-  Serial.println("Sending snapshot...");
+  debug_serial->println("Sending snapshot...");
 #endif
 
 
-  for (int i = 0; i < 6; i++) 
+  for (int i = 0; i < 6; i++)
   {
-    Serial1.write(_SNAPSHOT[i]);
+    camera_serial.write(_SNAPSHOT[i]);
   }
   // @todo why 500 delay?
   delay(500);
   if (this->wait_for_bytes(ack)) {
 #ifdef cameraDebugSerial
-    Serial.println("snapshot success");
+    debug_serial->println("snapshot success");
 #endif
     return 1;
   }
 
 #ifdef cameraDebugSerial
-  Serial.println("snapshot fail");
+  debug_serial->println("snapshot fail");
 #endif
 
   return 0;
@@ -273,30 +273,30 @@ int UCAMII::get_picture() {
   delay(100);
 
 #ifdef cameraDebugSerial
-  Serial.println("Sending get picture...");
+  debug_serial->println("Sending get picture...");
 #endif
 
-  for (int i = 0; i < 6; i++) 
+  for (int i = 0; i < 6; i++)
   {
-    Serial1.write(_GET_PICTURE[i]);
+    camera_serial.write(_GET_PICTURE[i]);
   }
   // @todo why 500 delay?
   delay(500);
   if (this->wait_for_bytes(ack)) {
 #ifdef cameraDebugSerial
-    Serial.println("picture success");
+    debug_serial->println("picture success");
 #endif
     // get the 6 bytes ACK
     for (i = 0; i <= 5; i++) {
       ack[i] = 0;
-      while (!Serial1.available());
+      while (!camera_serial.available());
 
-      ack[i] = Serial1.read();
+      ack[i] = camera_serial.read();
       // last 3 bytes are the image size
 #ifdef cameraDebugSerial
-      Serial.print(i, DEC);
-      Serial.print(" value: ");
-      Serial.println(ack[i], HEX);
+      debug_serial->print(i, DEC);
+      debug_serial->print(" value: ");
+      debug_serial->println(ack[i], HEX);
 #endif
     }
 
@@ -313,7 +313,7 @@ int UCAMII::get_picture() {
   }
 
 #ifdef cameraDebugSerial
-  Serial.println("picture fail");
+  debug_serial->println("picture fail");
 #endif
 
   return 0;
@@ -333,9 +333,9 @@ int UCAMII::getData() {
 
   // request bytes
   for (int i = 0; i < 6; i++) {
-    Serial1.write(my_ack[i]);
+    camera_serial.write(my_ack[i]);
   }
-  
+
 
   // Set number of bytes we should wait for
   if (this->image_pos < UCAMII_BUF_SIZE) {
@@ -344,31 +344,31 @@ int UCAMII::getData() {
     bytes = UCAMII_BUF_SIZE + 6;
   }
 #ifdef cameraDebugSerial
-//    Serial.print("REMAINING: ");
-//    Serial.print(this->image_pos, DEC);
-//    Serial.print(" BYTES PER CHUNK: ");
-//    Serial.println(bytes, DEC);
+//    debug_serial->print("REMAINING: ");
+//    debug_serial->print(this->image_pos, DEC);
+//    debug_serial->print(" BYTES PER CHUNK: ");
+//    debug_serial->println(bytes, DEC);
 
 
 #endif
 
   for (i = 0; i < bytes; i++) {
-      while (!Serial1.available());
+      while (!camera_serial.available());
       // wait for bytes
-          s = Serial1.read();
+          s = camera_serial.read();
 
           // Skip first 4 and last 2, Page 10 of the datasheet
           if (i >= 4 && i < bytes - 2) {
 #ifdef cameraDebugSerial
-              //Serial.print("*");
+              //debug_serial->print("*");
 #endif
               this->imgBuffer[i - 4] = s;
               this->image_pos--; //hitting 0 before it needs to hit 0? add print statements
           }
 #ifdef cameraDebugSerial
-          //Serial.print(this->imgBuffer[s], HEX);
-          //Serial.print(HEX);
-          //Serial.print(" ");
+          //debug_serial->print(this->imgBuffer[s], HEX);
+          //debug_serial->print(HEX);
+          //debug_serial->print(" ");
 
 
 #endif
@@ -376,7 +376,7 @@ int UCAMII::getData() {
 
 
 #ifdef cameraDebugSerial
-      Serial.println("");
+      debug_serial->println("");
 #endif
 
   this->package_no++;
@@ -385,13 +385,13 @@ int UCAMII::getData() {
     my_ack[4] = 0xF0;
     my_ack[5] = 0xF0;
     for (int i = 0; i < 6; i++) {
-      Serial1.write(my_ack[i]);
+      camera_serial.write(my_ack[i]);
     }
       if(this->image_pos == 0) {
           for(int i = 0;i<6;i++){
-              Serial1.write(_RESET[i]);
+              camera_serial.write(_RESET[i]);
           }
-          //Serial.println("RESET SUCCESSFUL");
+          //debug_serial->println("RESET SUCCESSFUL");
           this->image_pos = 0;
           this->package_no = 0;
       }
@@ -399,6 +399,3 @@ int UCAMII::getData() {
   return bytes-6;
 
 }
-
-
-

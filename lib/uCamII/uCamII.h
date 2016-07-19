@@ -1,5 +1,5 @@
 /*
-    uCam.h  
+    uCam.h
 */
 
 #ifndef UCAMII_h
@@ -12,16 +12,15 @@ class UCAMII {
 
 public:
     UCAMII(Stream& cameraSerial = Serial, Stream* debugSerial = (Stream*) NULL);
- //   UCAMII();
     boolean init();
     boolean takePicture();
     int numberOfPackages();
-	
+
     unsigned long imageSize;
 
-    int getData();    
+    int getData();
     byte imgBuffer[UCAMII_BUF_SIZE];    // this is also set in _PACK_SIZE
-    
+
 private:
     unsigned long image_pos;
     int package_no;
