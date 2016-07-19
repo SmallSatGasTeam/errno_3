@@ -3,7 +3,9 @@
 
 #include <Wire.h>
 #include <CoolSatBaro.h>
+#include <Adafruit_Sensor.h>
 #include <Adafruit_MCP9808.h>
+#include <Adafruit_BNO055.h>
 #include <uCamII.h>
 
 #include "sensor.h"
@@ -120,6 +122,7 @@ void TaskSensorRead(void *pvParameters){
   // Create sensor instances
   Adafruit_MCP9808 sensor_temp_ex = Adafruit_MCP9808();
   Adafruit_MCP9808 sensor_temp_in = Adafruit_MCP9808();
+  Adafruit_BNO055  sensor_gyro = Adafruit_BNO055();
   CoolSatBaro sensor_baro;
 
   // Initialze sensors
@@ -127,11 +130,14 @@ void TaskSensorRead(void *pvParameters){
   initialize_temp_ex(&sensor_temp_ex);
   initialize_temp_in(&sensor_temp_in);
   initialize_baro(&sensor_baro);
+  initialize_gyro(&sensor_gyro);
 
   int readIntervals[] = {1000,10}; // How often to execute in milliseconds
   unsigned int lastRead[2]; // To store last read time
 
-  Serial.println("\texTmp\tinTmp\tbaro\tlight\tUV");
+  Serial.println("\t");
+  Serial.println("\t\t\t\t\t\tm/s/s:\t\t\tdegrees:");
+  Serial.println("\texTemp\tinTemp\tbaro\tlight\tUV\tX:\tY:\tZ:\tX:\tY:\tZ:");
 
   for(;;){
     unsigned int now = millis();
@@ -146,6 +152,7 @@ void TaskSensorRead(void *pvParameters){
         read_baro(&sensor_baro);
         read_light();
         read_uv();
+		read_gyro(&sensor_gyro);
         Serial.println();
       //  Serial.println("Test Task Read Sensors");
 

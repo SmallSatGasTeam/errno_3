@@ -1,6 +1,8 @@
 #ifndef SENSORS_H
 #define SENSORS_H
 
+//----------- Temperature sensors ------------//
+
 void initialize_temp_ex(Adafruit_MCP9808* sensor){
   if (!sensor->begin(0x18)) {
     Serial.println("Couldn't find external MCP9808!");
@@ -20,6 +22,8 @@ void read_temp(Adafruit_MCP9808* sensor){
   Serial.print(sensor->readTempC());
 }
 
+//------------ Barometer ------------//
+
 void initialize_baro(CoolSatBaro* sensor){
   sensor->initial(0x76);
 }
@@ -29,6 +33,8 @@ void read_baro(CoolSatBaro* sensor){
   Serial.print("\t");
   Serial.print(sensor->getPressure());
 }
+
+//------------ Light & UV sensors ------------//
 
 void read_light(){
     float lightPin = 15; //anlaog light pin #
@@ -41,10 +47,10 @@ void read_light(){
 
    volt = analogRead(lightPin) * TOVOLT;
    RLDR = (1000.0 * (5 - volt )) / volt;
-	 lux = TOLUX * (pow(RLDR, TOLUXPWR));
+   lux = TOLUX * (pow(RLDR, TOLUXPWR));
 
-	 Serial.print("\t");
-   Serial.print(lux);
+	Serial.print("\t");
+	Serial.print(lux);
 }
 
 void read_uv(){
@@ -55,4 +61,38 @@ void read_uv(){
     Serial.print("\t");
     Serial.print(uv);
 }
+
+//------------ Gyroscope ------------//
+
+void initialize_gyro(Adafruit_BNO055* gyro){
+	if (!gyro->begin()){
+		Serial.println("Couldn't detect BNO055 gyroscope ... Check your wiring or I2C ADDR!");
+		while(1);
+	}
+	gyro->setExtCrystalUse(true);
+}
+
+void read_gyro(Adafruit_BNO055* gyro){
+
+	imu::Vector<3> acceleration = gyro->getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
+	
+	Serial.print("\t");
+	Serial.print(acceleration.x());
+	Serial.print("\t");
+	Serial.print(acceleration.y());
+	Serial.print("\t");
+	Serial.print(acceleration.z());
+
+	imu::Vector<3> euler = gyro->getVector(Adafruit_BNO055::VECTOR_EULER);
+
+	Serial.print("\t");
+	Serial.print(euler.x());
+	Serial.print("\t");
+	Serial.print(euler.y());
+	Serial.print("\t");
+	Serial.print(euler.z());
+
+	delay(100); // Delay of 100ms 
+}
+
 #endif
