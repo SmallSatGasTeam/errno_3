@@ -46,4 +46,13 @@ void read_light(){
 	 Serial.print("\t");
    Serial.print(lux);
 }
+
+void read_uv(){
+    const int uvPin = 1; // UV sensor pin
+    float uv = 0.0; // default
+    uv = analogRead(uvPin); // reads value
+    
+    Serial.print("\t");
+    Serial.print(uv);
+}
 #endif
