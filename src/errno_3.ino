@@ -141,8 +141,8 @@ void TaskSensorRead(void *pvParameters){
         // Safe to use serial print here
         read_temp(&sensor_temp);
         read_baro(&sensor_baro);
-		  read_light();
-		  Serial.println();
+  		  read_light();
+  		  Serial.println();
       //  Serial.println("Test Task Read Sensors");
 
         xSemaphoreGive( xSerialSemaphore );
@@ -168,10 +168,7 @@ void TaskCamera(void *pvParameters){
     if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
       // Safe to use serial print here
        if(Serial.peek() == TAKE_PHOTO){
-        bool a = camera.init();
-	Serial.print("init: ");
-	Serial.print(a);
-        if (a) {
+        if (camera.init()) {
           camera.takePicture();
           Serial.print("Image size: ");
           Serial.println(camera.imageSize, DEC);
