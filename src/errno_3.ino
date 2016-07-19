@@ -17,8 +17,8 @@ void TaskSensorRead(void *pvParameters);
 // define semaphores
 SemaphoreHandle_t xSerialSemaphore;
 
-/**
- * Global setup should occur here
+/*
+  Global setup should occur here
  */
 void setup() {
 
@@ -109,18 +109,20 @@ void TaskSensorRead(void *pvParameters){
   Wire.begin(); //Begining everying on our I2C Bus
 
   // Create sensor instances
-  Adafruit_MCP9808 sensor_temp = Adafruit_MCP9808();
+  Adafruit_MCP9808 sensor_temp_ex = Adafruit_MCP9808();
+  Adafruit_MCP9808 sensor_temp_in = Adafruit_MCP9808();
   CoolSatBaro sensor_baro;
 
   // Initialze sensors
   // These functions should be defined in sensor.h
-  initialize_temp(&sensor_temp);
+  initialize_temp_ex(&sensor_temp_ex);
+  initialize_temp_in(&sensor_temp_in);
   initialize_baro(&sensor_baro);
 
   int readIntervals[] = {1000,10}; // How often to execute in milliseconds
   unsigned int lastRead[2]; // To store last read time
 
-  Serial.println("\ttemp\tbaro\tlight");
+  Serial.println("\ttmpEx\ttmpIn\tbaro\tlight");
 
   for(;;){
     unsigned int now = millis();
@@ -130,7 +132,8 @@ void TaskSensorRead(void *pvParameters){
 
 		if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
         // Safe to use serial print here
-        read_temp(&sensor_temp);
+        read_temp(&sensor_temp_ex);
+	read_temp(&sensor_temp_in);
         read_baro(&sensor_baro);
 		  read_light();
 		  Serial.println();
