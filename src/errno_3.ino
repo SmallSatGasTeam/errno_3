@@ -136,8 +136,8 @@ void TaskSensorRead(void *pvParameters){
   unsigned int lastRead[2]; // To store last read time
 
   Serial.println("\t");
-  Serial.println("\t\t\t\t\t\tm/s/s:\t\t\tdegrees:");
-  Serial.println("\texTemp\tinTemp\tbaro\tlight\tUV\tX:\tY:\tZ:\tX:\tY:\tZ:");
+  Serial.println("\t\t\t\t\t\tm/s/s:\t\t\tdegrees:\t\ttime:");
+  Serial.println("\texTemp\tinTemp\tbaro\tlight\tUV\tX:\tY:\tZ:\tX:\tY:\tZ:\thr:mn:sc");
 
   for(;;){
     unsigned int now = millis();
@@ -153,6 +153,7 @@ void TaskSensorRead(void *pvParameters){
         read_light();
         read_uv();
 		read_gyro(&sensor_gyro);
+		timestamp();
         Serial.println();
       //  Serial.println("Test Task Read Sensors");
 
