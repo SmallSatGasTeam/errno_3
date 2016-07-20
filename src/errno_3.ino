@@ -8,6 +8,7 @@
 #include <Adafruit_MCP9808.h>
 #include <Adafruit_BNO055.h>
 #include <uCamII.h>
+#include <TinyGPS++.h>
 #include "sensor.h"
 #include "messages.h" // Defines incoming data header
 
@@ -24,6 +25,7 @@ File allSensors;
  */
 void setup() {
   delay(8000);
+  Serial2.begin(9600);
   Serial.begin(9600);
 
   Serial.println("Initializing SD Card");
@@ -64,7 +66,7 @@ void setup() {
 xTaskCreate(
     TaskSensorRead
     ,  (const portCHAR *) "ReadSensors"
-    ,  500  // Stack size
+    ,  1024  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -134,6 +136,7 @@ void TaskSensorRead(void *pvParameters){
   Adafruit_MCP9808 sensor_temp_in = Adafruit_MCP9808();
   Adafruit_BNO055  sensor_gyro = Adafruit_BNO055();
   CoolSatBaro sensor_baro;
+  TinyGPSPlus sensor_gps;
 
   // Initialze sensors
   // These functions should be defined in sensor.h
@@ -141,16 +144,16 @@ void TaskSensorRead(void *pvParameters){
   initialize_temp_in(&sensor_temp_in);
   initialize_baro(&sensor_baro);
   initialize_gyro(&sensor_gyro);
+//  initialize_gps(&sensor_gps);
 
   int readIntervals[] = {1000,10}; // How often to execute in milliseconds
   unsigned int lastRead[2]; // To store last read time
   
   allSensors.close();
 
-  Serial.println("exTmp\tinTmp\tbaro\tlight\tUV");
   Serial.println("\t");
   Serial.println("\t\t\t\t\t\tm/s/s:\t\t\tdegrees:");
-  Serial.println("\texTemp\tinTemp\tbaro\tlight\tUV\tX:\tY:\tZ:\tX:\tY:\tZ:");
+  Serial.println("exTemp\tinTemp\tbaro\tlight\tUV\t\tX:\tY:\tZ:\tX:\tY:\tZ:\tlat\tlng");
 
   for(;;){
     unsigned int now = millis();
@@ -158,16 +161,17 @@ void TaskSensorRead(void *pvParameters){
     if(now - lastRead[0] > readIntervals[0]){
       lastRead[0] = now;
 
-		if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+	if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
         // Safe to use serial print here
-        read_temp(&sensor_temp_ex);
-        read_temp(&sensor_temp_in);
-        read_baro(&sensor_baro);
-        read_light();
-        read_uv();
+        	read_temp(&sensor_temp_ex);
+        	read_temp(&sensor_temp_in);
+        	read_baro(&sensor_baro);
+        	read_light();
+        	read_uv();
 		read_gyro(&sensor_gyro);
-        Serial.println();
-      //  Serial.println("Test Task Read Sensors");
+		read_gps(&sensor_gps);
+        	Serial.println();
+      	//  Serial.println("Test Task Read Sensors");
 
         xSemaphoreGive( xSerialSemaphore );
       }
