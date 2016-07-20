@@ -1,9 +1,5 @@
 #ifndef SENSORS_H
 #define SENSORS_H
-
-#include <TimeLib.h>
-#include <DS1307RTC.h>
-
 //----------- Temperature sensors ------------//
 
 void initialize_temp_ex(Adafruit_MCP9808* sensor){
@@ -114,6 +110,57 @@ void read_gyro(Adafruit_BNO055* gyro){
 	delay(100); // Delay of 100ms 
 }
 
+//------------- GPS ---------------//
+
+//GPS must be constantly be fed characters
+void smartDelay(unsigned long ms,TinyGPSPlus* gps)
+{
+  unsigned long start = millis();
+  do 
+  {
+    while (Serial2.available()){
+      gps->encode(Serial2.read());
+    }
+  } while (millis() - start < ms);
+}
+
+//prints GPS values to desired locations
+void printFloat(float val, bool valid, int len, int prec, File* file)
+{
+  if (!valid)
+  {
+    while (len-- > 1)
+      file->print('*');
+      file->print(' ');
+      Serial.print('*');
+      Serial.print(' ');
+  }
+  else
+  {
+    file->print(val, prec);
+    Serial.print(val,prec);
+    int vi = abs((int)val);
+    int flen = prec + (val < 0.0 ? 2 : 1); // . and -
+    flen += vi >= 1000 ? 4 : vi >= 100 ? 3 : vi >= 10 ? 2 : 1;
+    for (int i=flen; i<len; ++i)
+      file->print(' ');
+      Serial.print(' ');
+  }
+}
+
+void read_gps(TinyGPSPlus* gps){
+	
+	File file = SD.open("sensors.txt", FILE_WRITE);
+	file.print("\t");
+	Serial.print("\t");
+	printFloat(gps->location.lat(),gps->location.isValid(),11,6,&file);
+	file.print("\t"); Serial.print("\t");
+	printFloat(gps->location.lng(),gps->location.isValid(),12,6,&file);	
+	file.print("\t");
+	Serial.print("\t");
+	smartDelay(1000,gps);
+
+}
 //------------ Clock ------------//
 
 void printTime(int time)
