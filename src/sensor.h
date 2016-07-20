@@ -1,6 +1,7 @@
 #ifndef SENSORS_H
 #define SENSORS_H
 
+//----------- Temperature sensors ------------//
 
 void initialize_temp_ex(Adafruit_MCP9808* sensor){
   if (!sensor->begin(0x18)) {
@@ -25,6 +26,8 @@ void read_temp(Adafruit_MCP9808* sensor){
   file.close();
 }
 
+//------------ Barometer ------------//
+
 void initialize_baro(CoolSatBaro* sensor){
   sensor->initial(0x76);
 }
@@ -39,6 +42,8 @@ void read_baro(CoolSatBaro* sensor){
   file.close();
 }
 
+//------------ Light & UV sensors ------------//
+
 void read_light(){
     File file = SD.open("sensors.txt", FILE_WRITE);
     float lightPin = 15; //anlaog light pin #
@@ -51,10 +56,8 @@ void read_light(){
 
    volt = analogRead(lightPin) * TOVOLT;
    RLDR = (1000.0 * (5 - volt )) / volt;
-	 lux = TOLUX * (pow(RLDR, TOLUXPWR));
+   lux = TOLUX * (pow(RLDR, TOLUXPWR));
 
-   //Serial.print("\t");
-   //file.print("\t");
    Serial.print(lux);
    Serial.print("\t");
    file.print(lux);
@@ -68,12 +71,44 @@ void read_uv(){
     float uv = 0.0; // default
     uv = analogRead(uvPin); // reads value
     
-    //Serial.print("\t");
-    //file.print("\t");
     Serial.print(uv);
     Serial.print("\t");
     file.print(uv);
     file.print("\t");
     file.close();
 }
+
+//------------ Gyroscope ------------//
+
+void initialize_gyro(Adafruit_BNO055* gyro){
+	if (!gyro->begin()){
+		Serial.println("Couldn't detect BNO055 gyroscope ... Check your wiring or I2C ADDR!");
+		while(1);
+	}
+	gyro->setExtCrystalUse(true);
+}
+
+void read_gyro(Adafruit_BNO055* gyro){
+
+	imu::Vector<3> acceleration = gyro->getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
+	
+	Serial.print("\t");
+	Serial.print(acceleration.x());
+	Serial.print("\t");
+	Serial.print(acceleration.y());
+	Serial.print("\t");
+	Serial.print(acceleration.z());
+
+	imu::Vector<3> euler = gyro->getVector(Adafruit_BNO055::VECTOR_EULER);
+
+	Serial.print("\t");
+	Serial.print(euler.x());
+	Serial.print("\t");
+	Serial.print(euler.y());
+	Serial.print("\t");
+	Serial.print(euler.z());
+
+	delay(100); // Delay of 100ms 
+}
+
 #endif
