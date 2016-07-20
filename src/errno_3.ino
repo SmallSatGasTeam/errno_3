@@ -1,13 +1,13 @@
 #include <Arduino_FreeRTOS.h>
 #include <semphr.h>  // add the FreeRTOS functions for Semaphores (or Flags).
-
+#include <SD.h>
+#include <SPI.h>
 #include <Wire.h>
 #include <CoolSatBaro.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_MCP9808.h>
 #include <Adafruit_BNO055.h>
 #include <uCamII.h>
-
 #include "sensor.h"
 #include "messages.h" // Defines incoming data header
 
@@ -18,13 +18,23 @@ void TaskSensorRead(void *pvParameters);
 
 // define semaphores
 SemaphoreHandle_t xSerialSemaphore;
-
+File allSensors;
 /**
  *Global setup should occur here
  */
 void setup() {
-
+  delay(8000);
   Serial.begin(9600);
+
+  Serial.println("Initializing SD Card");
+  if(!SD.begin(46)){
+    Serial.println("I am sad :(");
+  }
+  Serial.println("SD Initialized");
+
+  allSensors = SD.open("sensors.txt",FILE_WRITE);
+
+  allSensors.println("exTmp\tinTmp\tbaro\tlight\tUV");
 
   if (xSerialSemaphore == NULL)  // Check to confirm that the Serial Semaphore has not already been created.
   {
@@ -54,7 +64,7 @@ void setup() {
 xTaskCreate(
     TaskSensorRead
     ,  (const portCHAR *) "ReadSensors"
-    ,  300  // Stack size
+    ,  500  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -134,7 +144,10 @@ void TaskSensorRead(void *pvParameters){
 
   int readIntervals[] = {1000,10}; // How often to execute in milliseconds
   unsigned int lastRead[2]; // To store last read time
+  
+  allSensors.close();
 
+  Serial.println("exTmp\tinTmp\tbaro\tlight\tUV");
   Serial.println("\t");
   Serial.println("\t\t\t\t\t\tm/s/s:\t\t\tdegrees:");
   Serial.println("\texTemp\tinTemp\tbaro\tlight\tUV\tX:\tY:\tZ:\tX:\tY:\tZ:");
