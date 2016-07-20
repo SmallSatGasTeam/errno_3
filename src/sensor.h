@@ -154,8 +154,7 @@ void read_gps(TinyGPSPlus* gps){
 	file.print("\t");
 	Serial.print("\t");
 	printFloat(gps->location.lat(),gps->location.isValid(),11,6,&file);
-	file.print("\t");
-	Serial.print("\t");
+	file.print("\t"); Serial.print("\t");
 	printFloat(gps->location.lng(),gps->location.isValid(),12,6,&file);	
 	file.print("\t");
 	Serial.print("\t");
