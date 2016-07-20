@@ -149,7 +149,7 @@ void TaskSensorRead(void *pvParameters){
 
   Serial.println("\t");
   Serial.println("\t\t\t\t\t\tm/s/s:\t\t\tdegrees:\t\ttime:");
-  Serial.println("exTemp\tinTemp\tbaro\tlight\tUV\tX:\tY:\tZ:\tX:\tY:\tZ:\thr:mn:sc");
+  Serial.println("exTemp\tinTemp\tbaro\tlight\tUV\t\tX:\tY:\tZ:\tX:\tY:\tZ:\thr:mn:sc");
 
   for(;;){
     unsigned int now = millis();
