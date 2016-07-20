@@ -161,6 +161,31 @@ void read_gps(TinyGPSPlus* gps){
 	Serial.print("\t");
 	smartDelay(1000,gps);
 
+}
+//------------ Clock ------------//
 
+void printTime(int time)
+{
+	if (time >= 0 && time < 10){ // Prefaces times less than 10 with a 0
+		Serial.print("0");		 // e.g., converts "12:8:9" to "12:08:09"
+		Serial.print(time);
+	}
+	else Serial.print(time);
+}
+
+void timestamp()
+{
+	tmElements_t tm; // magic getter of time from TimeLib.h
+	
+	Serial.print("\t");
+
+	if (RTC.read(tm)){
+		printTime(tm.Hour);
+		Serial.print(":");
+		printTime(tm.Minute);
+		Serial.print(":");
+		printTime(tm.Second);
+	}
+	else Serial.println("Error: Failed to fetch time");
 }
 #endif

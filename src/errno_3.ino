@@ -9,6 +9,8 @@
 #include <Adafruit_BNO055.h>
 #include <uCamII.h>
 #include <TinyGPS++.h>
+#include <TimeLib.h>
+#include <DS1307RTC.h>
 #include "sensor.h"
 #include "messages.h" // Defines incoming data header
 
@@ -152,8 +154,8 @@ void TaskSensorRead(void *pvParameters){
   allSensors.close();
 
   Serial.println("\t");
-  Serial.println("\t\t\t\t\t\tm/s/s:\t\t\tdegrees:");
-  Serial.println("exTemp\tinTemp\tbaro\tlight\tUV\t\tX:\tY:\tZ:\tX:\tY:\tZ:\tlat\tlng");
+  Serial.println("\t\t\t\t\t\tm/s/s:\t\t\tdegrees:\t\ttime:");
+  Serial.println("exTemp\tinTemp\tbaro\tlight\tUV\t\tX:\tY:\tZ:\tX:\tY:\tZ:\thr:mn:sc\tlat\tlon");
 
   for(;;){
     unsigned int now = millis();
@@ -169,9 +171,10 @@ void TaskSensorRead(void *pvParameters){
         	read_light();
         	read_uv();
 		read_gyro(&sensor_gyro);
+		timestamp();
 		read_gps(&sensor_gps);
-        	Serial.println();
-      	//  Serial.println("Test Task Read Sensors");
+	        Serial.println();
+     	 //  Serial.println("Test Task Read Sensors");
 
         xSemaphoreGive( xSerialSemaphore );
       }
