@@ -21,24 +21,24 @@ void TaskSensorRead(void *pvParameters);
 
 // define semaphores
 SemaphoreHandle_t xSerialSemaphore;
+
+// define data log
 File allSensors;
+
+
 /**
  *Global setup should occur here
  */
 void setup() {
-  delay(8000);
   Serial2.begin(9600);
   Serial.begin(9600);
 
   Serial.println("Initializing SD Card");
   if(!SD.begin(46)){
-    Serial.println("I am sad :(");
+    Serial.println("SD card failed to initialize!");
   }
   Serial.println("SD Initialized");
-
   allSensors = SD.open("sensors.txt",FILE_WRITE);
-
-  allSensors.println("exTmp\tinTmp\tbaro\tlight\tUV");
 
   if (xSerialSemaphore == NULL)  // Check to confirm that the Serial Semaphore has not already been created.
   {
@@ -76,7 +76,7 @@ xTaskCreate(
 xTaskCreate(
     TaskCamera
     ,  (const portCHAR *) "Take Photos"
-    ,  600  // Stack size
+    ,  512  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -146,11 +146,15 @@ void TaskSensorRead(void *pvParameters){
   initialize_temp_in(&sensor_temp_in);
   initialize_baro(&sensor_baro);
   initialize_gyro(&sensor_gyro);
-//  initialize_gps(&sensor_gps);
 
   int readIntervals[] = {1000,10}; // How often to execute in milliseconds
   unsigned int lastRead[2]; // To store last read time
-  
+
+  /*
+    File has to be open when task starts in order to write data to log. We will
+    close it for now, and have each sensor open and close it to ensure we don't
+    corrupt our filesystem.
+   */
   allSensors.close();
 
   Serial.println("\t");
@@ -160,27 +164,33 @@ void TaskSensorRead(void *pvParameters){
   for(;;){
     unsigned int now = millis();
 
+    // Runs once a second
     if(now - lastRead[0] > readIntervals[0]){
       lastRead[0] = now;
 
-	if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+	     if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
         // Safe to use serial print here
-        	read_temp(&sensor_temp_ex);
-        	read_temp(&sensor_temp_in);
-        	read_baro(&sensor_baro);
-        	read_light();
-        	read_uv();
-		read_gyro(&sensor_gyro);
-		timestamp();
-		read_gps(&sensor_gps);
-	        Serial.println();
-     	 //  Serial.println("Test Task Read Sensors");
+      	read_temp(&sensor_temp_ex);
+      	read_temp(&sensor_temp_in);
+      	read_baro(&sensor_baro);
+      	read_light();
+      	read_uv();
+  	    timestamp();
+        read_gps(&sensor_gps);
 
         xSemaphoreGive( xSerialSemaphore );
       }
+      // Runs once every 10 milliseconds
     } else if(now - lastRead[1] > readIntervals[1]) {
       lastRead[1] = now;
 
+      if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+        // Safe to use serial print here
+
+        read_gyro(&sensor_gyro);
+
+        xSemaphoreGive( xSerialSemaphore );
+      }
     }
   }
 }
