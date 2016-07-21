@@ -70,7 +70,7 @@ void setup() {
 xTaskCreate(
     TaskSensorRead
     ,  (const portCHAR *) "ReadSensors"
-    ,  2024  // Stack size
+    ,  1024  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -175,7 +175,7 @@ void TaskSensorRead(void *pvParameters){
         File file = SD.open(FILENAME, FILE_WRITE);
 
 
-       	Stream* outputs[] = {&Serial, &file, (Stream*) NULL};
+        Stream* outputs[] = {&Serial, &file, (Stream*) NULL};
         print_sensor(&sensor_temp_ex, read_temp, 'T', outputs);
         print_sensor(&sensor_temp_in, read_temp, 't', outputs);
         print_sensor(&sensor_baro, read_baro, 'B', outputs );  
