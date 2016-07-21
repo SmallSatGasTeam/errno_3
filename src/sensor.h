@@ -1,30 +1,24 @@
 #ifndef SENSORS_H
 #define SENSORS_H
 
-#define FILENAME "sensors.txt"
 //----------- Temperature sensors ------------//
 
 void initialize_temp_ex(Adafruit_MCP9808* sensor, Stream& output){
   if (!sensor->begin(0x18)) {
     output.println("Couldn't find external MCP9808!");
-    while (1);
   }
 }
 
 void initialize_temp_in(Adafruit_MCP9808* sensor, Stream& output){
   if (!sensor->begin(0x1D)) {
     output.println("Couldn't find internal MCP9808!");
-    while (1);
   }
 }
 
-void read_temp(Adafruit_MCP9808* sensor, Stream& output){
-  File file = SD.open(FILENAME, FILE_WRITE);
-  output.print(sensor->readTempC());
-  output.print("\t");
-  file.println(sensor->readTempC());
-  file.print("\t");
-  file.close();
+void read_temp(Adafruit_MCP9808* sensor, Stream& output, File& file){
+  float val = sensor->readTempC();
+  output.print(val);
+  file.print(val);
 }
 
 //------------ Barometer ------------//
@@ -33,20 +27,16 @@ void initialize_baro(CoolSatBaro* sensor, Stream& output){
   sensor->initial(0x76);
 }
 
-void read_baro(CoolSatBaro* sensor, Stream& output){
-  File file = SD.open(FILENAME, FILE_WRITE);
+void read_baro(CoolSatBaro* sensor, Stream& output, File& file){
   sensor->readBaro();
-  output.print(sensor->getPressure());
-  output.print("\t");
-  file.print(sensor->getPressure());
-  file.print("\t");
-  file.close();
+  float val = sensor->getPressure();
+  output.print(val);
+  file.print(val);
 }
 
 //------------ Light & UV sensors ------------//
 
-void read_light(Stream& output){
-    File file = SD.open(FILENAME, FILE_WRITE);
+void read_light(Stream& output, File& file){
     float lightPin = 15; //anlaog light pin #
     float volt = 0.0; //voltage (volts)
     float RLDR = 0.0; //resistance (ohms)
@@ -60,23 +50,16 @@ void read_light(Stream& output){
     lux = TOLUX * (pow(RLDR, TOLUXPWR));
 
     output.print(lux);
-    output.print("\t");
     file.print(lux);
-    file.print("\t");
-    file.close();
 }
 
-void read_uv(Stream& output){
-    File file = SD.open(FILENAME, FILE_WRITE);
-    const int uvPin = 1; // UV sensor pin
-    float uv = 0.0; // default
-    uv = analogRead(uvPin); // reads value
+void read_uv(Stream& output, File& file){
+  const int uvPin = 1; // UV sensor pin
+  float uv = 0.0; // default
+  uv = analogRead(uvPin); // reads value
 
-    output.print(uv);
-    output.print("\t");
-    file.print(uv);
-    file.print("\t");
-    file.close();
+  output.print(uv);
+  file.print(uv);
 }
 
 //------------ Gyroscope ------------//
@@ -84,32 +67,31 @@ void read_uv(Stream& output){
 void initialize_gyro(Adafruit_BNO055* gyro, Stream& output){
 	if (!gyro->begin()){
 		output.println("Couldn't detect BNO055 gyroscope ... Check your wiring or I2C ADDR!");
-		while(1);
 	}
 	gyro->setExtCrystalUse(true);
 }
 
-void read_gyro(Adafruit_BNO055* gyro, Stream& output){
+void read_gyro(Adafruit_BNO055* gyro, Stream& output, File& file){
 
 	imu::Vector<3> acceleration = gyro->getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
 
-	output.print("\t");
 	output.print(acceleration.x());
 	output.print("\t");
 	output.print(acceleration.y());
 	output.print("\t");
 	output.print(acceleration.z());
+	output.print("\t");
 
 	imu::Vector<3> euler = gyro->getVector(Adafruit_BNO055::VECTOR_EULER);
 
-	output.print("\t");
 	output.print(euler.x());
 	output.print("\t");
 	output.print(euler.y());
 	output.print("\t");
 	output.print(euler.z());
+	output.print("\t");
 
-	delay(100); // Delay of 100ms
+	// delay(100); // Delay of 100ms TODO needed?
 }
 
 //------------- GPS ---------------//
@@ -150,9 +132,7 @@ void printFloat(float val, bool valid, int len, int prec, File* file, Stream* ou
   }
 }
 
-void read_gps(TinyGPSPlus* gps, Stream& output){
-
-	File file = SD.open(FILENAME, FILE_WRITE);
+void read_gps(TinyGPSPlus* gps, Stream& output, File& file){
 	file.print("\t");
 	output.print("\t");
 	printFloat(gps->location.lat(),gps->location.isValid(),11,6,&file,&output);

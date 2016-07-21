@@ -1,3 +1,5 @@
+#define FILENAME "sensors.txt"
+
 #include <Arduino_FreeRTOS.h>
 #include <semphr.h>  // add the FreeRTOS functions for Semaphores (or Flags).
 #include <SD.h>
@@ -170,13 +172,17 @@ void TaskSensorRead(void *pvParameters){
 
 	     if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
         // Safe to use serial print here
-        read_temp(&sensor_temp_ex, Serial);
-        read_temp(&sensor_temp_in, Serial);
-        read_baro(&sensor_baro, Serial);
-        read_light(Serial);
-        read_uv(Serial);
+        File file = SD.open(FILENAME, FILE_WRITE);
+
+        read_temp(&sensor_temp_ex, Serial, file);
+        read_temp(&sensor_temp_in, Serial, file);
+        read_baro(&sensor_baro, Serial, file);
+        read_light(Serial, file);
+        read_uv(Serial, file);
         timestamp(Serial); //TODO
-        read_gps(&sensor_gps, Serial);
+        read_gps(&sensor_gps, Serial, file);
+
+        file.close();
 
         xSemaphoreGive( xSerialSemaphore );
       }
@@ -187,8 +193,11 @@ void TaskSensorRead(void *pvParameters){
       if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
         // Safe to use serial print here
 
-        read_gyro(&sensor_gyro, Serial);
+        File file = SD.open(FILENAME, FILE_WRITE);
+        
+        read_gyro(&sensor_gyro, Serial, file);
 
+        file.close();
         xSemaphoreGive( xSerialSemaphore );
       }
     }
