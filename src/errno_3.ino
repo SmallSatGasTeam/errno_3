@@ -142,10 +142,10 @@ void TaskSensorRead(void *pvParameters){
 
   // Initialze sensors
   // These functions should be defined in sensor.h
-  initialize_temp_ex(&sensor_temp_ex);
-  initialize_temp_in(&sensor_temp_in);
-  initialize_baro(&sensor_baro);
-  initialize_gyro(&sensor_gyro);
+  initialize_temp_ex(&sensor_temp_ex, Serial);
+  initialize_temp_in(&sensor_temp_in, Serial);
+  initialize_baro(&sensor_baro, Serial);
+  initialize_gyro(&sensor_gyro, Serial);
 
   int readIntervals[] = {1000,10}; // How often to execute in milliseconds
   unsigned int lastRead[2]; // To store last read time
@@ -170,13 +170,13 @@ void TaskSensorRead(void *pvParameters){
 
 	     if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
         // Safe to use serial print here
-      	read_temp(&sensor_temp_ex);
-      	read_temp(&sensor_temp_in);
-      	read_baro(&sensor_baro);
-      	read_light();
-      	read_uv();
-  	    timestamp();
-        read_gps(&sensor_gps);
+        read_temp(&sensor_temp_ex, Serial);
+        read_temp(&sensor_temp_in, Serial);
+        read_baro(&sensor_baro, Serial);
+        read_light(Serial);
+        read_uv(Serial);
+        timestamp(Serial); //TODO
+        read_gps(&sensor_gps, Serial);
 
         xSemaphoreGive( xSerialSemaphore );
       }
@@ -187,7 +187,7 @@ void TaskSensorRead(void *pvParameters){
       if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
         // Safe to use serial print here
 
-        read_gyro(&sensor_gyro);
+        read_gyro(&sensor_gyro, Serial);
 
         xSemaphoreGive( xSerialSemaphore );
       }
