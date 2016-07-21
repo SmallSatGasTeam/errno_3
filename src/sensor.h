@@ -1,6 +1,15 @@
 #ifndef SENSORS_H
 #define SENSORS_H
 
+template <typename F, typename S>
+void print_sensor(S sensor, F func, char header, Stream** outputs){
+  for(int i = 0; outputs[i] != NULL; i++){
+    outputs[i]->print(header); outputs[i]->print(':');
+    func(sensor, outputs[i]);
+    outputs[i]->println();
+  }
+}
+
 //----------- Temperature sensors ------------//
 
 void initialize_temp_ex(Adafruit_MCP9808* sensor, Stream& output){
@@ -15,10 +24,9 @@ void initialize_temp_in(Adafruit_MCP9808* sensor, Stream& output){
   }
 }
 
-void read_temp(Adafruit_MCP9808* sensor, Stream& output, File& file){
+void read_temp(Adafruit_MCP9808* sensor, Stream* output ){
   float val = sensor->readTempC();
-  output.print(val);
-  file.print(val);
+  output->print(val);
 }
 
 //------------ Barometer ------------//
@@ -27,16 +35,16 @@ void initialize_baro(CoolSatBaro* sensor, Stream& output){
   sensor->initial(0x76);
 }
 
-void read_baro(CoolSatBaro* sensor, Stream& output, File& file){
+void read_baro(CoolSatBaro* sensor, Stream* output){
   sensor->readBaro();
   float val = sensor->getPressure();
-  output.print(val);
-  file.print(val);
+  float alt = sensor->getAltitude();
+  output->print(val); output->print(','); output->print(alt);
 }
 
 //------------ Light & UV sensors ------------//
 
-void read_light(Stream& output, File& file){
+void read_light(void* dummy, Stream* output){
     float lightPin = 15; //anlaog light pin #
     float volt = 0.0; //voltage (volts)
     float RLDR = 0.0; //resistance (ohms)
@@ -49,17 +57,15 @@ void read_light(Stream& output, File& file){
     RLDR = (1000.0 * (5 - volt )) / volt;
     lux = TOLUX * (pow(RLDR, TOLUXPWR));
 
-    output.print(lux);
-    file.print(lux);
+    output->print(lux);
 }
 
-void read_uv(Stream& output, File& file){
+void read_uv(void* dummy, Stream* output){
   const int uvPin = 1; // UV sensor pin
   float uv = 0.0; // default
   uv = analogRead(uvPin); // reads value
 
-  output.print(uv);
-  file.print(uv);
+  output->print(uv);
 }
 
 //------------ Gyroscope ------------//
@@ -71,25 +77,25 @@ void initialize_gyro(Adafruit_BNO055* gyro, Stream& output){
 	gyro->setExtCrystalUse(true);
 }
 
-void read_gyro(Adafruit_BNO055* gyro, Stream& output, File& file){
+void read_gyro(Adafruit_BNO055* gyro, Stream* output){
 
 	imu::Vector<3> acceleration = gyro->getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
 
-	output.print(acceleration.x());
-	output.print("\t");
-	output.print(acceleration.y());
-	output.print("\t");
-	output.print(acceleration.z());
-	output.print("\t");
+	output->print(acceleration.x());
+	output->print(",");
+	output->print(acceleration.y());
+	output->print(",");
+	output->print(acceleration.z());
+	output->print(",");
 
 	imu::Vector<3> euler = gyro->getVector(Adafruit_BNO055::VECTOR_EULER);
 
-	output.print(euler.x());
-	output.print("\t");
-	output.print(euler.y());
-	output.print("\t");
-	output.print(euler.z());
-	output.print("\t");
+	output->print(euler.x());
+	output->print(",");
+	output->print(euler.y());
+	output->print(",");
+	output->print(euler.z());
+	output->print(",");
 
 	// delay(100); // Delay of 100ms TODO needed?
 }
@@ -97,76 +103,70 @@ void read_gyro(Adafruit_BNO055* gyro, Stream& output, File& file){
 //------------- GPS ---------------//
 
 //GPS must be constantly be fed characters
-void smartDelay(unsigned long ms, TinyGPSPlus* gps, Stream& input)
+void smartDelay(unsigned long ms, TinyGPSPlus* gps, Stream* input)
 {
   unsigned long start = millis();
   do
   {
-    while (input.available()){
-      gps->encode(input.read());
+    while (input->available()){
+      gps->encode(input->read());
     }
   } while (millis() - start < ms);
 }
 
 //prints GPS values to desired locations
-void printFloat(float val, bool valid, int len, int prec, File* file, Stream* output)
+void printFloat(float val, bool valid, int len, int prec, Stream* output)
 {
   if (!valid)
   {
-    while (len-- > 1)
+    while (len-- > 1){
+     /*
       file->print('*');
       file->print(' ');
       output->print('*');
       output->print(' ');
+     */
+    }
   }
   else
   {
-    file->print(val, prec);
     output->print(val,prec);
     int vi = abs((int)val);
     int flen = prec + (val < 0.0 ? 2 : 1); // . and -
     flen += vi >= 1000 ? 4 : vi >= 100 ? 3 : vi >= 10 ? 2 : 1;
     for (int i=flen; i<len; ++i)
-      file->print(' ');
       output->print(' ');
   }
 }
 
-void read_gps(TinyGPSPlus* gps, Stream& output, File& file){
-	file.print("\t");
-	output.print("\t");
-	printFloat(gps->location.lat(),gps->location.isValid(),11,6,&file,&output);
-	file.print("\t"); output.print("\t");
-	printFloat(gps->location.lng(),gps->location.isValid(),12,6,&file,&output);
-	file.print("\t");
-	output.print("\t");
-	smartDelay(1000, gps, output);
-
+void read_gps(TinyGPSPlus* gps, Stream* output){
+	printFloat(gps->location.lat(),gps->location.isValid(),11,6, output);
+	output->print(",");
+	printFloat(gps->location.lng(),gps->location.isValid(),12,6, output);
+	smartDelay(1000, gps, output); //TODO which serial port?
 }
 //------------ Clock ------------//
 
-void printTime(int time, Stream& output)
+void printTime(int time, Stream* output)
 {
 	if (time >= 0 && time < 10){ // Prefaces times less than 10 with a 0
-		output.print("0");		 // e.g., converts "12:8:9" to "12:08:09"
-		output.print(time);
+		output->print("0");		 // e.g., converts "12:8:9" to "12:08:09"
+		output->print(time);
 	}
-	else output.print(time);
+	else output->print(time);
 }
 
-void timestamp(Stream& output)
+void timestamp(Stream* output)
 {
 	tmElements_t tm; // magic getter of time from TimeLib.h
 
-	output.print("\t");
-
 	if (RTC.read(tm)){
 		printTime(tm.Hour, output);
-		output.print(":");
+		output->print(":");
 		printTime(tm.Minute, output);
-		output.print(":");
+		output->print(":");
 		printTime(tm.Second, output);
 	}
-	else output.println("Error: Failed to fetch time");
+	else output->println("Error: Failed to fetch time");
 }
 #endif

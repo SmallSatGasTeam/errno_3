@@ -70,7 +70,7 @@ void setup() {
 xTaskCreate(
     TaskSensorRead
     ,  (const portCHAR *) "ReadSensors"
-    ,  1024  // Stack size
+    ,  2024  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -174,13 +174,14 @@ void TaskSensorRead(void *pvParameters){
         // Safe to use serial print here
         File file = SD.open(FILENAME, FILE_WRITE);
 
-        read_temp(&sensor_temp_ex, Serial, file);
-        read_temp(&sensor_temp_in, Serial, file);
-        read_baro(&sensor_baro, Serial, file);
-        read_light(Serial, file);
-        read_uv(Serial, file);
-        timestamp(Serial); //TODO
-        read_gps(&sensor_gps, Serial, file);
+
+       	Stream* outputs[] = {&Serial, &file, (Stream*) NULL};
+        print_sensor(&sensor_temp_ex, read_temp, 'T', outputs);
+        print_sensor(&sensor_temp_in, read_temp, 't', outputs);
+        print_sensor(&sensor_baro, read_baro, 'B', outputs );  
+        print_sensor((void*) NULL, read_light, 'L', outputs);  
+        print_sensor((void*) NULL, read_uv, 'V', outputs);
+        print_sensor(&sensor_gps, read_gps, 'G',  outputs); 
 
         file.close();
 
@@ -194,8 +195,8 @@ void TaskSensorRead(void *pvParameters){
         // Safe to use serial print here
 
         File file = SD.open(FILENAME, FILE_WRITE);
-        
-        read_gyro(&sensor_gyro, Serial, file);
+     	Stream* outputs[] = {&file, (Stream*) NULL};       
+        print_sensor(&sensor_gyro, read_gyro, 'Y', outputs);
 
         file.close();
         xSemaphoreGive( xSerialSemaphore );
