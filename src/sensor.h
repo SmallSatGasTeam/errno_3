@@ -1,13 +1,36 @@
 #ifndef SENSORS_H
 #define SENSORS_H
 
+
+template <typename F, typename S>
+void sensor_out(S sensor, F func, char* file_name, Stream** outputs, int num){
+  File file = SD.open(file_name, FILE_WRITE);
+  Stream* out[num + 2]; for(int g = 0; g < num + 2; g++){out[g] = (Stream*) 0;}
+  for(int i = 0; i < num; i++){out[i] = outputs[i];} 
+  out[num] = &file;
+  out[num + 1] = (Stream*) NULL;
+  
+  for(int j = 0; out[j] != NULL; j++){
+    func(sensor, outputs[j]);
+    outputs[j]->println();
+  }
+  file.close();
+}
+
 template <typename F, typename S>
 void print_sensor(S sensor, F func, char header, Stream** outputs){
-  for(int i = 0; outputs[i] != NULL; i++){
-    outputs[i]->print(header); outputs[i]->print(':');
-    func(sensor, outputs[i]);
-    outputs[i]->println();
-  }
+ // File file_baro = SD.open("baro.csv", FILE_WRITE);
+
+// if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE &&
+//  xSemaphoreTake( xRadioSemaphore, ( TickType_t ) 5 ) == pdTRUE  ){
+    for(int i = 0; outputs[i] != NULL; i++){
+      outputs[i]->print(header); outputs[i]->print(':');
+      func(sensor, outputs[i]);
+      outputs[i]->println();
+    }
+//  xSemaphoreGive( xRadioSemaphore );
+//  xSemaphoreGive( xSerialSemaphore );
+//  }
 }
 
 //----------- Temperature sensors ------------//

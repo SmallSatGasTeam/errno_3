@@ -23,10 +23,13 @@ void TaskSensorRead(void *pvParameters);
 
 // define semaphores
 SemaphoreHandle_t xSerialSemaphore;
+SemaphoreHandle_t xRadioSemaphore;
 
 // define data log
 File allSensors;
-
+//File file_baro; 
+//File file_temp;
+//File file_light;
 
 /**
  *Global setup should occur here
@@ -40,16 +43,20 @@ void setup() {
     Serial.println("SD card failed to initialize!");
   }
   Serial.println("SD Initialized");
-  allSensors = SD.open("sensors.txt",FILE_WRITE);
+  allSensors = SD.open("sensors.csv",FILE_WRITE);
+ // file_baro = SD.open("baro.csv",FILE_WRITE);
+ // file_temp = SD.open("temp.csv",FILE_WRITE);
+ // file_light = SD.open("light.csv",FILE_WRITE);
 
-  if (xSerialSemaphore == NULL)  // Check to confirm that the Serial Semaphore has not already been created.
-  {
-    xSerialSemaphore = xSemaphoreCreateMutex();  // Create a mutex semaphore we will use to manage the Serial Port
-    if (xSerialSemaphore){
-      xSemaphoreGive(xSerialSemaphore);  // Make the Serial Port available for use, by "Giving" the Semaphore.
-    }
+  if (xSerialSemaphore == NULL) {
+    xSerialSemaphore = xSemaphoreCreateMutex(); 
+    if(xSerialSemaphore){ xSemaphoreGive(xSerialSemaphore);}
   }
-
+ 
+ if (xRadioSemaphore == NULL) {
+    xRadioSemaphore = xSemaphoreCreateMutex(); 
+    if(xRadioSemaphore){ xSemaphoreGive(xRadioSemaphore);}
+  }
   // Now set up two tasks to run independently.
   xTaskCreate(
     TaskBlink
@@ -70,7 +77,7 @@ void setup() {
 xTaskCreate(
     TaskSensorRead
     ,  (const portCHAR *) "ReadSensors"
-    ,  1024  // Stack size
+    ,  4048  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -158,10 +165,9 @@ void TaskSensorRead(void *pvParameters){
     corrupt our filesystem.
    */
   allSensors.close();
-
-  Serial.println("\t");
-  Serial.println("\t\t\t\t\t\tm/s/s:\t\t\tdegrees:\t\ttime:");
-  Serial.println("exTemp\tinTemp\tbaro\tlight\tUV\t\tX:\tY:\tZ:\tX:\tY:\tZ:\thr:mn:sc\tlat\tlon");
+ // file_baro.close();
+ // file_temp.close();
+ // file_light.close();
 
   for(;;){
     unsigned int now = millis();
@@ -170,20 +176,34 @@ void TaskSensorRead(void *pvParameters){
     if(now - lastRead[0] > readIntervals[0]){
       lastRead[0] = now;
 
-	     if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+       if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
         // Safe to use serial print here
-        File file = SD.open(FILENAME, FILE_WRITE);
+//        File all_sensors = SD.open(FILENAME, FILE_WRITE);
+ //       File file_baro = SD.open("baro.csv", FILE_WRITE);
+ //       File file_temp = SD.open("temp.csv", FILE_WRITE);
+ //       File file_light = SD.open("light.csv", FILE_WRITE);
 
+        
+//        Stream* outputs[] = {&Serial, &all_sensors, (Stream*) NULL};
+//        print_sensor(&sensor_temp_ex, read_temp, 'T', outputs);
+ //       print_sensor(&sensor_temp_in, read_temp, 't', outputs);
+//        print_sensor(&sensor_baro, read_baro, 'B', outputs );  
+//        print_sensor((void*) NULL, read_light, 'L', outputs);  
+//        print_sensor((void*) NULL, read_uv, 'V', outputs);
+//        print_sensor(&sensor_gps, read_gps, 'G',  outputs); 
+  
+        Stream* out[] = {&Serial, &Serial3};
+	int numOut = 2;
+	
+        sensor_out(&sensor_temp_ex, read_temp,"temp_ex.csv" , out, numOut);
+/*	sensor_out(&sensor_temp_in, read_temp,"temp_in.csv" , out, numOut);
+	sensor_out(&sensor_baro, read_baro,"baro.csv" , out, numOut);
+	sensor_out((void*) NULL, read_light,"light.csv" , out, numOut);
+	sensor_out((void*) NULL, read_uv,"uv.csv" , out, numOut);
+	sensor_out(&sensor_gps, read_gps,"gsp.csv" , out, numOut);
+*/
+ //       all_sensors.close();
 
-        Stream* outputs[] = {&Serial, &file, (Stream*) NULL};
-        print_sensor(&sensor_temp_ex, read_temp, 'T', outputs);
-        print_sensor(&sensor_temp_in, read_temp, 't', outputs);
-        print_sensor(&sensor_baro, read_baro, 'B', outputs );  
-        print_sensor((void*) NULL, read_light, 'L', outputs);  
-        print_sensor((void*) NULL, read_uv, 'V', outputs);
-        print_sensor(&sensor_gps, read_gps, 'G',  outputs); 
-
-        file.close();
 
         xSemaphoreGive( xSerialSemaphore );
       }
