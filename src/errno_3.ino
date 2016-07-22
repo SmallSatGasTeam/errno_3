@@ -26,9 +26,9 @@ SemaphoreHandle_t xSerialSemaphore;
 SemaphoreHandle_t xRadioSemaphore;
 
 // define data log
-File allSensors;
+//File allSensors;
 //File file_baro; 
-//File file_temp;
+File file_temp;
 //File file_light;
 
 /**
@@ -43,9 +43,10 @@ void setup() {
     Serial.println("SD card failed to initialize!");
   }
   Serial.println("SD Initialized");
-  allSensors = SD.open("sensors.csv",FILE_WRITE);
- // file_baro = SD.open("baro.csv",FILE_WRITE);
- // file_temp = SD.open("temp.csv",FILE_WRITE);
+
+//  allSensors = SD.open("sensors.csv",FILE_WRITE);
+//  file_baro = SD.open("baro.csv",FILE_WRITE);
+  file_temp = SD.open("temp.csv",FILE_WRITE);
  // file_light = SD.open("light.csv",FILE_WRITE);
 
   if (xSerialSemaphore == NULL) {
@@ -77,7 +78,7 @@ void setup() {
 xTaskCreate(
     TaskSensorRead
     ,  (const portCHAR *) "ReadSensors"
-    ,  4048  // Stack size
+    ,  3024  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -164,9 +165,9 @@ void TaskSensorRead(void *pvParameters){
     close it for now, and have each sensor open and close it to ensure we don't
     corrupt our filesystem.
    */
-  allSensors.close();
- // file_baro.close();
- // file_temp.close();
+//  allSensors.close();
+//  file_baro.close();
+  file_temp.close();
  // file_light.close();
 
   for(;;){
@@ -175,7 +176,6 @@ void TaskSensorRead(void *pvParameters){
     // Runs once a second
     if(now - lastRead[0] > readIntervals[0]){
       lastRead[0] = now;
-
        if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
         // Safe to use serial print here
 //        File all_sensors = SD.open(FILENAME, FILE_WRITE);
@@ -194,14 +194,13 @@ void TaskSensorRead(void *pvParameters){
   
         Stream* out[] = {&Serial, &Serial3};
 	int numOut = 2;
-	
-        sensor_out(&sensor_temp_ex, read_temp,"temp_ex.csv" , out, numOut);
-/*	sensor_out(&sensor_temp_in, read_temp,"temp_in.csv" , out, numOut);
+        sensor_out(&sensor_temp_ex, read_temp,"temp.csv" , out, numOut);
+	sensor_out(&sensor_temp_in, read_temp,"temp_in.csv" , out, numOut);
 	sensor_out(&sensor_baro, read_baro,"baro.csv" , out, numOut);
 	sensor_out((void*) NULL, read_light,"light.csv" , out, numOut);
 	sensor_out((void*) NULL, read_uv,"uv.csv" , out, numOut);
 	sensor_out(&sensor_gps, read_gps,"gsp.csv" , out, numOut);
-*/
+
  //       all_sensors.close();
 
 
@@ -214,11 +213,11 @@ void TaskSensorRead(void *pvParameters){
       if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
         // Safe to use serial print here
 
-        File file = SD.open(FILENAME, FILE_WRITE);
-     	Stream* outputs[] = {&file, (Stream*) NULL};       
-        print_sensor(&sensor_gyro, read_gyro, 'Y', outputs);
+  //      File file = SD.open(FILENAME, FILE_WRITE);
+  //   	Stream* outputs[] = {&file, (Stream*) NULL};       
+  //      print_sensor(&sensor_gyro, read_gyro, 'Y', outputs);
 
-        file.close();
+ //       file.close();
         xSemaphoreGive( xSerialSemaphore );
       }
     }
