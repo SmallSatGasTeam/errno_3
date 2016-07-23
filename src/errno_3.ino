@@ -27,9 +27,14 @@ SemaphoreHandle_t xRadioSemaphore;
 
 // define data log
 //File allSensors;
-//File file_baro; 
+File file_baro; 
 File file_temp;
-//File file_light;
+File file_light;
+
+ const int num_files = 7;
+ char* file_names[] = {"baro.csv", "temp_in.csv", "temp_ex.csv", "light.csv", "uv.csv" ,"gps.csv", "gyro.csv", "camera.csv"};
+
+ File files[num_files];
 
 /**
  *Global setup should occur here
@@ -43,11 +48,15 @@ void setup() {
     Serial.println("SD card failed to initialize!");
   }
   Serial.println("SD Initialized");
+ 
+ for(int i = 0; i < num_files; i++){
+   files[i] = SD.open(file_names[i], FILE_WRITE);
+ }
 
 //  allSensors = SD.open("sensors.csv",FILE_WRITE);
 //  file_baro = SD.open("baro.csv",FILE_WRITE);
-  file_temp = SD.open("temp.csv",FILE_WRITE);
- // file_light = SD.open("light.csv",FILE_WRITE);
+//  file_temp = SD.open("temp.csv",FILE_WRITE);
+//  file_light = SD.open("light.csv",FILE_WRITE);
 
   if (xSerialSemaphore == NULL) {
     xSerialSemaphore = xSemaphoreCreateMutex(); 
@@ -167,8 +176,9 @@ void TaskSensorRead(void *pvParameters){
    */
 //  allSensors.close();
 //  file_baro.close();
-  file_temp.close();
- // file_light.close();
+//  file_temp.close();
+//  file_light.close();
+    for(int i = 0; i < num_files; i++){ files[i].close(); }
 
   for(;;){
     unsigned int now = millis();
@@ -193,13 +203,14 @@ void TaskSensorRead(void *pvParameters){
 //        print_sensor(&sensor_gps, read_gps, 'G',  outputs); 
   
         Stream* out[] = {&Serial, &Serial3};
-	int numOut = 2;
-        sensor_out(&sensor_temp_ex, read_temp,"temp.csv" , out, numOut);
-	sensor_out(&sensor_temp_in, read_temp,"temp_in.csv" , out, numOut);
-	sensor_out(&sensor_baro, read_baro,"baro.csv" , out, numOut);
-	sensor_out((void*) NULL, read_light,"light.csv" , out, numOut);
-	sensor_out((void*) NULL, read_uv,"uv.csv" , out, numOut);
-	sensor_out(&sensor_gps, read_gps,"gsp.csv" , out, numOut);
+	int numOut = 2; //TODO clean up dat shit
+
+	sensor_out(&sensor_baro, read_baro, file_names[0], out, numOut);        
+	sensor_out(&sensor_temp_in, read_temp,file_names[1], out, numOut);
+        sensor_out(&sensor_temp_ex, read_temp,file_names[2], out, numOut);
+	sensor_out((void*) NULL, read_light,file_names[3], out, numOut);
+	sensor_out((void*) NULL, read_uv, file_names[4], out, numOut);
+	sensor_out(&sensor_gps, read_gps, file_names[5], out, numOut);
 
  //       all_sensors.close();
 
