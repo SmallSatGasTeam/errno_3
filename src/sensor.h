@@ -3,7 +3,9 @@
 
 
 template <typename F, typename S>
-void sensor_out(S sensor, F func, char* file_name, Stream** outputs, int num){
+void sensor_out(S sensor, F func, char* file_name, Stream** outputs, int num, SemaphoreHandle_t& lock){
+ 
+if ( xSemaphoreTake( lock, ( TickType_t ) 5 ) == pdTRUE ){
   File file = SD.open(file_name, FILE_WRITE);
   for(int i = 0; i < num; i++){ 
     func(sensor, outputs[i]);
@@ -12,6 +14,9 @@ void sensor_out(S sensor, F func, char* file_name, Stream** outputs, int num){
   func(sensor, &file);
   file.println();
   file.close();
+ 
+  xSemaphoreGive(lock);
+ }
 }
 
 template <typename F, typename S>
