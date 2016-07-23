@@ -22,12 +22,16 @@ Adafruit_MCP9808 sensor_temp_in = Adafruit_MCP9808();
 Adafruit_BNO055  sensor_gyro = Adafruit_BNO055();
 CoolSatBaro sensor_baro;
 TinyGPSPlus sensor_gps;
+UCAMII camera(Serial1, &Serial);
+
+File file;
 
 // define tasks
 void TaskBlink( void *pvParameters ); //TODO remove this test task
 void TaskAnalogRead( void *pvParameters ); //TODO remove this test task
 void TaskSensorReadStandard(void *pvParameters);
 void TaskSensorReadFast(void *pvParameters);
+void TaskCamera(void *pvParameters);
 
 // define semaphores
 SemaphoreHandle_t xOutputSemaphore;
@@ -73,7 +77,7 @@ void setup() {
  xTaskCreate(
    TaskAnalogRead
    ,  (const portCHAR *) "AnalogRead"
-   ,  1024  // Stack size
+   ,  512  // Stack size
    ,  NULL
    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
    ,  NULL );
@@ -81,7 +85,7 @@ void setup() {
 xTaskCreate(
     TaskSensorReadStandard
     ,  (const portCHAR *) "ReadSensors"
-    ,  2024  // Stack size
+    ,  512  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -89,7 +93,7 @@ xTaskCreate(
 xTaskCreate(
     TaskSensorReadFast
     ,  (const portCHAR *) "ReadSensorsFast"
-    ,  300  // Stack size
+    ,  350  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -97,7 +101,7 @@ xTaskCreate(
 xTaskCreate(
     TaskCamera
     ,  (const portCHAR *) "Take Photos"
-    ,  512  // Stack size
+    ,  350 // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -182,14 +186,14 @@ void TaskSensorReadStandard(void *pvParameters){
 void TaskCamera(void *pvParameters){
   (void) pvParameters;
 
-  UCAMII camera(Serial1, &Serial);
   short x = 0;
   int bytes;
   for(;;){
   vTaskDelay(1);
     if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
-      // Safe to use serial print here
+       // Safe to use serial print here
        if(Serial.peek() == TAKE_PHOTO){
+         Serial.read();
         if (camera.init()) {
           camera.takePicture();
           Serial.print("Image size: ");
