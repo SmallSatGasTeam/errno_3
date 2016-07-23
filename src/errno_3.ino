@@ -63,7 +63,7 @@ void setup() {
  xTaskCreate(
    TaskAnalogRead
    ,  (const portCHAR *) "AnalogRead"
-   ,  128  // Stack size
+   ,  1024  // Stack size
    ,  NULL
    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
    ,  NULL );
@@ -71,7 +71,7 @@ void setup() {
 xTaskCreate(
     TaskSensorRead
     ,  (const portCHAR *) "ReadSensors"
-    ,  3024  // Stack size
+    ,  2024  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -113,19 +113,19 @@ void TaskBlink(void *pvParameters)  // This is a task.
   }
 }
 
+void read_test(void* a, Stream* output){
+ output->println("Analog read Test Task Read");
+}
+
 void TaskAnalogRead(void *pvParameters)  // This is a task.
 {
   (void) pvParameters;
 
   for (;;)
   {
-
-    if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE )
-    {
-      Serial.println("Analog read Test Task Read");
-      xSemaphoreGive( xOutputSemaphore ); // Now free or "Give" the Serial Port for others.
-    }
-    vTaskDelay(1);  // one tick delay (15ms) in between reads for stability
+      Stream* outs[] = {&Serial, (Stream*) NULL };
+      sensor_out((void*) NULL, read_test, file_names[6], outs);  
+      vTaskDelay(20);  // one tick delay (15ms) in between reads for stability
   }
 }
 
@@ -168,23 +168,21 @@ void TaskSensorRead(void *pvParameters){
       lastRead[0] = now;
         // Safe to use serial print here      
   
-        Stream* out[] = {&Serial, &Serial3};
-	int numOut = 2; //TODO clean up dat shit
+        Stream* out[] = {&Serial, &Serial3, (Stream*) NULL};
 
-	sensor_out(&sensor_baro, read_baro, file_names[0], out, numOut, xOutputSemaphore);   
-	sensor_out(&sensor_temp_in, read_temp,file_names[1], out, numOut, xOutputSemaphore);
-        sensor_out(&sensor_temp_ex, read_temp,file_names[2], out, numOut, xOutputSemaphore);
-	sensor_out((void*) NULL, read_light,file_names[3], out, numOut, xOutputSemaphore);
-	sensor_out((void*) NULL, read_uv, file_names[4], out, numOut, xOutputSemaphore);
-	sensor_out(&sensor_gps, read_gps, file_names[5], out, numOut, xOutputSemaphore);
-
-     
+	sensor_out(&sensor_baro, read_baro, file_names[0], out);   
+	sensor_out(&sensor_temp_in, read_temp,file_names[1], out);
+        sensor_out(&sensor_temp_ex, read_temp,file_names[2], out);
+	sensor_out((void*) NULL, read_light,file_names[3], out);
+	sensor_out((void*) NULL, read_uv, file_names[4], out);
+	sensor_out(&sensor_gps, read_gps, file_names[5], out);
+    
         // Runs once every 10 milliseconds
     } else if(now - lastRead[1] > readIntervals[1]) {
       lastRead[1] = now;
 
      	Stream* outputs[] = {(Stream*) NULL};       
-	sensor_out(&sensor_gyro, read_gyro, file_names[6], outputs, 0, xOutputSemaphore);
+	//sensor_out(&sensor_gyro, read_gyro, file_names[6], outputs);
     }
   }
 }

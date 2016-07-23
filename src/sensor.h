@@ -1,13 +1,13 @@
 #ifndef SENSORS_H
 #define SENSORS_H
 
-
+extern SemaphoreHandle_t xOutputSemaphore;
 template <typename F, typename S>
-void sensor_out(S sensor, F func, char* file_name, Stream** outputs, int num, SemaphoreHandle_t& lock){
+inline void sensor_out(S sensor, F func, char* file_name, Stream** outputs){
  
-if ( xSemaphoreTake( lock, ( TickType_t ) 5 ) == pdTRUE ){
+if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
   File file = SD.open(file_name, FILE_WRITE);
-  for(int i = 0; i < num; i++){ 
+  for(int i = 0; outputs[i] != NULL; i++){ 
     func(sensor, outputs[i]);
     outputs[i]->println(); 
   }
@@ -15,7 +15,7 @@ if ( xSemaphoreTake( lock, ( TickType_t ) 5 ) == pdTRUE ){
   file.println();
   file.close();
  
-  xSemaphoreGive(lock);
+  xSemaphoreGive(xOutputSemaphore);
  }
 }
 
