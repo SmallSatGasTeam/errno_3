@@ -23,8 +23,6 @@ void TaskSensorRead(void *pvParameters);
 
 // define semaphores
 SemaphoreHandle_t xOutputSemaphore;
-//SemaphoreHandle_t xRadioSemaphore;
-//SemaphoreHandle_t xSdCardSemaphore;
 
  const int num_files = 7;
  char* file_names[] = {"baro.csv", "temp_in.csv", "temp_ex.csv", "light.csv", "uv.csv" ,"gps.csv", "gyro.csv", "camera.csv"};
@@ -52,11 +50,6 @@ void setup() {
     xOutputSemaphore = xSemaphoreCreateMutex(); 
     if(xOutputSemaphore){ xSemaphoreGive(xOutputSemaphore);}
   }
- 
-// if (xRadioSemaphore == NULL) {
-//    xRadioSemaphore = xSemaphoreCreateMutex(); 
-//    if(xRadioSemaphore){ xSemaphoreGive(xRadioSemaphore);}
-//  }
 
   // Now set up two tasks to run independently.
   xTaskCreate(
@@ -179,12 +172,12 @@ void TaskSensorRead(void *pvParameters){
 	int numOut = 2; //TODO clean up dat shit
 
 	sensor_out(&sensor_baro, read_baro, file_names[0], out, numOut, xOutputSemaphore);   
-/*	sensor_out(&sensor_temp_in, read_temp,file_names[1], out, numOut);
-        sensor_out(&sensor_temp_ex, read_temp,file_names[2], out, numOut);
-	sensor_out((void*) NULL, read_light,file_names[3], out, numOut);
-	sensor_out((void*) NULL, read_uv, file_names[4], out, numOut);
-	sensor_out(&sensor_gps, read_gps, file_names[5], out, numOut);
-*/
+	sensor_out(&sensor_temp_in, read_temp,file_names[1], out, numOut, xOutputSemaphore);
+        sensor_out(&sensor_temp_ex, read_temp,file_names[2], out, numOut, xOutputSemaphore);
+	sensor_out((void*) NULL, read_light,file_names[3], out, numOut, xOutputSemaphore);
+	sensor_out((void*) NULL, read_uv, file_names[4], out, numOut, xOutputSemaphore);
+	sensor_out(&sensor_gps, read_gps, file_names[5], out, numOut, xOutputSemaphore);
+
      
         // Runs once every 10 milliseconds
     } else if(now - lastRead[1] > readIntervals[1]) {
