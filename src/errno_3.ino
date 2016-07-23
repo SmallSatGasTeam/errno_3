@@ -22,7 +22,7 @@ void TaskAnalogRead( void *pvParameters ); //TODO remove this test task
 void TaskSensorRead(void *pvParameters);
 
 // define semaphores
-SemaphoreHandle_t xSerialSemaphore;
+SemaphoreHandle_t xOutputSemaphore;
 //SemaphoreHandle_t xRadioSemaphore;
 //SemaphoreHandle_t xSdCardSemaphore;
 
@@ -48,9 +48,9 @@ void setup() {
    files[i] = SD.open(file_names[i], FILE_WRITE);
  }
 
-  if (xSerialSemaphore == NULL) {
-    xSerialSemaphore = xSemaphoreCreateMutex(); 
-    if(xSerialSemaphore){ xSemaphoreGive(xSerialSemaphore);}
+  if (xOutputSemaphore == NULL) {
+    xOutputSemaphore = xSemaphoreCreateMutex(); 
+    if(xOutputSemaphore){ xSemaphoreGive(xOutputSemaphore);}
   }
  
 // if (xRadioSemaphore == NULL) {
@@ -127,10 +127,10 @@ void TaskAnalogRead(void *pvParameters)  // This is a task.
   for (;;)
   {
 
-    if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE )
+    if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE )
     {
       Serial.println("Analog read Test Task Read");
-      xSemaphoreGive( xSerialSemaphore ); // Now free or "Give" the Serial Port for others.
+      xSemaphoreGive( xOutputSemaphore ); // Now free or "Give" the Serial Port for others.
     }
     vTaskDelay(1);  // one tick delay (15ms) in between reads for stability
   }
@@ -173,32 +173,25 @@ void TaskSensorRead(void *pvParameters){
     // Runs once a second
     if(now - lastRead[0] > readIntervals[0]){
       lastRead[0] = now;
-//       if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
         // Safe to use serial print here      
   
         Stream* out[] = {&Serial, &Serial3};
 	int numOut = 2; //TODO clean up dat shit
 
-	sensor_out(&sensor_baro, read_baro, file_names[0], out, numOut, xSerialSemaphore);        
+	sensor_out(&sensor_baro, read_baro, file_names[0], out, numOut, xOutputSemaphore);   
 /*	sensor_out(&sensor_temp_in, read_temp,file_names[1], out, numOut);
         sensor_out(&sensor_temp_ex, read_temp,file_names[2], out, numOut);
 	sensor_out((void*) NULL, read_light,file_names[3], out, numOut);
 	sensor_out((void*) NULL, read_uv, file_names[4], out, numOut);
 	sensor_out(&sensor_gps, read_gps, file_names[5], out, numOut);
 */
-//        xSemaphoreGive( xSerialSemaphore );
-//      }
-      // Runs once every 10 milliseconds
+     
+        // Runs once every 10 milliseconds
     } else if(now - lastRead[1] > readIntervals[1]) {
       lastRead[1] = now;
 
-      if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
-        // Safe to use serial print here
-
      	Stream* outputs[] = {(Stream*) NULL};       
-	//sensor_out(&sensor_gyro, read_gyro, file_names[6], outputs, 0);
-        xSemaphoreGive( xSerialSemaphore );
-      }
+	sensor_out(&sensor_gyro, read_gyro, file_names[6], outputs, 0, xOutputSemaphore);
     }
   }
 }
@@ -214,7 +207,7 @@ void TaskCamera(void *pvParameters){
   bool taken = false;
   for(;;){
 
-    if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+    if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
       // Safe to use serial print here
        if(Serial.peek() == TAKE_PHOTO){
         if (camera.init()) {
@@ -236,7 +229,7 @@ void TaskCamera(void *pvParameters){
 
         }
       }
-    xSemaphoreGive( xSerialSemaphore );
+    xSemaphoreGive( xOutputSemaphore );
    }
   }
 }
