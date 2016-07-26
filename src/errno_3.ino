@@ -16,38 +16,49 @@
 #include "sensor.h"
 #include "messages.h" // Defines incoming data header
 
+// define sensors 
+Adafruit_MCP9808 sensor_temp_ex = Adafruit_MCP9808();
+Adafruit_MCP9808 sensor_temp_in = Adafruit_MCP9808();
+Adafruit_BNO055  sensor_gyro = Adafruit_BNO055();
+CoolSatBaro sensor_baro;
+TinyGPSPlus sensor_gps;
+
 // define tasks
 void TaskBlink( void *pvParameters ); //TODO remove this test task
 void TaskAnalogRead( void *pvParameters ); //TODO remove this test task
-void TaskSensorRead(void *pvParameters);
+void TaskSensorReadStandard(void *pvParameters);
+void TaskSensorReadFast(void *pvParameters);
 
 // define semaphores
-SemaphoreHandle_t xSerialSemaphore;
+SemaphoreHandle_t xOutputSemaphore;
 
-// define data log
-File allSensors;
+ const int num_files = 7;
+ char* file_names[] = {"baro.csv", "temp_in.csv", "temp_ex.csv", "light.csv", "uv.csv" ,"gps.csv", "gyro.csv", "camera.csv"};
 
+ File files[num_files];
 
 /**
  *Global setup should occur here
  */
 void setup() {
-  Serial2.begin(9600);
+ 
   Serial.begin(9600);
+  Serial1.begin(115200);
+  Serial2.begin(9600);
 
   Serial.println("Initializing SD Card");
   if(!SD.begin(46)){
     Serial.println("SD card failed to initialize!");
   }
   Serial.println("SD Initialized");
-  allSensors = SD.open("sensors.txt",FILE_WRITE);
+ 
+ for(int i = 0; i < num_files; i++){
+   files[i] = SD.open(file_names[i], FILE_WRITE);
+ }
 
-  if (xSerialSemaphore == NULL)  // Check to confirm that the Serial Semaphore has not already been created.
-  {
-    xSerialSemaphore = xSemaphoreCreateMutex();  // Create a mutex semaphore we will use to manage the Serial Port
-    if (xSerialSemaphore){
-      xSemaphoreGive(xSerialSemaphore);  // Make the Serial Port available for use, by "Giving" the Semaphore.
-    }
+  if (xOutputSemaphore == NULL) {
+    xOutputSemaphore = xSemaphoreCreateMutex(); 
+    if(xOutputSemaphore){ xSemaphoreGive(xOutputSemaphore);}
   }
 
   // Now set up two tasks to run independently.
@@ -62,15 +73,23 @@ void setup() {
  xTaskCreate(
    TaskAnalogRead
    ,  (const portCHAR *) "AnalogRead"
-   ,  128  // Stack size
+   ,  1024  // Stack size
    ,  NULL
    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
    ,  NULL );
 
 xTaskCreate(
-    TaskSensorRead
+    TaskSensorReadStandard
     ,  (const portCHAR *) "ReadSensors"
-    ,  1024  // Stack size
+    ,  2024  // Stack size
+    ,  NULL
+    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  NULL );
+
+xTaskCreate(
+    TaskSensorReadFast
+    ,  (const portCHAR *) "ReadSensorsFast"
+    ,  300  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -112,111 +131,63 @@ void TaskBlink(void *pvParameters)  // This is a task.
   }
 }
 
+void read_test(void* a, Stream* output){
+ output->println("Analog read Test Task Read");
+}
+
 void TaskAnalogRead(void *pvParameters)  // This is a task.
 {
   (void) pvParameters;
 
+  Stream* outs[] = {&Serial, (Stream*) NULL };
+  
   for (;;)
   {
-
-    if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE )
-    {
-      //Serial.println("Analog read Test Task Read");
-      xSemaphoreGive( xSerialSemaphore ); // Now free or "Give" the Serial Port for others.
-    }
-    vTaskDelay(1);  // one tick delay (15ms) in between reads for stability
+      sensor_out((void*) NULL, read_test, file_names[6], outs);  
+      vTaskDelay(20);  // one tick delay (15ms) in between reads for stability
   }
 }
 
-
-void TaskSensorRead(void *pvParameters){
+void TaskSensorReadStandard(void *pvParameters){
   (void) pvParameters;
 
   // Task Setup
   Wire.begin(); //Begining everying on our I2C Bus
-
-  // Create sensor instances
-  Adafruit_MCP9808 sensor_temp_ex = Adafruit_MCP9808();
-  Adafruit_MCP9808 sensor_temp_in = Adafruit_MCP9808();
-  Adafruit_BNO055  sensor_gyro = Adafruit_BNO055();
-  CoolSatBaro sensor_baro;
-  TinyGPSPlus sensor_gps;
 
   // Initialze sensors
   // These functions should be defined in sensor.h
   initialize_temp_ex(&sensor_temp_ex, Serial);
   initialize_temp_in(&sensor_temp_in, Serial);
   initialize_baro(&sensor_baro, Serial);
-  initialize_gyro(&sensor_gyro, Serial);
-
-  int readIntervals[] = {1000,10}; // How often to execute in milliseconds
-  unsigned int lastRead[2]; // To store last read time
 
   /*
     File has to be open when task starts in order to write data to log. We will
     close it for now, and have each sensor open and close it to ensure we don't
     corrupt our filesystem.
    */
-  allSensors.close();
+  for(int i = 0; i < num_files; i++){ files[i].close(); }
 
-  Serial.println("\t");
-  Serial.println("\t\t\t\t\t\tm/s/s:\t\t\tdegrees:\t\ttime:");
-  Serial.println("exTemp\tinTemp\tbaro\tlight\tUV\t\tX:\tY:\tZ:\tX:\tY:\tZ:\thr:mn:sc\tlat\tlon");
-
+  Stream* out[] = {&Serial, &Serial3, (Stream*) NULL};      
   for(;;){
-    unsigned int now = millis();
-
-    // Runs once a second
-    if(now - lastRead[0] > readIntervals[0]){
-      lastRead[0] = now;
-
-	     if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
-        // Safe to use serial print here
-        File file = SD.open(FILENAME, FILE_WRITE);
-
-
-        Stream* outputs[] = {&Serial, &file, (Stream*) NULL};
-        print_sensor(&sensor_temp_ex, read_temp, 'T', outputs);
-        print_sensor(&sensor_temp_in, read_temp, 't', outputs);
-        print_sensor(&sensor_baro, read_baro, 'B', outputs );  
-        print_sensor((void*) NULL, read_light, 'L', outputs);  
-        print_sensor((void*) NULL, read_uv, 'V', outputs);
-        print_sensor(&sensor_gps, read_gps, 'G',  outputs); 
-
-        file.close();
-
-        xSemaphoreGive( xSerialSemaphore );
-      }
-      // Runs once every 10 milliseconds
-    } else if(now - lastRead[1] > readIntervals[1]) {
-      lastRead[1] = now;
-
-      if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
-        // Safe to use serial print here
-
-        File file = SD.open(FILENAME, FILE_WRITE);
-     	Stream* outputs[] = {&file, (Stream*) NULL};       
-        print_sensor(&sensor_gyro, read_gyro, 'Y', outputs);
-
-        file.close();
-        xSemaphoreGive( xSerialSemaphore );
-      }
-    }
+    vTaskDelay( 1000 / portTICK_PERIOD_MS );
+    sensor_out(&sensor_baro, read_baro, file_names[0], out);   
+    sensor_out(&sensor_temp_in, read_temp,file_names[1], out);
+    sensor_out(&sensor_temp_ex, read_temp,file_names[2], out); 
+    sensor_out((void*) NULL, read_light,file_names[3], out);
+    sensor_out((void*) NULL, read_uv, file_names[4], out);
+ //   sensor_out(&sensor_gps, read_gps, file_names[5], out);
   }
 }
 
 void TaskCamera(void *pvParameters){
   (void) pvParameters;
 
-  Serial1.begin(115200);
-
   UCAMII camera(Serial1, &Serial);
   short x = 0;
   int bytes;
-  bool taken = false;
   for(;;){
-
-    if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+  vTaskDelay(1);
+    if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
       // Safe to use serial print here
        if(Serial.peek() == TAKE_PHOTO){
         if (camera.init()) {
@@ -238,7 +209,22 @@ void TaskCamera(void *pvParameters){
 
         }
       }
-    xSemaphoreGive( xSerialSemaphore );
+    xSemaphoreGive( xOutputSemaphore );
    }
+  }
+}
+
+
+void TaskSensorReadFast(void *pvParameters)
+{
+  (void) pvParameters;
+
+  Stream* outputs[] = {&Serial, (Stream*) NULL};
+  initialize_gyro(&sensor_gyro, Serial);
+
+  for (;;) // A Task shall never return or exit.
+  {
+    sensor_out(&sensor_gyro, read_gyro, file_names[6], outputs);
+    vTaskDelay( 50 / portTICK_PERIOD_MS ); 
   }
 }
