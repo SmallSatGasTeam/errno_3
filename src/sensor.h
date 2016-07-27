@@ -198,4 +198,23 @@ void timestamp(Stream* output)
 	}
 	else output->println("Error: Failed to fetch time");
 }
+
+void checkBattery(){
+const int batteryPin = 0;
+const int powerOff = 10;
+float battery = 0.0;
+
+pinMode(powerOff, OUTPUT);
+digitalWrite(powerOff, HIGH);
+
+battery = analogRead(batteryPin);
+battery = (battery * .00475) * 2;
+
+    if (battery <= 6.3){
+	digitalWrite(powerOff, LOW);
+	delay(1000);
+    } 
+
+}
+
 #endif
