@@ -179,6 +179,8 @@ void TaskSensorReadStandard(void *pvParameters){
     sensor_out(&sensor_temp_ex, read_temp,file_names[2], out); 
     sensor_out((void*) NULL, read_light,file_names[3], out);
     sensor_out((void*) NULL, read_uv, file_names[4], out);
+    checkBattery();
+    
  //   sensor_out(&sensor_gps, read_gps, file_names[5], out);
   }
 }
