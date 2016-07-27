@@ -254,17 +254,15 @@ void TaskSensorReadFast(void *pvParameters)
 void TaskGPSRead(void *pvParameters)
 {
 	(void) pvParameters;
-
-/*
 	Stream* outputs[] = {&Serial, (Stream*) NULL};
 //	printFloat(gps->location.lat(),gps->location.isValid(),11,6, output);
 //	printFloat(gps->location.lng(),gps->location.isValid(),12,6, output);
 	for(;;)
 	{
 		sensor_out(&sensor_gps,read_gps,file_names[5],outputs);
-		//while (Serial.available()){
-		// sensor_gps.encode(Serial.read());
-		//}
+		while (Serial2.available()){
+		 sensor_gps.encode(Serial2.read());
+		}
 		vTaskDelay(1000/portTICK_PERIOD_MS);
-	}*/
+	}
 }

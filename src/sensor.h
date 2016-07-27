@@ -170,9 +170,9 @@ void printFloat(float val, bool valid, int len, int prec, Stream* output)
 
 void read_gps(TinyGPSPlus* gps, Stream* output){
 //	printFloat(gps->location.lat(),gps->location.isValid(),11,6, output);
-//	output->print(gps->location.lat());
+	output->print(gps->location.lat());
 	output->print(",");
-//	output->print(gps->location.lng());
+	output->print(gps->location.lng());
 //	printFloat(gps->location.lng(),gps->location.isValid(),12,6, output);
 //	smartDelay(1000, gps, output); //TODO which serial port?
 }
