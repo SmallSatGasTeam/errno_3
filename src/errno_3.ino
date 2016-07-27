@@ -50,6 +50,7 @@ void setup() {
   Serial.begin(9600);
   Serial1.begin(115200);
   Serial2.begin(9600);
+  Serial3.begin(9600);
 
   Serial.println("Initializing SD Card");
   if(!SD.begin(46)){
@@ -84,7 +85,7 @@ void setup() {
  xTaskCreate(
    TaskAnalogRead
    ,  (const portCHAR *) "AnalogRead"
-   ,  512  // Stack size
+   ,  600  // Stack size
    ,  NULL
    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
    ,  NULL );
