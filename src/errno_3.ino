@@ -22,6 +22,9 @@ Adafruit_MCP9808 sensor_temp_in = Adafruit_MCP9808();
 Adafruit_BNO055  sensor_gyro = Adafruit_BNO055();
 CoolSatBaro sensor_baro;
 TinyGPSPlus sensor_gps;
+UCAMII camera(Serial1, &Serial);
+
+File file;
 
 // define tasks
 void TaskBlink( void *pvParameters ); //TODO remove this test task
@@ -29,9 +32,11 @@ void TaskAnalogRead( void *pvParameters ); //TODO remove this test task
 void TaskSensorReadStandard(void *pvParameters);
 void TaskSensorReadFast(void *pvParameters);
 void TaskGPSRead(void *pvParameters);
+void TaskCamera(void *pvParameters);
 
 // define semaphores
 SemaphoreHandle_t xOutputSemaphore;
+SemaphoreHandle_t xSDSemaphore;
 
  const int num_files = 7;
  char* file_names[] = {"baro.csv", "temp_in.csv", "temp_ex.csv", "light.csv", "uv.csv" ,"gps.csv", "gyro.csv", "camera.csv"};
@@ -46,6 +51,7 @@ void setup() {
   Serial.begin(9600);
   Serial1.begin(115200);
   Serial2.begin(9600);
+  Serial3.begin(9600);
 
   Serial.println("Initializing SD Card");
   if(!SD.begin(46)){
@@ -56,10 +62,16 @@ void setup() {
  for(int i = 0; i < num_files; i++){
    files[i] = SD.open(file_names[i], FILE_WRITE);
  }
-
-  if (xOutputSemaphore == NULL) {
+ 
+ // initialize Mutex  
+ if (xOutputSemaphore == NULL) {
     xOutputSemaphore = xSemaphoreCreateMutex(); 
     if(xOutputSemaphore){ xSemaphoreGive(xOutputSemaphore);}
+  }
+ 
+ if (xSDSemaphore == NULL) {
+    xSDSemaphore = xSemaphoreCreateMutex(); 
+    if(xSDSemaphore){ xSemaphoreGive(xSDSemaphore);}
   }
 
   // Now set up two tasks to run independently.
@@ -74,7 +86,7 @@ void setup() {
  xTaskCreate(
    TaskAnalogRead
    ,  (const portCHAR *) "AnalogRead"
-   ,  1024  // Stack size
+   ,  600  // Stack size
    ,  NULL
    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
    ,  NULL );
@@ -82,7 +94,7 @@ void setup() {
 xTaskCreate(
     TaskSensorReadStandard
     ,  (const portCHAR *) "ReadSensors"
-    ,  2024  // Stack size
+    ,  512  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -90,7 +102,7 @@ xTaskCreate(
 xTaskCreate(
     TaskSensorReadFast
     ,  (const portCHAR *) "ReadSensorsFast"
-    ,  300  // Stack size
+    ,  350  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -98,7 +110,7 @@ xTaskCreate(
 xTaskCreate(
     TaskCamera
     ,  (const portCHAR *) "Take Photos"
-    ,  512  // Stack size
+    ,  350 // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -183,6 +195,8 @@ void TaskSensorReadStandard(void *pvParameters){
     sensor_out(&sensor_temp_ex, read_temp,file_names[2], out); 
     sensor_out((void*) NULL, read_light,file_names[3], out);
     sensor_out((void*) NULL, read_uv, file_names[4], out);
+    checkBattery();
+    
  //   sensor_out(&sensor_gps, read_gps, file_names[5], out);
   }
 }
@@ -190,14 +204,14 @@ void TaskSensorReadStandard(void *pvParameters){
 void TaskCamera(void *pvParameters){
   (void) pvParameters;
 
-  UCAMII camera(Serial1, &Serial);
   short x = 0;
   int bytes;
   for(;;){
   vTaskDelay(1);
     if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
-      // Safe to use serial print here
+       // Safe to use serial print here
        if(Serial.peek() == TAKE_PHOTO){
+         Serial.read();
         if (camera.init()) {
           camera.takePicture();
           Serial.print("Image size: ");
