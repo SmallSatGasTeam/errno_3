@@ -31,6 +31,7 @@ void TaskSensorReadFast(void *pvParameters);
 
 // define semaphores
 SemaphoreHandle_t xOutputSemaphore;
+SemaphoreHandle_t xSDSemaphore;
 
  const int num_files = 7;
  char* file_names[] = {"baro.csv", "temp_in.csv", "temp_ex.csv", "light.csv", "uv.csv" ,"gps.csv", "gyro.csv", "camera.csv"};
@@ -55,10 +56,16 @@ void setup() {
  for(int i = 0; i < num_files; i++){
    files[i] = SD.open(file_names[i], FILE_WRITE);
  }
-
-  if (xOutputSemaphore == NULL) {
+ 
+ // initialize Mutex  
+ if (xOutputSemaphore == NULL) {
     xOutputSemaphore = xSemaphoreCreateMutex(); 
     if(xOutputSemaphore){ xSemaphoreGive(xOutputSemaphore);}
+  }
+ 
+ if (xSDSemaphore == NULL) {
+    xSDSemaphore = xSemaphoreCreateMutex(); 
+    if(xSDSemaphore){ xSemaphoreGive(xSDSemaphore);}
   }
 
   // Now set up two tasks to run independently.
