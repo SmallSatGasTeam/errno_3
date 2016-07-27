@@ -23,6 +23,10 @@ Adafruit_BNO055  sensor_gyro = Adafruit_BNO055();
 CoolSatBaro sensor_baro;
 TinyGPSPlus sensor_gps;
 
+// define pins
+const int WIRE_CUTTER = 12;
+const int BOOM_SWITCH = 30;
+
 // define tasks
 void TaskBlink( void *pvParameters ); //TODO remove this test task
 void TaskAnalogRead( void *pvParameters ); //TODO remove this test task
@@ -33,8 +37,16 @@ void TaskDeployBoom(void *pvParameters);
 // define semaphores
 SemaphoreHandle_t xOutputSemaphore;
 
- const int num_files = 7;
- char* file_names[] = {"baro.csv", "temp_in.csv", "temp_ex.csv", "light.csv", "uv.csv" ,"gps.csv", "gyro.csv", "camera.csv"};
+ const int num_files = 8;
+ char* file_names[] = {"baro.csv",     
+					   "temp_in.csv",   
+					   "temp_ex.csv",
+					   "light.csv",
+					   "uv.csv",
+					   "gps.csv", 
+					   "gyro.csv",
+					   "camera.csv"
+ 					   "boom.csv"};
 
  File files[num_files];
 
@@ -64,11 +76,15 @@ void setup() {
 
   Wire.begin(); //Begining everying on our I2C Bus
  
-  // Initialze sensors
+  // Initialize sensors
   // These functions should be defined in sensor.h
   initialize_temp_ex(&sensor_temp_ex, Serial);
   initialize_temp_in(&sensor_temp_in, Serial);
   initialize_baro(&sensor_baro, Serial);
+
+  // Initialize switches
+  pinMode(WIRE_CUTTER, OUTPUT);
+  pinMode(BOOM_SWITCH, INPUT);
 
   // Now set up two tasks to run independently.
   xTaskCreate(
@@ -110,6 +126,15 @@ xTaskCreate(
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
+
+xTaskCreate(
+    TaskDeployBoom
+    ,  (const portCHAR *) "Deploy Boom"
+    ,  512 // Stack size
+    ,  NULL
+    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  NULL );
+
 
   // Now the task scheduler, which takes over control of scheduling individual tasks, is automatically started.
 }
@@ -176,6 +201,7 @@ void TaskSensorReadStandard(void *pvParameters){
     sensor_out((void*) NULL, read_light,file_names[3], out);
     sensor_out((void*) NULL, read_uv, file_names[4], out);
  //   sensor_out(&sensor_gps, read_gps, file_names[5], out);
+	sensor_out((void*) NULL, read_boom, file_names[8], out);
   }
 }
 
@@ -231,20 +257,27 @@ void TaskSensorReadFast(void *pvParameters)
 
 void TaskDeployBoom(void *pvParameters){
  (void) pvParameters;
- // 44 millibars
- // pin 12 --> high enable cutter 
- // pin 30 --> returns whether or not high
  
- float val;
+ float pressure;
  
- for(;;){
-  val = sensor_baro.getPressure();
-  if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
-       if(Serial.peek() == TAKE_PHOTO){
-       }
-  }
-  xSemaphoreGive( xOutputSemaphore );
- }
+ for(;;)
+ {
  
+  pressure = sensor_baro.getPressure();
+  
+  if(Serial.peek() == DEPLOY_BOOM || pressure >= 44)
+  {
+	if (pressure >= 44) {
+	    Serial.println("*** Barometric pressure has dropped below 44 millibars ***");
+		Serial.println("*** Initiating automatic aeroboom deployment. Stand by ***");
+	}
+    digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
+	Serial.println("Engaging wire-cutter...");
+	delay(3000);
+	digitalWrite(WIRE_CUTTER, LOW); // Disengage
+	Serial.println("Disengaging...");
+	delay(1000);
+	Serial.println("Deployment complete.");
+  } 
  }
 }

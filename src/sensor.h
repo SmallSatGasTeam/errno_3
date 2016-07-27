@@ -145,12 +145,12 @@ void printFloat(float val, bool valid, int len, int prec, Stream* output)
   if (!valid)
   {
     while (len-- > 1){
-     /*
-      file->print('*');
-      file->print(' ');
+     
+     // file->print('*');
+     // file->print(' ');
       output->print('*');
       output->print(' ');
-     */
+     
     }
   }
   else
@@ -193,5 +193,17 @@ void timestamp(Stream* output)
 		printTime(tm.Second, output);
 	}
 	else output->println("Error: Failed to fetch time");
+}
+
+//------------ Boom ------------//
+
+void read_boom(void* dummy, Stream* output)
+{
+	auto level = digitalRead(30); // Pin 30
+	if (level == HIGH)
+	{
+		output->print("HIGH"); // TODO Make printed message more meaningful
+	}
+	else output->print("LOW");
 }
 #endif
