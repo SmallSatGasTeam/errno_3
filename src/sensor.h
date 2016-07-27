@@ -3,6 +3,7 @@
 
 extern SemaphoreHandle_t xOutputSemaphore;
 extern SemaphoreHandle_t xSDSemaphore;
+extern File file;
 template <typename F, typename S>
 inline void sensor_out(S sensor, F func, char* file_name, Stream** outputs){
  
@@ -15,7 +16,7 @@ inline void sensor_out(S sensor, F func, char* file_name, Stream** outputs){
    }
 
   if ( xSemaphoreTake( xSDSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
-    File file = SD.open(file_name, FILE_WRITE);
+    file = SD.open(file_name, FILE_WRITE);
     func(sensor, &file);
     file.println();
     file.close();
