@@ -165,10 +165,12 @@ void printFloat(float val, bool valid, int len, int prec, Stream* output)
 }
 
 void read_gps(TinyGPSPlus* gps, Stream* output){
-	printFloat(gps->location.lat(),gps->location.isValid(),11,6, output);
+//	printFloat(gps->location.lat(),gps->location.isValid(),11,6, output);
+//	output->print(gps->location.lat());
 	output->print(",");
-	printFloat(gps->location.lng(),gps->location.isValid(),12,6, output);
-	smartDelay(1000, gps, output); //TODO which serial port?
+//	output->print(gps->location.lng());
+//	printFloat(gps->location.lng(),gps->location.isValid(),12,6, output);
+//	smartDelay(1000, gps, output); //TODO which serial port?
 }
 //------------ Clock ------------//
 
@@ -182,8 +184,7 @@ void printTime(int time, Stream* output)
 }
 
 void timestamp(Stream* output)
-{
-	tmElements_t tm; // magic getter of time from TimeLib.h
+{	tmElements_t tm; // magic getter of time from TimeLib.h
 
 	if (RTC.read(tm)){
 		printTime(tm.Hour, output);
