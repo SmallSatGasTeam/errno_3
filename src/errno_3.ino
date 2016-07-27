@@ -28,6 +28,7 @@ void TaskBlink( void *pvParameters ); //TODO remove this test task
 void TaskAnalogRead( void *pvParameters ); //TODO remove this test task
 void TaskSensorReadStandard(void *pvParameters);
 void TaskSensorReadFast(void *pvParameters);
+void TaskDeployBoom(void *pvParameters);
 
 // define semaphores
 SemaphoreHandle_t xOutputSemaphore;
@@ -60,6 +61,14 @@ void setup() {
     xOutputSemaphore = xSemaphoreCreateMutex(); 
     if(xOutputSemaphore){ xSemaphoreGive(xOutputSemaphore);}
   }
+
+  Wire.begin(); //Begining everying on our I2C Bus
+ 
+  // Initialze sensors
+  // These functions should be defined in sensor.h
+  initialize_temp_ex(&sensor_temp_ex, Serial);
+  initialize_temp_in(&sensor_temp_in, Serial);
+  initialize_baro(&sensor_baro, Serial);
 
   // Now set up two tasks to run independently.
   xTaskCreate(
@@ -151,15 +160,6 @@ void TaskAnalogRead(void *pvParameters)  // This is a task.
 void TaskSensorReadStandard(void *pvParameters){
   (void) pvParameters;
 
-  // Task Setup
-  Wire.begin(); //Begining everying on our I2C Bus
-
-  // Initialze sensors
-  // These functions should be defined in sensor.h
-  initialize_temp_ex(&sensor_temp_ex, Serial);
-  initialize_temp_in(&sensor_temp_in, Serial);
-  initialize_baro(&sensor_baro, Serial);
-
   /*
     File has to be open when task starts in order to write data to log. We will
     close it for now, and have each sensor open and close it to ensure we don't
@@ -227,4 +227,24 @@ void TaskSensorReadFast(void *pvParameters)
     sensor_out(&sensor_gyro, read_gyro, file_names[6], outputs);
     vTaskDelay( 50 / portTICK_PERIOD_MS ); 
   }
+}
+
+void TaskDeployBoom(void *pvParameters){
+ (void) pvParameters;
+ // 44 millibars
+ // pin 12 --> high enable cutter 
+ // pin 30 --> returns whether or not high
+ 
+ float val;
+ 
+ for(;;){
+  val = sensor_baro.getPressure();
+  if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+       if(Serial.peek() == TAKE_PHOTO){
+       }
+  }
+  xSemaphoreGive( xOutputSemaphore );
+ }
+ 
+ }
 }
