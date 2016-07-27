@@ -2,23 +2,26 @@
 #define SENSORS_H
 
 extern SemaphoreHandle_t xOutputSemaphore;
+extern SemaphoreHandle_t xSDSemaphore;
 template <typename F, typename S>
 inline void sensor_out(S sensor, F func, char* file_name, Stream** outputs){
  
-if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
-  File file = SD.open(file_name, FILE_WRITE);
-  for(int i = 0; outputs[i] != NULL; i++){ 
-    func(sensor, outputs[i]);
-    outputs[i]->println(); 
-  }
-  func(sensor, &file);
-  file.println();
-  file.close();
- 
-  xSemaphoreGive(xOutputSemaphore);
- }
-}
+  if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+    for(int i = 0; outputs[i] != NULL; i++){ 
+      func(sensor, outputs[i]);
+      outputs[i]->println(); 
+    }
+    xSemaphoreGive(xOutputSemaphore);
+   }
 
+  if ( xSemaphoreTake( xSDSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+    File file = SD.open(file_name, FILE_WRITE);
+    func(sensor, &file);
+    file.println();
+    file.close();
+    xSemaphoreGive(xSDSemaphore);
+  }
+}
 template <typename F, typename S>
 void print_sensor(S sensor, F func, char header, Stream** outputs){
  // File file_baro = SD.open("baro.csv", FILE_WRITE);
