@@ -22,6 +22,9 @@ Adafruit_MCP9808 sensor_temp_in = Adafruit_MCP9808();
 Adafruit_BNO055  sensor_gyro = Adafruit_BNO055();
 CoolSatBaro sensor_baro;
 TinyGPSPlus sensor_gps;
+UCAMII camera(Serial1, &Serial);
+
+File file;
 
 // define pins
 const int WIRE_CUTTER = 12;
@@ -33,9 +36,12 @@ void TaskAnalogRead( void *pvParameters ); //TODO remove this test task
 void TaskSensorReadStandard(void *pvParameters);
 void TaskSensorReadFast(void *pvParameters);
 void TaskDeployBoom(void *pvParameters);
+void TaskGPSRead(void *pvParameters);
+void TaskCamera(void *pvParameters);
 
 // define semaphores
 SemaphoreHandle_t xOutputSemaphore;
+SemaphoreHandle_t xSDSemaphore;
 
  const int num_files = 8;
  char* file_names[] = {"baro.csv",     
@@ -58,6 +64,7 @@ void setup() {
   Serial.begin(9600);
   Serial1.begin(115200);
   Serial2.begin(9600);
+  Serial3.begin(9600);
 
   Serial.println("Initializing SD Card");
   if(!SD.begin(46)){
@@ -68,10 +75,16 @@ void setup() {
  for(int i = 0; i < num_files; i++){
    files[i] = SD.open(file_names[i], FILE_WRITE);
  }
-
-  if (xOutputSemaphore == NULL) {
+ 
+ // initialize Mutex  
+ if (xOutputSemaphore == NULL) {
     xOutputSemaphore = xSemaphoreCreateMutex(); 
     if(xOutputSemaphore){ xSemaphoreGive(xOutputSemaphore);}
+  }
+ 
+ if (xSDSemaphore == NULL) {
+    xSDSemaphore = xSemaphoreCreateMutex(); 
+    if(xSDSemaphore){ xSemaphoreGive(xSDSemaphore);}
   }
 
   Wire.begin(); //Begining everying on our I2C Bus
@@ -98,7 +111,7 @@ void setup() {
  xTaskCreate(
    TaskAnalogRead
    ,  (const portCHAR *) "AnalogRead"
-   ,  1024  // Stack size
+   ,  600  // Stack size
    ,  NULL
    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
    ,  NULL );
@@ -106,7 +119,7 @@ void setup() {
 xTaskCreate(
     TaskSensorReadStandard
     ,  (const portCHAR *) "ReadSensors"
-    ,  2024  // Stack size
+    ,  512  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -114,7 +127,7 @@ xTaskCreate(
 xTaskCreate(
     TaskSensorReadFast
     ,  (const portCHAR *) "ReadSensorsFast"
-    ,  300  // Stack size
+    ,  350  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -122,6 +135,14 @@ xTaskCreate(
 xTaskCreate(
     TaskCamera
     ,  (const portCHAR *) "Take Photos"
+    ,  350 // Stack size
+    ,  NULL
+    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  NULL );
+
+xTaskCreate(
+    TaskGPSRead
+    ,  (const portCHAR *) "GPSRead"
     ,  512  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
@@ -138,7 +159,6 @@ xTaskCreate(
 
   // Now the task scheduler, which takes over control of scheduling individual tasks, is automatically started.
 }
-
 void loop()
 {
   // Empty. Things are done in Tasks.
@@ -200,6 +220,8 @@ void TaskSensorReadStandard(void *pvParameters){
     sensor_out(&sensor_temp_ex, read_temp,file_names[2], out); 
     sensor_out((void*) NULL, read_light,file_names[3], out);
     sensor_out((void*) NULL, read_uv, file_names[4], out);
+    checkBattery();
+    
  //   sensor_out(&sensor_gps, read_gps, file_names[5], out);
   }
 }
@@ -207,14 +229,14 @@ void TaskSensorReadStandard(void *pvParameters){
 void TaskCamera(void *pvParameters){
   (void) pvParameters;
 
-  UCAMII camera(Serial1, &Serial);
   short x = 0;
   int bytes;
   for(;;){
   vTaskDelay(1);
     if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
-      // Safe to use serial print here
+       // Safe to use serial print here
        if(Serial.peek() == TAKE_PHOTO){
+         Serial.read();
         if (camera.init()) {
           camera.takePicture();
           Serial.print("Image size: ");
@@ -275,4 +297,19 @@ void TaskDeployBoom(void *pvParameters){
 	vTaskDelay( 1000 / portTICK_PERIOD_MS );
   } 
  }
+
+void TaskGPSRead(void *pvParameters)
+{
+	(void) pvParameters;
+	Stream* outputs[] = {&Serial, (Stream*) NULL};
+//	printFloat(gps->location.lat(),gps->location.isValid(),11,6, output);
+//	printFloat(gps->location.lng(),gps->location.isValid(),12,6, output);
+	for(;;)
+	{
+		sensor_out(&sensor_gps,read_gps,file_names[5],outputs);
+		while (Serial2.available()){
+		 sensor_gps.encode(Serial2.read());
+		}
+		vTaskDelay(1000/portTICK_PERIOD_MS);
+	}
 }

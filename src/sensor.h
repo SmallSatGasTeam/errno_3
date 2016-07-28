@@ -2,23 +2,27 @@
 #define SENSORS_H
 
 extern SemaphoreHandle_t xOutputSemaphore;
+extern SemaphoreHandle_t xSDSemaphore;
+extern File file;
 template <typename F, typename S>
 inline void sensor_out(S sensor, F func, char* file_name, Stream** outputs){
  
-if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
-  File file = SD.open(file_name, FILE_WRITE);
-  for(int i = 0; outputs[i] != NULL; i++){ 
-    func(sensor, outputs[i]);
-    outputs[i]->println(); 
-  }
-  func(sensor, &file);
-  file.println();
-  file.close();
- 
-  xSemaphoreGive(xOutputSemaphore);
- }
-}
+  if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+    for(int i = 0; outputs[i] != NULL; i++){ 
+      func(sensor, outputs[i]);
+      outputs[i]->println(); 
+    }
+    xSemaphoreGive(xOutputSemaphore);
+   }
 
+  if ( xSemaphoreTake( xSDSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+    file = SD.open(file_name, FILE_WRITE);
+    func(sensor, &file);
+    file.println();
+    file.close();
+    xSemaphoreGive(xSDSemaphore);
+  }
+}
 template <typename F, typename S>
 void print_sensor(S sensor, F func, char header, Stream** outputs){
  // File file_baro = SD.open("baro.csv", FILE_WRITE);
@@ -165,10 +169,12 @@ void printFloat(float val, bool valid, int len, int prec, Stream* output)
 }
 
 void read_gps(TinyGPSPlus* gps, Stream* output){
-	printFloat(gps->location.lat(),gps->location.isValid(),11,6, output);
+//	printFloat(gps->location.lat(),gps->location.isValid(),11,6, output);
+	output->print(gps->location.lat());
 	output->print(",");
-	printFloat(gps->location.lng(),gps->location.isValid(),12,6, output);
-	smartDelay(1000, gps, output); //TODO which serial port?
+	output->print(gps->location.lng());
+//	printFloat(gps->location.lng(),gps->location.isValid(),12,6, output);
+//	smartDelay(1000, gps, output); //TODO which serial port?
 }
 //------------ Clock ------------//
 
@@ -182,8 +188,7 @@ void printTime(int time, Stream* output)
 }
 
 void timestamp(Stream* output)
-{
-	tmElements_t tm; // magic getter of time from TimeLib.h
+{	tmElements_t tm; // magic getter of time from TimeLib.h
 
 	if (RTC.read(tm)){
 		printTime(tm.Hour, output);
@@ -201,4 +206,23 @@ void print_boom(void* dummy, Stream* output)
 {
      output->print("***************** DEPLOYING BOOM **********************");
 }
+
+void checkBattery(){
+const int batteryPin = 0;
+const int powerOff = 10;
+float battery = 0.0;
+
+pinMode(powerOff, OUTPUT);
+digitalWrite(powerOff, HIGH);
+
+battery = analogRead(batteryPin);
+battery = (battery * .00475) * 2;
+
+    if (battery <= 6.3){
+	digitalWrite(powerOff, LOW);
+	delay(1000);
+    } 
+
+}
+
 #endif
