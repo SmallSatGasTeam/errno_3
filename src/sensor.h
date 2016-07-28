@@ -145,12 +145,12 @@ void printFloat(float val, bool valid, int len, int prec, Stream* output)
   if (!valid)
   {
     while (len-- > 1){
-     
-     // file->print('*');
-     // file->print(' ');
-     // output->print('*');
-     //  output->print(' ');
-     
+     /*
+       file->print('*');
+       file->print(' ');
+       output->print('*');
+       output->print(' ');
+     /*
     }
   }
   else
