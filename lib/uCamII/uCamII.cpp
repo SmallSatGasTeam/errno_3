@@ -5,7 +5,7 @@
  */
 
 #include "uCamII.h"
-#define cameraDebugSerial
+//#define cameraDebugSerial
 
 
 

@@ -6,7 +6,7 @@ void read_timestamp(void* dummy, Stream* output);
 bool message_peek(Stream** stream, char message, char &read_count, char num_readers){
   for(char i = 0; stream[i] != NULL; i++){
     if(stream[i]->peek() == message){
-      while(stream[i]->available(){stream[i]->read();}
+      while(stream[i]->available()){stream[i]->read();}
       read_count = 0;
       return true;
     }
@@ -15,7 +15,7 @@ bool message_peek(Stream** stream, char message, char &read_count, char num_read
   if(++read_count >= num_readers){
     read_count = 0;
     for(char i = 0; stream[i] != NULL; i++){
-      while(stream[i]->available(){stream[i]->read();}
+      while(stream[i]->available()){stream[i]->read();}
     }
   } 
   return false;
@@ -257,12 +257,12 @@ void read_camera(UCAMII* camera, Stream* output){
     camera->takePicture();
     while ( bytes = camera->getData() ) {
       for (x = 0; x < bytes; x++) {
-        Serial.print("0x");
-        Serial.print(camera->imgBuffer[x], HEX);
-        Serial.print(" ");
+        output->print("0x");
+        output->print(camera->imgBuffer[x], HEX);
+        output->print(" ");
       }
-    Serial.println("\n\n\n\n");
     }
+    output->println("\n\n\n\n");
   }
 }
 #endif

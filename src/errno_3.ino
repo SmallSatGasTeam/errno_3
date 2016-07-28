@@ -52,8 +52,8 @@ char* file_names[] = {
 	"uv.csv",
 	"gps.csv", 
 	"gyro.csv",
-	"camera.csv"
-	"boom.csv"
+	"camera.csv",
+	"boom.csv",
 	"time_stamp.csv"
 };
 
@@ -273,9 +273,9 @@ void TaskDeployBoom(void *pvParameters){
  
   pressure = sensor_baro.getPressure();
   
-  if(message_peek(input_streams, DEPLOY_BOOM, read_count, num_readers) || (pressure <= 44 && pressure > 30))
+  if(message_peek(input_streams, DEPLOY_BOOM, read_count, num_readers) || (pressure <= 853 && pressure > 30))
   {
-	sensor_out((void*) NULL, print_boom, file_names[7], out);
+	sensor_out((void*) NULL, print_boom, file_names[8], out);
         digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
 	vTaskDelay( 3000 / portTICK_PERIOD_MS );
         digitalWrite(WIRE_CUTTER, LOW); // Disengage
