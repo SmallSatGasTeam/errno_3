@@ -1,13 +1,14 @@
 #ifndef SENSORS_H
 #define SENSORS_H
 
-char message_peek(Stream** stream, char message, char &read_count, char &num_readers){
+bool message_peek(Stream** stream, char message, char &read_count, char num_readers){
   // if any streams have input
   for(char i = 0; stream[i] != NULL; i++){
     if(stream[i]->peek() == message){return true;}
   }
   
   if(++read_count >= num_readers){
+    read_count = 0;
     for(char i = 0; stream[i] != NULL; i++){
       while(stream[i]->available()){stream[i]->read(); } 
     }
