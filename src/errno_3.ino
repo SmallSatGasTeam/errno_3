@@ -290,7 +290,7 @@ void TaskDeployBoom(void *pvParameters){
  
   pressure = sensor_baro.getPressure();
   
-  if(message_peek(input_streams, DEPLOY_BOOM, read_count, num_readers) || pressure <= 44)
+  if(message_peek(input_streams, DEPLOY_BOOM, read_count, num_readers) || (pressure <= 44 && pressure > 30))
   {
 	sensor_out((void*) NULL, print_boom, file_names[8], out);
         digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
