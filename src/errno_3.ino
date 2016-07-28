@@ -74,18 +74,7 @@ void setup() {
     if(xOutputSemaphore){ xSemaphoreGive(xOutputSemaphore);}
   }
 
-  Wire.begin(); //Begining everying on our I2C Bus
- 
-  // Initialize sensors
-  // These functions should be defined in sensor.h
-  initialize_temp_ex(&sensor_temp_ex, Serial);
-  initialize_temp_in(&sensor_temp_in, Serial);
-  initialize_baro(&sensor_baro, Serial);
-
-  // Initialize switches
-  pinMode(WIRE_CUTTER, OUTPUT);
- // pinMode(BOOM_SWITCH, INPUT);
-
+  
   // Now set up two tasks to run independently.
   xTaskCreate(
     TaskBlink
@@ -184,6 +173,18 @@ void TaskAnalogRead(void *pvParameters)  // This is a task.
 
 void TaskSensorReadStandard(void *pvParameters){
   (void) pvParameters;
+
+  Wire.begin(); //Begining everying on our I2C Bus
+ 
+  // Initialize sensors
+  // These functions should be defined in sensor.h
+  initialize_temp_ex(&sensor_temp_ex, Serial);
+  initialize_temp_in(&sensor_temp_in, Serial);
+  initialize_baro(&sensor_baro, Serial);
+
+  // Initialize switches
+  pinMode(WIRE_CUTTER, OUTPUT);
+ // pinMode(BOOM_SWITCH, INPUT);
 
   /*
     File has to be open when task starts in order to write data to log. We will
