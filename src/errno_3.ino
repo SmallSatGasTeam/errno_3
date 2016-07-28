@@ -42,17 +42,20 @@ void TaskCamera(void *pvParameters);
 SemaphoreHandle_t xOutputSemaphore;
 SemaphoreHandle_t xSDSemaphore;
 
- const int num_files = 9;
- char* file_names[] = {"baro.csv",     
-					   "temp_in.csv",   
-					   "temp_ex.csv",
-					   "light.csv",
-					   "uv.csv",
-					   "gps.csv", 
-					   "gyro.csv",
-					   "camera.csv"
- 					   "boom.csv", 
-					   "camera.csv"};
+const int num_files = 10;
+
+char* file_names[] = {
+	"baro.csv",     
+	"temp_in.csv",   
+	"temp_ex.csv",
+	"light.csv",
+	"uv.csv",
+	"gps.csv", 
+	"gyro.csv",
+	"camera.csv"
+	"boom.csv"
+	"time_stamp.csv"
+};
 
  File files[num_files];
 
@@ -114,7 +117,7 @@ void setup() {
  xTaskCreate(
    TaskAnalogRead
    ,  (const portCHAR *) "AnalogRead"
-   ,  600  // Stack size
+   ,  512  // Stack size
    ,  NULL
    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
    ,  NULL );
@@ -122,7 +125,7 @@ void setup() {
 xTaskCreate(
     TaskSensorReadStandard
     ,  (const portCHAR *) "ReadSensors"
-    ,  512  // Stack size
+    ,  600  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -223,6 +226,7 @@ void TaskSensorReadStandard(void *pvParameters){
     sensor_out(&sensor_temp_ex, read_temp,file_names[2], out); 
     sensor_out((void*) NULL, read_light,file_names[3], out);
     sensor_out((void*) NULL, read_uv, file_names[4], out);
+    sensor_out((void*) NULL, read_timestamp, file_names[9], out);
     checkBattery();
     
  //   sensor_out(&sensor_gps, read_gps, file_names[5], out);
@@ -237,7 +241,7 @@ void TaskCamera(void *pvParameters){
   for(;;){
     vTaskDelay(1);
     if(message_peek(input_streams, TAKE_PHOTO, read_count, num_readers)){
-      sensor_out(&camera, read_camera, file_names[8], out);
+      sensor_out(&camera, read_camera, file_names[7], out);
     }
   }
 }

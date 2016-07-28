@@ -1,6 +1,8 @@
 #ifndef SENSORS_H
 #define SENSORS_H
 
+void read_timestamp(void* dummy, Stream* output);
+
 bool message_peek(Stream** stream, char message, char &read_count, char num_readers){
   for(char i = 0; stream[i] != NULL; i++){
     if(stream[i]->peek() == message){
@@ -22,19 +24,22 @@ bool message_peek(Stream** stream, char message, char &read_count, char num_read
 extern SemaphoreHandle_t xOutputSemaphore;
 extern SemaphoreHandle_t xSDSemaphore;
 extern File file;
+
 template <typename F, typename S>
 inline void sensor_out(S sensor, F func, char* file_name, Stream** outputs){
  
-  if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+	if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
     for(int i = 0; outputs[i] != NULL; i++){ 
-      func(sensor, outputs[i]);
-      outputs[i]->println(); 
+			func(sensor, outputs[i]);
+			outputs[i]->println(); 
     }
     xSemaphoreGive(xOutputSemaphore);
-   }
+	}
 
   if ( xSemaphoreTake( xSDSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
     file = SD.open(file_name, FILE_WRITE);
+		read_timestamp((void*) NULL, &file);
+		file.print(", ");
     func(sensor, &file);
     file.println();
     file.close();
@@ -93,11 +98,11 @@ void read_baro(CoolSatBaro* sensor, Stream* output){
 //------------ Light & UV sensors ------------//
 
 void read_light(void* dummy, Stream* output){
-    float lightPin = 15; //anlaog light pin #
+    float lightPin = 15; //analog light pin #
     float volt = 0.0; //voltage (volts)
     float RLDR = 0.0; //resistance (ohms)
     float lux = 0.0; //brightness (lumens/m2)
-    const float TOVOLT = .0048; //converts sesor output to volts
+    const float TOVOLT = .0048; //converts sensor output to volts
     const float TOLUX = 776897.0; //converts to lux
     const float TOLUXPWR = -1.206; //converts to lux
 
@@ -197,8 +202,7 @@ void read_gps(TinyGPSPlus* gps, Stream* output){
 }
 //------------ Clock ------------//
 
-void printTime(int time, Stream* output)
-{
+void printTime(int time, Stream* output){
 	if (time >= 0 && time < 10){ // Prefaces times less than 10 with a 0
 		output->print("0");		 // e.g., converts "12:8:9" to "12:08:09"
 		output->print(time);
@@ -206,8 +210,8 @@ void printTime(int time, Stream* output)
 	else output->print(time);
 }
 
-void timestamp(Stream* output)
-{	tmElements_t tm; // magic getter of time from TimeLib.h
+void read_timestamp(void* dummy, Stream* output){	
+	tmElements_t tm; // magic getter of time from TimeLib.h
 
 	if (RTC.read(tm)){
 		printTime(tm.Hour, output);
