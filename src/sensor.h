@@ -230,6 +230,8 @@ void print_boom(void* dummy, Stream* output)
      output->print("***************** DEPLOYING BOOM **********************");
 }
 
+//------------ Battery ------------//
+
 void checkBattery(){
 const int batteryPin = 0;
 const int powerOff = 10;

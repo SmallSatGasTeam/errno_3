@@ -265,6 +265,8 @@ void TaskDeployBoom(void *pvParameters){
  (void) pvParameters;
  
  Stream* out[] = {&Serial, &Serial3, (Stream*) NULL};      
+
+ bool deployed = false;
   
  float pressure;
  
@@ -272,14 +274,18 @@ void TaskDeployBoom(void *pvParameters){
  {
  
   pressure = sensor_baro.getPressure();
-  
-  if(message_peek(input_streams, DEPLOY_BOOM, read_count, num_readers) || (pressure <= 853 && pressure > 30))
+
+// if 'b' is pressed OR (pressure falls below 44 AND boom hasn't deployed yet)
+  if(
+    message_peek(input_streams, DEPLOY_BOOM, read_count, num_readers) || 
+    ((pressure <= 44 && pressure > 30) && deployed == false))
   {
 	sensor_out((void*) NULL, print_boom, file_names[8], out);
         digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
 	vTaskDelay( 3000 / portTICK_PERIOD_MS );
         digitalWrite(WIRE_CUTTER, LOW); // Disengage
 	vTaskDelay( 1000 / portTICK_PERIOD_MS );
+        deployed = true;
   } 
  }
 }
