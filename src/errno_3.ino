@@ -28,7 +28,6 @@ File file;
 
 // define pins
 const int WIRE_CUTTER = 12;
-// const int BOOM_SWITCH = 30; 
 
 // define tasks
 void TaskBlink( void *pvParameters ); //TODO remove this test task
@@ -101,7 +100,6 @@ void setup() {
 
   // Initialize switches
   pinMode(WIRE_CUTTER, OUTPUT);
- // pinMode(BOOM_SWITCH, INPUT);
 
   // Now set up two tasks to run independently.
   xTaskCreate(
@@ -292,7 +290,7 @@ void TaskDeployBoom(void *pvParameters){
  
   pressure = sensor_baro.getPressure();
   
-  if(Serial.peek() == DEPLOY_BOOM || pressure <= 44)
+  if(message_peek(input_streams, DEPLOY_BOOM, read_count, num_readers) || pressure <= 44)
   {
 	sensor_out((void*) NULL, print_boom, file_names[8], out);
         digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
@@ -301,6 +299,7 @@ void TaskDeployBoom(void *pvParameters){
 	vTaskDelay( 1000 / portTICK_PERIOD_MS );
   } 
  }
+}
 
 void TaskGPSRead(void *pvParameters)
 {
