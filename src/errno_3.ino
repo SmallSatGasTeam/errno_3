@@ -31,6 +31,7 @@ void TaskBlink( void *pvParameters ); //TODO remove this test task
 void TaskAnalogRead( void *pvParameters ); //TODO remove this test task
 void TaskSensorReadStandard(void *pvParameters);
 void TaskSensorReadFast(void *pvParameters);
+void TaskGPSRead(void *pvParameters);
 void TaskCamera(void *pvParameters);
 
 // define semaphores
@@ -54,6 +55,7 @@ void setup() {
   Serial.begin(9600);
   Serial1.begin(115200);
   Serial2.begin(9600);
+  Serial3.begin(9600);
 
   Serial.println("Initializing SD Card");
   if(!SD.begin(46)){
@@ -88,7 +90,7 @@ void setup() {
  xTaskCreate(
    TaskAnalogRead
    ,  (const portCHAR *) "AnalogRead"
-   ,  512  // Stack size
+   ,  600  // Stack size
    ,  NULL
    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
    ,  NULL );
@@ -117,9 +119,16 @@ xTaskCreate(
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
 
+xTaskCreate(
+    TaskGPSRead
+    ,  (const portCHAR *) "GPSRead"
+    ,  512  // Stack size
+    ,  NULL
+    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  NULL );
+
   // Now the task scheduler, which takes over control of scheduling individual tasks, is automatically started.
 }
-
 void loop()
 {
   // Empty. Things are done in Tasks.
@@ -244,4 +253,20 @@ void TaskSensorReadFast(void *pvParameters)
     sensor_out(&sensor_gyro, read_gyro, file_names[6], outputs);
     vTaskDelay( 50 / portTICK_PERIOD_MS ); 
   }
+}
+
+void TaskGPSRead(void *pvParameters)
+{
+	(void) pvParameters;
+	Stream* outputs[] = {&Serial, (Stream*) NULL};
+//	printFloat(gps->location.lat(),gps->location.isValid(),11,6, output);
+//	printFloat(gps->location.lng(),gps->location.isValid(),12,6, output);
+	for(;;)
+	{
+		sensor_out(&sensor_gps,read_gps,file_names[5],outputs);
+		while (Serial2.available()){
+		 sensor_gps.encode(Serial2.read());
+		}
+		vTaskDelay(1000/portTICK_PERIOD_MS);
+	}
 }
