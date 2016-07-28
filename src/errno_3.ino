@@ -56,6 +56,10 @@ SemaphoreHandle_t xSDSemaphore;
 
  File files[num_files];
 
+ char read_count = 0; // Number of times input buffer has been read
+ char num_readers = 1; // Number of tasks that read input buffer
+ Stream* input_streams[] = {&Serial, &Serial3, (Stream*) NULL };
+
 /**
  *Global setup should occur here
  */
@@ -235,7 +239,7 @@ void TaskCamera(void *pvParameters){
   vTaskDelay(1);
     if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
        // Safe to use serial print here
-       if(Serial.peek() == TAKE_PHOTO){
+      if(message_peek(input_streams, TAKE_PHOTO, read_count, num_readers)){
          Serial.read();
         if (camera.init()) {
           camera.takePicture();

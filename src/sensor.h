@@ -1,6 +1,25 @@
 #ifndef SENSORS_H
 #define SENSORS_H
 
+bool message_peek(Stream** stream, char message, char &read_count, char num_readers){
+  // if any streams have input
+  for(char i = 0; stream[i] != NULL; i++){
+    if(stream[i]->peek() == message){
+      stream[i]->read();
+      read_count = 0;
+      return true;
+    }
+  }
+  
+  if(++read_count >= num_readers){
+    read_count = 0;
+    for(char i = 0; stream[i] != NULL; i++){
+      stream[i]->read(); 
+    }
+  } 
+  return false;
+}
+
 extern SemaphoreHandle_t xOutputSemaphore;
 extern SemaphoreHandle_t xSDSemaphore;
 extern File file;
