@@ -26,11 +26,15 @@ UCAMII camera(Serial1, &Serial);
 
 File file;
 
+// define pins
+const int WIRE_CUTTER = 12;
+
 // define tasks
 void TaskBlink( void *pvParameters ); //TODO remove this test task
 void TaskAnalogRead( void *pvParameters ); //TODO remove this test task
 void TaskSensorReadStandard(void *pvParameters);
 void TaskSensorReadFast(void *pvParameters);
+void TaskDeployBoom(void *pvParameters);
 void TaskGPSRead(void *pvParameters);
 void TaskCamera(void *pvParameters);
 
@@ -38,10 +42,25 @@ void TaskCamera(void *pvParameters);
 SemaphoreHandle_t xOutputSemaphore;
 SemaphoreHandle_t xSDSemaphore;
 
- const int num_files = 8;
- char* file_names[] = {"baro.csv", "temp_in.csv", "temp_ex.csv", "light.csv", "uv.csv" ,"gps.csv", "gyro.csv", "camera.csv", "time_stamp.csv"};
+const int num_files = 8;
+
+char* file_names[] = {
+	"baro.csv",     
+	"temp_in.csv",   
+	"temp_ex.csv",
+	"light.csv",
+	"uv.csv",
+	"gps.csv", 
+	"gyro.csv",
+	"camera.csv"
+	"boom.csv"
+	"time_stamp.csv"};
 
  File files[num_files];
+
+ char read_count = 0; // Number of times input buffer has been read
+ char num_readers = 1; // Number of tasks that read input buffer
+ Stream* input_streams[] = {&Serial, &Serial3, (Stream*) NULL };
 
 /**
  *Global setup should occur here
@@ -73,6 +92,17 @@ void setup() {
     xSDSemaphore = xSemaphoreCreateMutex(); 
     if(xSDSemaphore){ xSemaphoreGive(xSDSemaphore);}
   }
+
+  Wire.begin(); //Begining everying on our I2C Bus
+ 
+  // Initialize sensors
+  // These functions should be defined in sensor.h
+  initialize_temp_ex(&sensor_temp_ex, Serial);
+  initialize_temp_in(&sensor_temp_in, Serial);
+  initialize_baro(&sensor_baro, Serial);
+
+  // Initialize switches
+  pinMode(WIRE_CUTTER, OUTPUT);
 
   // Now set up two tasks to run independently.
   xTaskCreate(
@@ -123,6 +153,15 @@ xTaskCreate(
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
 
+xTaskCreate(
+    TaskDeployBoom
+    ,  (const portCHAR *) "Deploy Boom"
+    ,  512 // Stack size
+    ,  NULL
+    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  NULL );
+
+
   // Now the task scheduler, which takes over control of scheduling individual tasks, is automatically started.
 }
 void loop()
@@ -171,15 +210,6 @@ void TaskAnalogRead(void *pvParameters)  // This is a task.
 void TaskSensorReadStandard(void *pvParameters){
   (void) pvParameters;
 
-  // Task Setup
-  Wire.begin(); //Begining everying on our I2C Bus
-
-  // Initialze sensors
-  // These functions should be defined in sensor.h
-  initialize_temp_ex(&sensor_temp_ex, Serial);
-  initialize_temp_in(&sensor_temp_in, Serial);
-  initialize_baro(&sensor_baro, Serial);
-
   /*
     File has to be open when task starts in order to write data to log. We will
     close it for now, and have each sensor open and close it to ensure we don't
@@ -211,7 +241,7 @@ void TaskCamera(void *pvParameters){
   vTaskDelay(1);
     if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
        // Safe to use serial print here
-       if(Serial.peek() == TAKE_PHOTO){
+      if(message_peek(input_streams, TAKE_PHOTO, read_count, num_readers)){
          Serial.read();
         if (camera.init()) {
           camera.takePicture();
@@ -250,6 +280,29 @@ void TaskSensorReadFast(void *pvParameters)
     sensor_out(&sensor_gyro, read_gyro, file_names[6], outputs);
     vTaskDelay( 50 / portTICK_PERIOD_MS ); 
   }
+}
+
+void TaskDeployBoom(void *pvParameters){
+ (void) pvParameters;
+ 
+ Stream* out[] = {&Serial, &Serial3, (Stream*) NULL};      
+  
+ float pressure;
+ 
+ for(;;)
+ {
+ 
+  pressure = sensor_baro.getPressure();
+  
+  if(message_peek(input_streams, DEPLOY_BOOM, read_count, num_readers) || (pressure <= 44 && pressure > 30))
+  {
+	sensor_out((void*) NULL, print_boom, file_names[8], out);
+        digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
+	vTaskDelay( 3000 / portTICK_PERIOD_MS );
+        digitalWrite(WIRE_CUTTER, LOW); // Disengage
+	vTaskDelay( 1000 / portTICK_PERIOD_MS );
+  } 
+ }
 }
 
 void TaskGPSRead(void *pvParameters)

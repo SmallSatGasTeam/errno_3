@@ -3,6 +3,25 @@
 
 void read_timestamp(void* dummy, Stream* output);
 
+bool message_peek(Stream** stream, char message, char &read_count, char num_readers){
+  // if any streams have input
+  for(char i = 0; stream[i] != NULL; i++){
+    if(stream[i]->peek() == message){
+      stream[i]->read();
+      read_count = 0;
+      return true;
+    }
+  }
+  
+  if(++read_count >= num_readers){
+    read_count = 0;
+    for(char i = 0; stream[i] != NULL; i++){
+      stream[i]->read(); 
+    }
+  } 
+  return false;
+}
+
 extern SemaphoreHandle_t xOutputSemaphore;
 extern SemaphoreHandle_t xSDSemaphore;
 extern File file;
@@ -154,12 +173,12 @@ void printFloat(float val, bool valid, int len, int prec, Stream* output)
   if (!valid)
   {
     while (len-- > 1){
-     /*
-      file->print('*');
-      file->print(' ');
-      output->print('*');
-      output->print(' ');
-     */
+     
+     // file->print('*');
+     // file->print(' ');
+     // output->print('*');
+     //  output->print(' ');
+     
     }
   }
   else
@@ -202,6 +221,13 @@ void read_timestamp(void* dummy, Stream* output){
 		printTime(tm.Second, output);
 	}
 	else output->println("Error: Failed to fetch time");
+}
+
+//------------ Boom ------------//
+
+void print_boom(void* dummy, Stream* output)
+{
+     output->print("***************** DEPLOYING BOOM **********************");
 }
 
 void checkBattery(){
