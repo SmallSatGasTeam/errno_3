@@ -168,12 +168,12 @@ void printFloat(float val, bool valid, int len, int prec, Stream* output)
   if (!valid)
   {
     while (len-- > 1){
-     /*
-      file->print('*');
-      file->print(' ');
-      output->print('*');
-      output->print(' ');
-     */
+     
+     // file->print('*');
+     // file->print(' ');
+     // output->print('*');
+     //  output->print(' ');
+     
     }
   }
   else
@@ -217,6 +217,13 @@ void timestamp(Stream* output)
 		printTime(tm.Second, output);
 	}
 	else output->println("Error: Failed to fetch time");
+}
+
+//------------ Boom ------------//
+
+void print_boom(void* dummy, Stream* output)
+{
+     output->print("***************** DEPLOYING BOOM **********************");
 }
 
 void checkBattery(){
