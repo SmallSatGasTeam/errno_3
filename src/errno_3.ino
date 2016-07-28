@@ -25,7 +25,7 @@ TinyGPSPlus sensor_gps;
 
 // define pins
 const int WIRE_CUTTER = 12;
-const int BOOM_SWITCH = 30;
+// const int BOOM_SWITCH = 30; 
 
 // define tasks
 void TaskBlink( void *pvParameters ); //TODO remove this test task
@@ -84,7 +84,7 @@ void setup() {
 
   // Initialize switches
   pinMode(WIRE_CUTTER, OUTPUT);
-  pinMode(BOOM_SWITCH, INPUT);
+ // pinMode(BOOM_SWITCH, INPUT);
 
   // Now set up two tasks to run independently.
   xTaskCreate(
@@ -201,7 +201,6 @@ void TaskSensorReadStandard(void *pvParameters){
     sensor_out((void*) NULL, read_light,file_names[3], out);
     sensor_out((void*) NULL, read_uv, file_names[4], out);
  //   sensor_out(&sensor_gps, read_gps, file_names[5], out);
-	sensor_out((void*) NULL, read_boom, file_names[8], out);
   }
 }
 
@@ -258,6 +257,8 @@ void TaskSensorReadFast(void *pvParameters)
 void TaskDeployBoom(void *pvParameters){
  (void) pvParameters;
  
+ Stream* out[] = {&Serial, &Serial3, (Stream*) NULL};      
+  
  float pressure;
  
  for(;;)
@@ -265,19 +266,13 @@ void TaskDeployBoom(void *pvParameters){
  
   pressure = sensor_baro.getPressure();
   
-  if(Serial.peek() == DEPLOY_BOOM || pressure >= 44)
+  if(Serial.peek() == DEPLOY_BOOM || pressure <= 44)
   {
-	if (pressure >= 44) {
-	    Serial.println("*** Barometric pressure has dropped below 44 millibars ***");
-		Serial.println("*** Initiating automatic aeroboom deployment. Stand by ***");
-	}
-    digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
-	Serial.println("Engaging wire-cutter...");
-	delay(3000);
-	digitalWrite(WIRE_CUTTER, LOW); // Disengage
-	Serial.println("Disengaging...");
-	delay(1000);
-	Serial.println("Deployment complete.");
+	sensor_out((void*) NULL, print_boom, file_names[8], out);
+        digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
+	vTaskDelay( 3000 / portTICK_PERIOD_MS );
+        digitalWrite(WIRE_CUTTER, LOW); // Disengage
+	vTaskDelay( 1000 / portTICK_PERIOD_MS );
   } 
  }
 }

@@ -3,6 +3,6 @@
 
 unsigned char TAKE_PHOTO = 1;
 
-unsigned char DEPLOY_BOOM = 1;
+unsigned char DEPLOY_BOOM = 2;
 
 #endif

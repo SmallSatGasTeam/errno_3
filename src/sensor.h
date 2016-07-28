@@ -148,8 +148,8 @@ void printFloat(float val, bool valid, int len, int prec, Stream* output)
      
      // file->print('*');
      // file->print(' ');
-      output->print('*');
-      output->print(' ');
+     // output->print('*');
+     //  output->print(' ');
      
     }
   }
@@ -197,13 +197,8 @@ void timestamp(Stream* output)
 
 //------------ Boom ------------//
 
-void read_boom(void* dummy, Stream* output)
+void print_boom(void* dummy, Stream* output)
 {
-	auto level = digitalRead(30); // Pin 30
-	if (level == HIGH)
-	{
-		output->print("HIGH"); // TODO Make printed message more meaningful
-	}
-	else output->print("LOW");
+     output->print("***************** DEPLOYING BOOM **********************");
 }
 #endif
