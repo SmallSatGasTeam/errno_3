@@ -42,7 +42,7 @@ void TaskCamera(void *pvParameters);
 SemaphoreHandle_t xOutputSemaphore;
 SemaphoreHandle_t xSDSemaphore;
 
- const int num_files = 8;
+ const int num_files = 9;
  char* file_names[] = {"baro.csv",     
 					   "temp_in.csv",   
 					   "temp_ex.csv",
@@ -51,12 +51,13 @@ SemaphoreHandle_t xSDSemaphore;
 					   "gps.csv", 
 					   "gyro.csv",
 					   "camera.csv"
- 					   "boom.csv"};
+ 					   "boom.csv", 
+					   "camera.csv"};
 
  File files[num_files];
 
  char read_count = 0; // Number of times input buffer has been read
- char num_readers = 1; // Number of tasks that read input buffer
+ char num_readers = 2; // Number of tasks that read input buffer
  Stream* input_streams[] = {&Serial, &Serial3, (Stream*) NULL };
 
 /**
@@ -137,7 +138,7 @@ xTaskCreate(
 xTaskCreate(
     TaskCamera
     ,  (const portCHAR *) "Take Photos"
-    ,  350 // Stack size
+    ,  600 // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -231,35 +232,13 @@ void TaskSensorReadStandard(void *pvParameters){
 void TaskCamera(void *pvParameters){
   (void) pvParameters;
 
-  short x = 0;
-  int bytes;
+  Stream* out[] = {(Stream*) NULL};
+
   for(;;){
-  vTaskDelay(1);
-    if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
-       // Safe to use serial print here
-      if(message_peek(input_streams, TAKE_PHOTO, read_count, num_readers)){
-         Serial.read();
-        if (camera.init()) {
-          camera.takePicture();
-          Serial.print("Image size: ");
-          Serial.println(camera.imageSize, DEC);
-          Serial.print("number of packages: ");
-          Serial.println(camera.numberOfPackages(), DEC);
-
-          while ( bytes = camera.getData() ) {
-            for (x = 0; x < bytes; x++) {
-              Serial.print("0x");
-              Serial.print(camera.imgBuffer[x], HEX);
-              Serial.print(" ");
-            }
-            Serial.println("");
-          }
-          Serial.println("done downloading");
-
-        }
-      }
-    xSemaphoreGive( xOutputSemaphore );
-   }
+    vTaskDelay(1);
+    if(message_peek(input_streams, TAKE_PHOTO, read_count, num_readers)){
+      sensor_out(&camera, read_camera, file_names[8], out);
+    }
   }
 }
 
@@ -292,7 +271,7 @@ void TaskDeployBoom(void *pvParameters){
   
   if(message_peek(input_streams, DEPLOY_BOOM, read_count, num_readers) || (pressure <= 44 && pressure > 30))
   {
-	sensor_out((void*) NULL, print_boom, file_names[8], out);
+	sensor_out((void*) NULL, print_boom, file_names[7], out);
         digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
 	vTaskDelay( 3000 / portTICK_PERIOD_MS );
         digitalWrite(WIRE_CUTTER, LOW); // Disengage

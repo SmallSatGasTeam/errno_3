@@ -2,10 +2,9 @@
 #define SENSORS_H
 
 bool message_peek(Stream** stream, char message, char &read_count, char num_readers){
-  // if any streams have input
   for(char i = 0; stream[i] != NULL; i++){
     if(stream[i]->peek() == message){
-      stream[i]->read();
+      while(stream[i]->available(){stream[i]->read();}
       read_count = 0;
       return true;
     }
@@ -14,7 +13,7 @@ bool message_peek(Stream** stream, char message, char &read_count, char num_read
   if(++read_count >= num_readers){
     read_count = 0;
     for(char i = 0; stream[i] != NULL; i++){
-      stream[i]->read(); 
+      while(stream[i]->available(){stream[i]->read();}
     }
   } 
   return false;
@@ -42,6 +41,7 @@ inline void sensor_out(S sensor, F func, char* file_name, Stream** outputs){
     xSemaphoreGive(xSDSemaphore);
   }
 }
+
 template <typename F, typename S>
 void print_sensor(S sensor, F func, char header, Stream** outputs){
  // File file_baro = SD.open("baro.csv", FILE_WRITE);
@@ -244,4 +244,21 @@ battery = (battery * .00475) * 2;
 
 }
 
+
+// ----------------- Camera -------------- //
+void read_camera(UCAMII* camera, Stream* output){
+  short x = 0;
+  int bytes;
+  if (camera->init()) {
+    camera->takePicture();
+    while ( bytes = camera->getData() ) {
+      for (x = 0; x < bytes; x++) {
+        Serial.print("0x");
+        Serial.print(camera->imgBuffer[x], HEX);
+        Serial.print(" ");
+      }
+    Serial.println("\n\n\n\n");
+    }
+  }
+}
 #endif
