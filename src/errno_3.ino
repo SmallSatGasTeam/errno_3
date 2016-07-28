@@ -42,7 +42,7 @@ void TaskCamera(void *pvParameters);
 SemaphoreHandle_t xOutputSemaphore;
 SemaphoreHandle_t xSDSemaphore;
 
-const int num_files = 8;
+const int num_files = 10;
 
 char* file_names[] = {
 	"baro.csv",     
@@ -52,14 +52,15 @@ char* file_names[] = {
 	"uv.csv",
 	"gps.csv", 
 	"gyro.csv",
-	"camera.csv"
-	"boom.csv"
-	"time_stamp.csv"};
+	"camera.csv",
+	"boom.csv",
+	"time_stamp.csv"
+};
 
  File files[num_files];
 
  char read_count = 0; // Number of times input buffer has been read
- char num_readers = 1; // Number of tasks that read input buffer
+ char num_readers = 2; // Number of tasks that read input buffer
  Stream* input_streams[] = {&Serial, &Serial3, (Stream*) NULL };
 
 /**
@@ -140,7 +141,7 @@ xTaskCreate(
 xTaskCreate(
     TaskCamera
     ,  (const portCHAR *) "Take Photos"
-    ,  350 // Stack size
+    ,  600 // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
@@ -225,7 +226,7 @@ void TaskSensorReadStandard(void *pvParameters){
     sensor_out(&sensor_temp_ex, read_temp,file_names[2], out); 
     sensor_out((void*) NULL, read_light,file_names[3], out);
     sensor_out((void*) NULL, read_uv, file_names[4], out);
-		sensor_out((void*) NULL, read_timestamp, file_names[8], out);
+    sensor_out((void*) NULL, read_timestamp, file_names[9], out);
     checkBattery();
     
  //   sensor_out(&sensor_gps, read_gps, file_names[5], out);
@@ -235,35 +236,13 @@ void TaskSensorReadStandard(void *pvParameters){
 void TaskCamera(void *pvParameters){
   (void) pvParameters;
 
-  short x = 0;
-  int bytes;
+  Stream* out[] = {(Stream*) NULL};
+
   for(;;){
-  vTaskDelay(1);
-    if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
-       // Safe to use serial print here
-      if(message_peek(input_streams, TAKE_PHOTO, read_count, num_readers)){
-         Serial.read();
-        if (camera.init()) {
-          camera.takePicture();
-          Serial.print("Image size: ");
-          Serial.println(camera.imageSize, DEC);
-          Serial.print("number of packages: ");
-          Serial.println(camera.numberOfPackages(), DEC);
-
-          while ( bytes = camera.getData() ) {
-            for (x = 0; x < bytes; x++) {
-              Serial.print("0x");
-              Serial.print(camera.imgBuffer[x], HEX);
-              Serial.print(" ");
-            }
-            Serial.println("");
-          }
-          Serial.println("done downloading");
-
-        }
-      }
-    xSemaphoreGive( xOutputSemaphore );
-   }
+    vTaskDelay(1);
+    if(message_peek(input_streams, TAKE_PHOTO, read_count, num_readers)){
+      sensor_out(&camera, read_camera, file_names[7], out);
+    }
   }
 }
 
