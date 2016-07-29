@@ -159,7 +159,7 @@ void read_gyro(Adafruit_BNO055* gyro, Stream* output){
 	output->print(euler.z());
 	output->print(",");
 
-	// delay(100); // Delay of 100ms TODO needed?
+	delay(100); // Delay of 100ms TODO needed?
 }
 
 //------------- GPS ---------------//

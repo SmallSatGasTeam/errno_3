@@ -256,7 +256,7 @@ void TaskDeployBoom(void *pvParameters){
 		for(char i = 0; input_streams[i] != NULL; i++){ 
 			if(input_streams[i]->available()){
 				received_message = input_streams[i]->read();
-				while(input_stream[i]->available()){input_streams[i]->read();} // Clear the rest of the buffer
+				while(input_streams[i]->available()){input_streams[i]->read();} // Clear the rest of the buffer
 			} 
 		}
 
@@ -270,16 +270,17 @@ void TaskDeployBoom(void *pvParameters){
 			deployed = true;
 
 			//take picture after boom deployment
-			sensor_out(&camera, read_camera, file_names[7], out);
+			message_out("****************Camera Taking Photo*****************", out);
+			sensor_out(&camera, read_camera, file_names[7], camera_out);
 		} 
-	}
 
-	if(received_message == TAKE_PHOTO){
-		message_out("****************Camera Taking Photo*****************", out);
-		sensor_out(&camera, read_camera, file_names[7], camera_out);
-		message_out("****************Camera Done Taking Photo************", out);
+
+		if(received_message == TAKE_PHOTO){
+			message_out("****************Camera Taking Photo*****************", out);
+			sensor_out(&camera, read_camera, file_names[7], camera_out);
+			message_out("****************Camera Done Taking Photo************", out);
+		}
 	}
-}
 }
 
 void TaskGPSRead(void *pvParameters)
