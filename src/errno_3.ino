@@ -1,5 +1,3 @@
-#define FILENAME "sensors.txt"
-
 #include <Arduino_FreeRTOS.h>
 #include <semphr.h>  // add the FreeRTOS functions for Semaphores (or Flags).
 #include <SD.h>
@@ -36,7 +34,6 @@ void TaskSensorReadStandard(void *pvParameters);
 void TaskSensorReadFast(void *pvParameters);
 void TaskDeployBoom(void *pvParameters);
 void TaskGPSRead(void *pvParameters);
-void TaskCamera(void *pvParameters);
 
 // define semaphores
 SemaphoreHandle_t xOutputSemaphore;
@@ -139,14 +136,6 @@ xTaskCreate(
     ,  NULL );
 
 xTaskCreate(
-    TaskCamera
-    ,  (const portCHAR *) "Take Photos"
-    ,  600 // Stack size
-    ,  NULL
-    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  NULL );
-
-xTaskCreate(
     TaskGPSRead
     ,  (const portCHAR *) "GPSRead"
     ,  512  // Stack size
@@ -233,20 +222,6 @@ void TaskSensorReadStandard(void *pvParameters){
   }
 }
 
-void TaskCamera(void *pvParameters){
-  (void) pvParameters;
-
-  Stream* out[] = {(Stream*) NULL};
-
-  for(;;){
-    vTaskDelay(1);
-    if(message_peek(input_streams, TAKE_PHOTO, read_count, num_readers)){
-      sensor_out(&camera, read_camera, file_names[7], out);
-    }
-  }
-}
-
-
 void TaskSensorReadFast(void *pvParameters)
 {
   (void) pvParameters;
@@ -265,7 +240,7 @@ void TaskDeployBoom(void *pvParameters){
  (void) pvParameters;
  
  Stream* out[] = {&Serial, &Serial3, (Stream*) NULL};      
-
+ Stream* camera_out[] = {(Stream*) NULL};      
  bool deployed = false;
   
  float pressure;
@@ -274,19 +249,32 @@ void TaskDeployBoom(void *pvParameters){
  {
  
   pressure = sensor_baro.getPressure();
+  
+  char received_message = 0;
+  // We don't expect to receive commands from two streams at the same time. So this
+  // Overwriting the message shouldn't be a problem.
+  for(char i = 0; input_streams[i] != NULL; i++){ 
+    if(input_streams[i]->available()){
+      received_message = input_streams[i]->read();
+      while(input_stream[i]->available()){input_streams[i]->read();} // Clear the rest of the buffer
+    } 
+  }
 
 // if 'b' is pressed OR (pressure falls below 44 AND boom hasn't deployed yet)
-  if(
-    message_peek(input_streams, DEPLOY_BOOM, read_count, num_readers) || 
-    ((pressure <= 44 && pressure > 30) && deployed == false))
-  {
+  if(received_message == DEPLOY_BOOM || ((pressure <= 44 && pressure > 30) && deployed == false)){
 	sensor_out((void*) NULL, print_boom, file_names[8], out);
         digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
 	vTaskDelay( 3000 / portTICK_PERIOD_MS );
         digitalWrite(WIRE_CUTTER, LOW); // Disengage
 	vTaskDelay( 1000 / portTICK_PERIOD_MS );
         deployed = true;
-  } 
+  }
+
+  if(received_message == TAKE_PHOTO){
+    message_out("****************Camera Taking Photo*****************", out);
+    sensor_out(&camera, read_camera, file_names[7], camera_out);
+    message_out("****************Camera Done Taking Photo************", out);
+  }
  }
 }
 

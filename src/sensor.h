@@ -47,6 +47,15 @@ inline void sensor_out(S sensor, F func, char* file_name, Stream** outputs){
   }
 }
 
+inline void message_out(char* message, Stream** outputs){ 
+  if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+    for(int i = 0; outputs[i] != NULL; i++){ 
+      outputs[i]->println(message); 
+    }
+    xSemaphoreGive(xOutputSemaphore);
+  }
+}
+
 template <typename F, typename S>
 void print_sensor(S sensor, F func, char header, Stream** outputs){
  // File file_baro = SD.open("baro.csv", FILE_WRITE);
