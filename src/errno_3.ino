@@ -1,5 +1,3 @@
-#define FILENAME "sensors.txt"
-
 #include <Arduino_FreeRTOS.h>
 #include <semphr.h>  // add the FreeRTOS functions for Semaphores (or Flags).
 #include <SD.h>
@@ -36,7 +34,6 @@ void TaskSensorReadStandard(void *pvParameters);
 void TaskSensorReadFast(void *pvParameters);
 void TaskDeployBoom(void *pvParameters);
 void TaskGPSRead(void *pvParameters);
-void TaskCamera(void *pvParameters);
 
 // define semaphores
 SemaphoreHandle_t xOutputSemaphore;
@@ -138,15 +135,6 @@ xTaskCreate(
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
 
-/*
-xTaskCreate(
-    TaskCamera
-    ,  (const portCHAR *) "Take Photos"
-    ,  600 // Stack size
-    ,  NULL
-    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  NULL );
-*/
 xTaskCreate(
     TaskGPSRead
     ,  (const portCHAR *) "GPSRead"
@@ -233,20 +221,6 @@ void TaskSensorReadStandard(void *pvParameters){
  //   sensor_out(&sensor_gps, read_gps, file_names[5], out);
   }
 }
-
-void TaskCamera(void *pvParameters){
-  (void) pvParameters;
-
-  Stream* out[] = {(Stream*) NULL};
-
-  for(;;){
-    vTaskDelay(1);
-    if(message_peek(input_streams, TAKE_PHOTO, read_count, num_readers)){
-      sensor_out(&camera, read_camera, file_names[7], out);
-    }
-  }
-}
-
 
 void TaskSensorReadFast(void *pvParameters)
 {
