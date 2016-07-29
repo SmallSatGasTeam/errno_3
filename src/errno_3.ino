@@ -28,8 +28,6 @@ File file;
 const int WIRE_CUTTER = 12;
 
 // define tasks
-void TaskBlink( void *pvParameters ); //TODO remove this test task
-void TaskAnalogRead( void *pvParameters ); //TODO remove this test task
 void TaskSensorReadStandard(void *pvParameters);
 void TaskSensorReadFast(void *pvParameters);
 void TaskDeployBoom(void *pvParameters);
@@ -102,23 +100,7 @@ void setup() {
 	// Initialize switches
 	pinMode(WIRE_CUTTER, OUTPUT);
 
-	// Now set up two tasks to run independently.
-	xTaskCreate(
-			TaskBlink
-			,  (const portCHAR *) "Blink"   // A name just for humans
-			,  128  // This stack size can be checked & adjusted by reading the Stack Highwater
-			,  NULL
-			,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-			,  NULL );
-
-	xTaskCreate(
-			TaskAnalogRead
-			,  (const portCHAR *) "AnalogRead"
-			,  512  // Stack size
-			,  NULL
-			,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-			,  NULL );
-
+	// Now set up two tasks to run independently
 	xTaskCreate(
 			TaskSensorReadStandard
 			,  (const portCHAR *) "ReadSensors"
@@ -163,40 +145,6 @@ void loop()
 /*---------------------- Tasks ---------------------*/
 /*--------------------------------------------------*/
 
-
-void TaskBlink(void *pvParameters)  // This is a task.
-{
-	(void) pvParameters;
-
-	// initialize digital pin 13 as an output.
-	pinMode(13, OUTPUT);
-
-	for (;;) // A Task shall never return or exit.
-	{
-		digitalWrite(13, HIGH);   // turn the LED on (HIGH is the voltage level)
-		vTaskDelay( 1000 / portTICK_PERIOD_MS ); // wait for one second
-		digitalWrite(13, LOW);    // turn the LED off by making the voltage LOW
-		vTaskDelay( 1000 / portTICK_PERIOD_MS ); // wait for one second
-	}
-}
-
-void read_test(void* a, Stream* output){
-	output->println("Analog read Test Task Read");
-}
-
-void TaskAnalogRead(void *pvParameters)  // This is a task.
-{
-	(void) pvParameters;
-
-	Stream* outs[] = {&Serial, (Stream*) NULL };
-
-	for (;;)
-	{
-		sensor_out((void*) NULL, read_test, file_names[6], outs);  
-		vTaskDelay(20);  // one tick delay (15ms) in between reads for stability
-	}
-}
-
 void TaskSensorReadStandard(void *pvParameters){
 	(void) pvParameters;
 
@@ -208,6 +156,7 @@ void TaskSensorReadStandard(void *pvParameters){
 	for(int i = 0; i < num_files; i++){ files[i].close(); }
 
 	Stream* out[] = {&Serial, &Serial3, (Stream*) NULL};      
+        message_out("barometer\ttemp-in\ttemp-ex\tlight\tuv\ttimestamp\n", out);
 	for(;;){
 		vTaskDelay( 1000 / portTICK_PERIOD_MS );
 		sensor_out(&sensor_baro, read_baro, file_names[0], out);   
@@ -217,8 +166,7 @@ void TaskSensorReadStandard(void *pvParameters){
 		sensor_out((void*) NULL, read_uv, file_names[4], out);
 		sensor_out((void*) NULL, read_timestamp, file_names[9], out);
 		checkBattery();
-
-		//   sensor_out(&sensor_gps, read_gps, file_names[5], out);
+                message_out("\n", out);
 	}
 }
 
@@ -226,7 +174,7 @@ void TaskSensorReadFast(void *pvParameters)
 {
 	(void) pvParameters;
 
-	Stream* outputs[] = {&Serial, (Stream*) NULL};
+	Stream* outputs[] = {(Stream*) NULL};
 	initialize_gyro(&sensor_gyro, Serial);
 
 	for (;;) // A Task shall never return or exit.
@@ -286,7 +234,7 @@ void TaskDeployBoom(void *pvParameters){
 void TaskGPSRead(void *pvParameters)
 {
 	(void) pvParameters;
-	Stream* outputs[] = {&Serial, (Stream*) NULL};
+	Stream* outputs[] = {(Stream*) NULL};
 	//	printFloat(gps->location.lat(),gps->location.isValid(),11,6, output);
 	//	printFloat(gps->location.lng(),gps->location.isValid(),12,6, output);
 	for(;;)
