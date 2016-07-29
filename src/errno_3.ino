@@ -254,7 +254,10 @@ void TaskDeployBoom(void *pvParameters){
   // We don't expect to receive commands from two streams at the same time. So this
   // Overwriting the message shouldn't be a problem.
   for(char i = 0; input_streams[i] != NULL; i++){ 
-    if(input_streams[i]->available()){received_message = input_streams[i]->read();} 
+    if(input_streams[i]->available()){
+      received_message = input_streams[i]->read();
+      while(input_stream[i]->available()){input_streams[i]->read();} // Clear the rest of the buffer
+    } 
   }
 
 // if 'b' is pressed OR (pressure falls below 44 AND boom hasn't deployed yet)
