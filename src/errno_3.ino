@@ -133,7 +133,7 @@ xTaskCreate(
 xTaskCreate(
     TaskSensorReadFast
     ,  (const portCHAR *) "ReadSensorsFast"
-    ,  350  // Stack size
+    ,  400  // Stack size
     ,  NULL
     ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL );
