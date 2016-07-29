@@ -286,6 +286,9 @@ void TaskDeployBoom(void *pvParameters){
         digitalWrite(WIRE_CUTTER, LOW); // Disengage
 	vTaskDelay( 1000 / portTICK_PERIOD_MS );
         deployed = true;
+
+//take picture after boom deployment
+	sensor_out(&camera, read_camera, file_names[7], out);
   } 
  }
 }
