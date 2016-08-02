@@ -165,6 +165,7 @@ void TaskSensorReadStandard(void *pvParameters){
 		sensor_out((void*) NULL, read_light,file_names[3], out);
 		sensor_out((void*) NULL, read_uv, file_names[4], out);
 		sensor_out((void*) NULL, read_timestamp, file_names[9], out);
+		sensor_out(&sensor_gps,read_gps,file_names[5],out);
 		checkBattery();
                 message_out("\n", out);
 	}
@@ -239,9 +240,6 @@ void TaskGPSRead(void *pvParameters)
 	{
 		while (Serial2.available()){
 			sensor_gps.encode(Serial2.read());
-		}
-		if(sensor_gps.location.isUpdated()){
-			sensor_out(&sensor_gps,read_gps,file_names[5],outputs);
 		}
 		vTaskDelay(500/portTICK_PERIOD_MS);
 	}
