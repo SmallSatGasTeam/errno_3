@@ -60,7 +60,7 @@ int UCAMII::attempt_sync()
 
   while (attempts < 60 && ack_success == 0) {
     // Flush
-    while (camera_serial.available());
+    while (camera_serial.available()) camera_serial.read();
     delay(1000);
 #ifdef cameraDebugSerial
     debug_serial->println("Trying...");
