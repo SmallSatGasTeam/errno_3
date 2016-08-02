@@ -26,9 +26,9 @@ extern SemaphoreHandle_t xSDSemaphore;
 extern File file;
 
 template <typename F, typename S>
-inline void sensor_out(S sensor, F func, char* file_name, Stream** outputs){
+inline void sensor_out(S sensor, F func, char* file_name, Stream** outputs, char priority = 5){
  
-	if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+	if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) priority ) == pdTRUE ){
     for(int i = 0; outputs[i] != NULL; i++){ 
 			func(sensor, outputs[i]);
 			outputs[i]->print('\t'); 
@@ -210,7 +210,8 @@ battery = (battery * .00475) * 2;
 
 // ----------------- Camera -------------- //
 void read_camera(UCAMII* camera, Stream* output){
-  short x = 0;
+ output->print("****************Camera Taking Photo*****************\n");
+ short x = 0;
   int bytes;
   if (camera->init()) {
     camera->takePicture();
@@ -223,5 +224,6 @@ void read_camera(UCAMII* camera, Stream* output){
     }
     output->println("\n\n\n\n");
   }
+ output->print("****************Camera Done Taking Photo*****************\n");
 }
 #endif
