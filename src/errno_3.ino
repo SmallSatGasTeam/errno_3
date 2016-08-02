@@ -165,6 +165,7 @@ void TaskSensorReadStandard(void *pvParameters){
 		sensor_out((void*) NULL, read_light,file_names[3], out);
 		sensor_out((void*) NULL, read_uv, file_names[4], out);
 		sensor_out((void*) NULL, read_timestamp, file_names[9], out);
+		sensor_out(&sensor_gps,read_gps,file_names[5],out);
 		checkBattery();
                 message_out("\n", out);
 	}
@@ -235,14 +236,11 @@ void TaskGPSRead(void *pvParameters)
 {
 	(void) pvParameters;
 	Stream* outputs[] = {(Stream*) NULL};
-	//	printFloat(gps->location.lat(),gps->location.isValid(),11,6, output);
-	//	printFloat(gps->location.lng(),gps->location.isValid(),12,6, output);
 	for(;;)
 	{
-		sensor_out(&sensor_gps,read_gps,file_names[5],outputs);
 		while (Serial2.available()){
 			sensor_gps.encode(Serial2.read());
 		}
-		vTaskDelay(1000/portTICK_PERIOD_MS);
+		vTaskDelay(500/portTICK_PERIOD_MS);
 	}
 }
