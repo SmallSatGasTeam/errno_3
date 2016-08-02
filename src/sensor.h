@@ -31,7 +31,7 @@ inline void sensor_out(S sensor, F func, char* file_name, Stream** outputs){
 	if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
     for(int i = 0; outputs[i] != NULL; i++){ 
 			func(sensor, outputs[i]);
-			outputs[i]->println(); 
+			outputs[i]->print('\t'); 
     }
     xSemaphoreGive(xOutputSemaphore);
 	}
