@@ -184,7 +184,7 @@ void read_timestamp(void* dummy, Stream* output){
 
 void print_boom(void* dummy, Stream* output)
 {
-     output->print("***************** DEPLOYING BOOM **********************");
+     output->print("\n***************** DEPLOYING BOOM **********************\n");
 }
 
 //------------ Battery ------------//
@@ -210,7 +210,6 @@ battery = (battery * .00475) * 2;
 
 // ----------------- Camera -------------- //
 void read_camera(UCAMII* camera, Stream* output){
- output->print("****************Camera Taking Photo*****************\n");
  short x = 0;
   int bytes;
   if (camera->init()) {
@@ -224,6 +223,5 @@ void read_camera(UCAMII* camera, Stream* output){
     }
     output->println("\n\n\n\n");
   }
- output->print("****************Camera Done Taking Photo*****************\n");
 }
 #endif

@@ -219,15 +219,16 @@ void TaskDeployBoom(void *pvParameters){
 			deployed = true;
 
 			//take picture after boom deployment
-			message_out("****************Camera Taking Photo*****************", out);
-			sensor_out(&camera, read_camera, file_names[7], camera_out);
+			message_out("\n****************Camera Taking Photo*****************\n", out);
+			sensor_out(&camera, read_camera, file_names[7], camera_out, 20);
+			message_out("\n****************Camera Done Taking Photo*****************\n", out);
 		} 
 
 
 		if(received_message == TAKE_PHOTO){
-			message_out("****************Camera Taking Photo*****************", out);
-			sensor_out(&camera, read_camera, file_names[7], camera_out);
-			message_out("****************Camera Done Taking Photo************", out);
+                    message_out("\n****************Camera Taking Photo*****************\n", out);
+		     sensor_out(&camera, read_camera, file_names[7], camera_out, 20);
+		     message_out("\n****************Camera Done Taking Photo*****************\n", out);
 		}
 	}
 }
