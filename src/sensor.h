@@ -109,9 +109,8 @@ void read_light(void* dummy, Stream* output){
 
 void read_uv(void* dummy, Stream* output){
   const int uvPin = 1; // UV sensor pin
-  float uv = 0.0; // default
-  uv = analogRead(uvPin); // reads value
-
+  int v = analogRead(uvPin); // reads value
+  float uv = 5 / 1023.0 * v * 10; 
   output->print(uv);
 }
 
