@@ -54,8 +54,6 @@ char* file_names[] = {
 
 File files[num_files];
 
-char read_count = 0; // Number of times input buffer has been read
-char num_readers = 2; // Number of tasks that read input buffer
 Stream* input_streams[] = {&Serial, &Serial3, (Stream*) NULL };
 
 /**
@@ -104,7 +102,7 @@ void setup() {
 	xTaskCreate(
 			TaskSensorReadStandard
 			,  (const portCHAR *) "ReadSensors"
-			,  600  // Stack size
+			,  700  // Stack size
 			,  NULL
 			,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
 			,  NULL );
@@ -112,7 +110,7 @@ void setup() {
 	xTaskCreate(
 			TaskSensorReadFast
 			,  (const portCHAR *) "ReadSensorsFast"
-			,  400  // Stack size
+			,  512  // Stack size
 			,  NULL
 			,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
 			,  NULL );
@@ -128,7 +126,7 @@ void setup() {
 	xTaskCreate(
 			TaskDeployBoom
 			,  (const portCHAR *) "Deploy Boom"
-			,  512 // Stack size
+			,  1024 // Stack size
 			,  NULL
 			,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
 			,  NULL );
@@ -211,7 +209,7 @@ void TaskDeployBoom(void *pvParameters){
 
 		// if 'b' is pressed OR (pressure falls below 44 AND boom hasn't deployed yet)
 		if(received_message == DEPLOY_BOOM || ((pressure <= 44 && pressure > 30) && deployed == false)){
-			sensor_out((void*) NULL, print_boom, file_names[8], out);
+			sensor_out((void*) NULL, print_boom, file_names[8], out, 500);
 			digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
 			vTaskDelay( 3000 / portTICK_PERIOD_MS );
 			digitalWrite(WIRE_CUTTER, LOW); // Disengage
@@ -220,14 +218,14 @@ void TaskDeployBoom(void *pvParameters){
 
 			//take picture after boom deployment
 			message_out("\n****************Camera Taking Photo*****************\n", out);
-			sensor_out(&camera, read_camera, file_names[7], camera_out, 20);
+			sensor_out(&camera, read_camera, file_names[7], camera_out, 500);
 			message_out("\n****************Camera Done Taking Photo*****************\n", out);
 		} 
 
 
 		if(received_message == TAKE_PHOTO){
                     message_out("\n****************Camera Taking Photo*****************\n", out);
-		     sensor_out(&camera, read_camera, file_names[7], camera_out, 20);
+		     sensor_out(&camera, read_camera, file_names[7], camera_out, 500);
 		     message_out("\n****************Camera Done Taking Photo*****************\n", out);
 		}
 	}
