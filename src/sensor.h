@@ -47,6 +47,39 @@ inline void sensor_out(S sensor, F func, char* file_name, Stream** outputs, char
   }
 }
 
+template <typename F, typename S>
+inline void critical_out(S sensor, F func, char* file_name, Stream** outputs, Stream** alert_outputs = (Stream**) NULL, char** status_messages = (char**) NULL){
+  if(status_messages && alert_outputs){
+    for(int i = 0; alert_outputs[i] != NULL; i++){
+      alert_outputs[i]->print(status_messages[0]);  
+    }
+  }
+
+  while(xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 15 ) != pdTRUE ){;}
+    for(int i = 0; outputs[i] != NULL; i++){ 
+      func(sensor, outputs[i]);
+      outputs[i]->print('\t'); 
+    }
+    xSemaphoreGive(xOutputSemaphore);
+
+  while( xSemaphoreTake( xSDSemaphore, ( TickType_t ) 15 ) != pdTRUE ){;}
+    file = SD.open(file_name, FILE_WRITE);
+    read_timestamp((void*) NULL, &file);
+    file.print(", ");
+    func(sensor, &file);
+    file.println();
+    file.close();
+    xSemaphoreGive(xSDSemaphore);
+
+  if(status_messages && alert_outputs){
+    for(int i = 0; alert_outputs[i] != NULL; i++){
+      alert_outputs[i]->print(status_messages[1]);  
+    }
+  }
+}
+
+
+
 inline void message_out(char* message, Stream** outputs){ 
   if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
     for(int i = 0; outputs[i] != NULL; i++){ 

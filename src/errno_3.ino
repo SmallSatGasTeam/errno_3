@@ -191,6 +191,10 @@ void TaskDeployBoom(void *pvParameters){
 	bool deployed = false;
 
 	float pressure;
+        char* camera_messages[] = {
+          "\n****************Camera Taking Photo*****************\n",
+          "\n****************Camera Done Taking Photo*****************\n"
+        };
 
 	for(;;)
 	{
@@ -209,7 +213,7 @@ void TaskDeployBoom(void *pvParameters){
 
 		// if 'b' is pressed OR (pressure falls below 44 AND boom hasn't deployed yet)
 		if(received_message == DEPLOY_BOOM || ((pressure <= 44 && pressure > 30) && deployed == false)){
-			sensor_out((void*) NULL, print_boom, file_names[8], out, 500);
+			critical_out((void*) NULL, print_boom, file_names[8], out);
 			digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
 			vTaskDelay( 3000 / portTICK_PERIOD_MS );
 			digitalWrite(WIRE_CUTTER, LOW); // Disengage
@@ -217,16 +221,12 @@ void TaskDeployBoom(void *pvParameters){
 			deployed = true;
 
 			//take picture after boom deployment
-			message_out("\n****************Camera Taking Photo*****************\n", out);
-			sensor_out(&camera, read_camera, file_names[7], camera_out, 500);
-			message_out("\n****************Camera Done Taking Photo*****************\n", out);
+			critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
 		} 
 
 
 		if(received_message == TAKE_PHOTO){
-                    message_out("\n****************Camera Taking Photo*****************\n", out);
-		     sensor_out(&camera, read_camera, file_names[7], camera_out, 500);
-		     message_out("\n****************Camera Done Taking Photo*****************\n", out);
+		    critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
 		}
 	}
 }
