@@ -1,5 +1,5 @@
 # ERRNO
-## Elevated Real-time Research Nonchaotic Observer
+## Elevated Real-time Research Near-Earth Observer
 
 A CubeSat deployment system based on FreeRTOS to test the functionality of an inflatable aeroboom in a high-altitude, low-pressure environment to be used as method of passive CubeSat stabilization.
 
