@@ -191,6 +191,10 @@ void TaskDeployBoom(void *pvParameters){
 	bool deployed = false;
 
 	float pressure;
+        auto iters = 0;
+        auto sum = 0;
+        auto avgPressure = 0;
+        const auto AVG_RANGE = 5;
         char* camera_messages[] = {
           "\n****************Camera Taking Photo*****************\n",
           "\n****************Camera Done Taking Photo*****************\n"
@@ -198,9 +202,16 @@ void TaskDeployBoom(void *pvParameters){
 
 	for(;;)
 	{
-
-		pressure = sensor_baro.getPressure();
-
+          ++iters;
+          pressure = sensor_baro.getPressure();
+          sum += pressure;
+          if (iters >= AVG_RANGE)
+          {
+          avgPressure = sum / iters;
+          sum = 0;
+          iters = 0;
+          }
+ 
 		char received_message = 0;
 		// We don't expect to receive commands from two streams at the same time. So this
 		// Overwriting the message shouldn't be a problem.
@@ -220,13 +231,11 @@ void TaskDeployBoom(void *pvParameters){
 			vTaskDelay( 1000 / portTICK_PERIOD_MS );
 			deployed = true;
 
-			//take picture after boom deployment
-			critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
-		} 
-
-
-		if(received_message == TAKE_PHOTO){
-		    critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
+                	//take picture after boom deployment
+                	critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
+                    	} 
+    	if(received_message == TAKE_PHOTO){
+	 critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
 		}
 	}
 }
