@@ -191,6 +191,10 @@ void TaskDeployBoom(void *pvParameters){
 	bool deployed = false;
 
 	float pressure;
+        auto iters = 0;
+        auto sum = 0;
+        auto avgPressure = 0;
+        const auto AVG_RANGE = 5;
         char* camera_messages[] = {
           "\n****************Camera Taking Photo*****************\n",
           "\n****************Camera Done Taking Photo*****************\n"
@@ -198,9 +202,16 @@ void TaskDeployBoom(void *pvParameters){
 
 	for(;;)
 	{
-
-		pressure = sensor_baro.getPressure();
-
+          ++iters;
+          pressure = sensor_baro.getPressure();
+          sum += pressure;
+          if (iters >= AVG_RANGE)
+          {
+          avgPressure = sum / iters;
+          sum = 0;
+          iters = 0;
+          }
+ 
 		char received_message = 0;
 		// We don't expect to receive commands from two streams at the same time. So this
 		// Overwriting the message shouldn't be a problem.
@@ -220,48 +231,9 @@ void TaskDeployBoom(void *pvParameters){
 			vTaskDelay( 1000 / portTICK_PERIOD_MS );
 			deployed = true;
 
-void TaskDeployBoom(void *pvParameters){
- (void) pvParameters;
- 
- Stream* out[] = {&Serial, &Serial3, (Stream*) NULL};      
-
- bool deployed = false;
-  
- float pressure;
- auto iters = 0;
- auto sum = 0;
- auto avgPressure = 0;
- const auto AVG_RANGE = 5;
- 
- for(;;)
- {
-  ++iters;
-  pressure = sensor_baro.getPressure();
-  sum += pressure;
-  if (iters >= AVG_RANGE)
-  {
-    avgPressure = sum / iters;
-    sum = 0;
-    iters = 0;
-  }
-
-
-// if 'b' is pressed OR (pressure falls below 44 AND boom hasn't deployed yet)
-  if(
-    message_peek(input_streams, DEPLOY_BOOM, read_count, num_readers) || 
-    ((avgPressure <= 44 && avgPressure > 30) && deployed == false))
-  {
-	sensor_out((void*) NULL, print_boom, file_names[8], out);
-        digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
-	vTaskDelay( 2000 / portTICK_PERIOD_MS );
-        digitalWrite(WIRE_CUTTER, LOW); // Disengage
-	vTaskDelay( 1000 / portTICK_PERIOD_MS );
-        deployed = true;
-  } 
- }
-	//take picture after boom deployment
-	critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
-    	} 
+                	//take picture after boom deployment
+                	critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
+                    	} 
     	if(received_message == TAKE_PHOTO){
 	 critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
 		}
