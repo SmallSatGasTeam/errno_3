@@ -1,5 +1,3 @@
-#define FILENAME "sensors.txt"
-
 #include <Arduino_FreeRTOS.h>
 #include <semphr.h>  // add the FreeRTOS functions for Semaphores (or Flags).
 #include <SD.h>
@@ -30,13 +28,10 @@ File file;
 const int WIRE_CUTTER = 12;
 
 // define tasks
-void TaskBlink( void *pvParameters ); //TODO remove this test task
-void TaskAnalogRead( void *pvParameters ); //TODO remove this test task
 void TaskSensorReadStandard(void *pvParameters);
 void TaskSensorReadFast(void *pvParameters);
 void TaskDeployBoom(void *pvParameters);
 void TaskGPSRead(void *pvParameters);
-void TaskCamera(void *pvParameters);
 
 // define semaphores
 SemaphoreHandle_t xOutputSemaphore;
@@ -57,209 +52,173 @@ char* file_names[] = {
 	"time_stamp.csv"
 };
 
- File files[num_files];
+File files[num_files];
 
- char read_count = 0; // Number of times input buffer has been read
- char num_readers = 2; // Number of tasks that read input buffer
- Stream* input_streams[] = {&Serial, &Serial3, (Stream*) NULL };
+Stream* input_streams[] = {&Serial, &Serial3, (Stream*) NULL };
 
 /**
  *Global setup should occur here
  */
 void setup() {
- 
-  Serial.begin(9600);
-  Serial1.begin(115200);
-  Serial2.begin(9600);
-  Serial3.begin(9600);
 
-  Serial.println("Initializing SD Card");
-  if(!SD.begin(46)){
-    Serial.println("SD card failed to initialize!");
-  }
-  Serial.println("SD Initialized");
- 
- for(int i = 0; i < num_files; i++){
-   files[i] = SD.open(file_names[i], FILE_WRITE);
- }
- 
- // initialize Mutex  
- if (xOutputSemaphore == NULL) {
-    xOutputSemaphore = xSemaphoreCreateMutex(); 
-    if(xOutputSemaphore){ xSemaphoreGive(xOutputSemaphore);}
-  }
- 
- if (xSDSemaphore == NULL) {
-    xSDSemaphore = xSemaphoreCreateMutex(); 
-    if(xSDSemaphore){ xSemaphoreGive(xSDSemaphore);}
-  }
+	Serial.begin(9600);
+	Serial1.begin(115200);
+	Serial2.begin(9600);
+	Serial3.begin(9600);
 
-  Wire.begin(); //Begining everying on our I2C Bus
- 
-  // Initialize sensors
-  // These functions should be defined in sensor.h
-  initialize_temp_ex(&sensor_temp_ex, Serial);
-  initialize_temp_in(&sensor_temp_in, Serial);
-  initialize_baro(&sensor_baro, Serial);
+	Serial.println("Initializing SD Card");
+	if(!SD.begin(46)){
+		Serial.println("SD card failed to initialize!");
+	}
+	Serial.println("SD Initialized");
 
-  // Initialize switches
-  pinMode(WIRE_CUTTER, OUTPUT);
+	for(int i = 0; i < num_files; i++){
+		files[i] = SD.open(file_names[i], FILE_WRITE);
+	}
 
-  // Now set up two tasks to run independently.
-  xTaskCreate(
-    TaskBlink
-    ,  (const portCHAR *) "Blink"   // A name just for humans
-    ,  128  // This stack size can be checked & adjusted by reading the Stack Highwater
-    ,  NULL
-    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  NULL );
+	// initialize Mutex  
+	if (xOutputSemaphore == NULL) {
+		xOutputSemaphore = xSemaphoreCreateMutex(); 
+		if(xOutputSemaphore){ xSemaphoreGive(xOutputSemaphore);}
+	}
 
- xTaskCreate(
-   TaskAnalogRead
-   ,  (const portCHAR *) "AnalogRead"
-   ,  512  // Stack size
-   ,  NULL
-   ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-   ,  NULL );
+	if (xSDSemaphore == NULL) {
+		xSDSemaphore = xSemaphoreCreateMutex(); 
+		if(xSDSemaphore){ xSemaphoreGive(xSDSemaphore);}
+	}
 
-xTaskCreate(
-    TaskSensorReadStandard
-    ,  (const portCHAR *) "ReadSensors"
-    ,  600  // Stack size
-    ,  NULL
-    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  NULL );
+	Wire.begin(); //Begining everying on our I2C Bus
 
-xTaskCreate(
-    TaskSensorReadFast
-    ,  (const portCHAR *) "ReadSensorsFast"
-    ,  350  // Stack size
-    ,  NULL
-    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  NULL );
+	// Initialize sensors
+	// These functions should be defined in sensor.h
+	initialize_temp_ex(&sensor_temp_ex, Serial);
+	initialize_temp_in(&sensor_temp_in, Serial);
+	initialize_baro(&sensor_baro, Serial);
 
-xTaskCreate(
-    TaskCamera
-    ,  (const portCHAR *) "Take Photos"
-    ,  600 // Stack size
-    ,  NULL
-    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  NULL );
+	// Initialize switches
+	pinMode(WIRE_CUTTER, OUTPUT);
 
-xTaskCreate(
-    TaskGPSRead
-    ,  (const portCHAR *) "GPSRead"
-    ,  512  // Stack size
-    ,  NULL
-    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  NULL );
+	// Now set up two tasks to run independently
+	xTaskCreate(
+			TaskSensorReadStandard
+			,  (const portCHAR *) "ReadSensors"
+			,  700  // Stack size
+			,  NULL
+			,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+			,  NULL );
 
-xTaskCreate(
-    TaskDeployBoom
-    ,  (const portCHAR *) "Deploy Boom"
-    ,  512 // Stack size
-    ,  NULL
-    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  NULL );
+	xTaskCreate(
+			TaskSensorReadFast
+			,  (const portCHAR *) "ReadSensorsFast"
+			,  512  // Stack size
+			,  NULL
+			,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+			,  NULL );
+
+	xTaskCreate(
+			TaskGPSRead
+			,  (const portCHAR *) "GPSRead"
+			,  512  // Stack size
+			,  NULL
+			,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+			,  NULL );
+
+	xTaskCreate(
+			TaskDeployBoom
+			,  (const portCHAR *) "Deploy Boom"
+			,  1024 // Stack size
+			,  NULL
+			,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+			,  NULL );
 
 
-  // Now the task scheduler, which takes over control of scheduling individual tasks, is automatically started.
+	// Now the task scheduler, which takes over control of scheduling individual tasks, is automatically started.
 }
 void loop()
 {
-  // Empty. Things are done in Tasks.
+	// Empty. Things are done in Tasks.
 }
 
 /*--------------------------------------------------*/
 /*---------------------- Tasks ---------------------*/
 /*--------------------------------------------------*/
 
-
-void TaskBlink(void *pvParameters)  // This is a task.
-{
-  (void) pvParameters;
-
-  // initialize digital pin 13 as an output.
-  pinMode(13, OUTPUT);
-
-  for (;;) // A Task shall never return or exit.
-  {
-    digitalWrite(13, HIGH);   // turn the LED on (HIGH is the voltage level)
-    vTaskDelay( 1000 / portTICK_PERIOD_MS ); // wait for one second
-    digitalWrite(13, LOW);    // turn the LED off by making the voltage LOW
-    vTaskDelay( 1000 / portTICK_PERIOD_MS ); // wait for one second
-  }
-}
-
-void read_test(void* a, Stream* output){
- output->println("Analog read Test Task Read");
-}
-
-void TaskAnalogRead(void *pvParameters)  // This is a task.
-{
-  (void) pvParameters;
-
-  Stream* outs[] = {&Serial, (Stream*) NULL };
-  
-  for (;;)
-  {
-      sensor_out((void*) NULL, read_test, file_names[6], outs);  
-      vTaskDelay(20);  // one tick delay (15ms) in between reads for stability
-  }
-}
-
 void TaskSensorReadStandard(void *pvParameters){
-  (void) pvParameters;
+	(void) pvParameters;
 
-  /*
-    File has to be open when task starts in order to write data to log. We will
-    close it for now, and have each sensor open and close it to ensure we don't
-    corrupt our filesystem.
-   */
-  for(int i = 0; i < num_files; i++){ files[i].close(); }
+	/*
+		 File has to be open when task starts in order to write data to log. We will
+		 close it for now, and have each sensor open and close it to ensure we don't
+		 corrupt our filesystem.
+		 */
+	for(int i = 0; i < num_files; i++){ files[i].close(); }
 
-  Stream* out[] = {&Serial, &Serial3, (Stream*) NULL};      
-  for(;;){
-    vTaskDelay( 1000 / portTICK_PERIOD_MS );
-    sensor_out(&sensor_baro, read_baro, file_names[0], out);   
-    sensor_out(&sensor_temp_in, read_temp,file_names[1], out);
-    sensor_out(&sensor_temp_ex, read_temp,file_names[2], out); 
-    sensor_out((void*) NULL, read_light,file_names[3], out);
-    sensor_out((void*) NULL, read_uv, file_names[4], out);
-    sensor_out((void*) NULL, read_timestamp, file_names[9], out);
-    checkBattery();
-    
- //   sensor_out(&sensor_gps, read_gps, file_names[5], out);
-  }
+	Stream* out[] = {&Serial, &Serial3, (Stream*) NULL};      
+        message_out("barometer\ttemp-in\ttemp-ex\tlight\tuv\ttimestamp\n", out);
+	for(;;){
+		vTaskDelay( 1000 / portTICK_PERIOD_MS );
+		sensor_out(&sensor_baro, read_baro, file_names[0], out);   
+		sensor_out(&sensor_temp_in, read_temp,file_names[1], out);
+		sensor_out(&sensor_temp_ex, read_temp,file_names[2], out); 
+		sensor_out((void*) NULL, read_light,file_names[3], out);
+		sensor_out((void*) NULL, read_uv, file_names[4], out);
+		sensor_out((void*) NULL, read_timestamp, file_names[9], out);
+		sensor_out(&sensor_gps,read_gps,file_names[5],out);
+		checkBattery();
+                message_out("\n", out);
+	}
 }
-
-void TaskCamera(void *pvParameters){
-  (void) pvParameters;
-
-  Stream* out[] = {(Stream*) NULL};
-
-  for(;;){
-    vTaskDelay(1);
-    if(message_peek(input_streams, TAKE_PHOTO, read_count, num_readers)){
-      sensor_out(&camera, read_camera, file_names[7], out);
-    }
-  }
-}
-
 
 void TaskSensorReadFast(void *pvParameters)
 {
-  (void) pvParameters;
+	(void) pvParameters;
 
-  Stream* outputs[] = {&Serial, (Stream*) NULL};
-  initialize_gyro(&sensor_gyro, Serial);
+	Stream* outputs[] = {(Stream*) NULL};
+	initialize_gyro(&sensor_gyro, Serial);
 
-  for (;;) // A Task shall never return or exit.
-  {
-    sensor_out(&sensor_gyro, read_gyro, file_names[6], outputs);
-    vTaskDelay( 50 / portTICK_PERIOD_MS ); 
-  }
+	for (;;) // A Task shall never return or exit.
+	{
+		sensor_out(&sensor_gyro, read_gyro, file_names[6], outputs);
+		vTaskDelay( 50 / portTICK_PERIOD_MS ); 
+	}
 }
+
+void TaskDeployBoom(void *pvParameters){
+	(void) pvParameters;
+
+	Stream* out[] = {&Serial, &Serial3, (Stream*) NULL};      
+	Stream* camera_out[] = {(Stream*) NULL};      
+	bool deployed = false;
+
+	float pressure;
+        char* camera_messages[] = {
+          "\n****************Camera Taking Photo*****************\n",
+          "\n****************Camera Done Taking Photo*****************\n"
+        };
+
+	for(;;)
+	{
+
+		pressure = sensor_baro.getPressure();
+
+		char received_message = 0;
+		// We don't expect to receive commands from two streams at the same time. So this
+		// Overwriting the message shouldn't be a problem.
+		for(char i = 0; input_streams[i] != NULL; i++){ 
+			if(input_streams[i]->available()){
+				received_message = input_streams[i]->read();
+				while(input_streams[i]->available()){input_streams[i]->read();} // Clear the rest of the buffer
+			} 
+		}
+
+		// if 'b' is pressed OR (pressure falls below 44 AND boom hasn't deployed yet)
+		if(received_message == DEPLOY_BOOM || ((pressure <= 44 && pressure > 30) && deployed == false)){
+			critical_out((void*) NULL, print_boom, file_names[8], out);
+			digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
+			vTaskDelay( 3000 / portTICK_PERIOD_MS );
+			digitalWrite(WIRE_CUTTER, LOW); // Disengage
+			vTaskDelay( 1000 / portTICK_PERIOD_MS );
+			deployed = true;
 
 void TaskDeployBoom(void *pvParameters){
  (void) pvParameters;
@@ -300,20 +259,24 @@ void TaskDeployBoom(void *pvParameters){
         deployed = true;
   } 
  }
+	//take picture after boom deployment
+	critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
+    	} 
+    	if(received_message == TAKE_PHOTO){
+	 critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
+		}
+	}
 }
 
 void TaskGPSRead(void *pvParameters)
 {
 	(void) pvParameters;
-	Stream* outputs[] = {&Serial, (Stream*) NULL};
-//	printFloat(gps->location.lat(),gps->location.isValid(),11,6, output);
-//	printFloat(gps->location.lng(),gps->location.isValid(),12,6, output);
+	Stream* outputs[] = {(Stream*) NULL};
 	for(;;)
 	{
-		sensor_out(&sensor_gps,read_gps,file_names[5],outputs);
 		while (Serial2.available()){
-		 sensor_gps.encode(Serial2.read());
+			sensor_gps.encode(Serial2.read());
 		}
-		vTaskDelay(1000/portTICK_PERIOD_MS);
+		vTaskDelay(500/portTICK_PERIOD_MS);
 	}
 }

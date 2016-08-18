@@ -26,12 +26,12 @@ extern SemaphoreHandle_t xSDSemaphore;
 extern File file;
 
 template <typename F, typename S>
-inline void sensor_out(S sensor, F func, char* file_name, Stream** outputs){
+inline void sensor_out(S sensor, F func, char* file_name, Stream** outputs, char priority = 5){
  
-	if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+	if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) priority ) == pdTRUE ){
     for(int i = 0; outputs[i] != NULL; i++){ 
 			func(sensor, outputs[i]);
-			outputs[i]->println(); 
+			outputs[i]->print('\t'); 
     }
     xSemaphoreGive(xOutputSemaphore);
 	}
@@ -48,20 +48,47 @@ inline void sensor_out(S sensor, F func, char* file_name, Stream** outputs){
 }
 
 template <typename F, typename S>
-void print_sensor(S sensor, F func, char header, Stream** outputs){
- // File file_baro = SD.open("baro.csv", FILE_WRITE);
-
-// if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE &&
-//  xSemaphoreTake( xRadioSemaphore, ( TickType_t ) 5 ) == pdTRUE  ){
-    for(int i = 0; outputs[i] != NULL; i++){
-      outputs[i]->print(header); outputs[i]->print(':');
-      func(sensor, outputs[i]);
-      outputs[i]->println();
+inline void critical_out(S sensor, F func, char* file_name, Stream** outputs, Stream** alert_outputs = (Stream**) NULL, char** status_messages = (char**) NULL){
+  if(status_messages && alert_outputs){
+    for(int i = 0; alert_outputs[i] != NULL; i++){
+      alert_outputs[i]->print(status_messages[0]);  
     }
-//  xSemaphoreGive( xRadioSemaphore );
-//  xSemaphoreGive( xSerialSemaphore );
-//  }
+  }
+
+  while(xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 15 ) != pdTRUE ){;}
+    for(int i = 0; outputs[i] != NULL; i++){ 
+      func(sensor, outputs[i]);
+      outputs[i]->print('\t'); 
+    }
+    xSemaphoreGive(xOutputSemaphore);
+
+  while( xSemaphoreTake( xSDSemaphore, ( TickType_t ) 15 ) != pdTRUE ){;}
+    file = SD.open(file_name, FILE_WRITE);
+    read_timestamp((void*) NULL, &file);
+    file.print(", ");
+    func(sensor, &file);
+    file.println();
+    file.close();
+    xSemaphoreGive(xSDSemaphore);
+
+  if(status_messages && alert_outputs){
+    for(int i = 0; alert_outputs[i] != NULL; i++){
+      alert_outputs[i]->print(status_messages[1]);  
+    }
+  }
 }
+
+
+
+inline void message_out(char* message, Stream** outputs){ 
+  if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+    for(int i = 0; outputs[i] != NULL; i++){ 
+      outputs[i]->println(message); 
+    }
+    xSemaphoreGive(xOutputSemaphore);
+  }
+}
+
 
 //----------- Temperature sensors ------------//
 
@@ -115,9 +142,8 @@ void read_light(void* dummy, Stream* output){
 
 void read_uv(void* dummy, Stream* output){
   const int uvPin = 1; // UV sensor pin
-  float uv = 0.0; // default
-  uv = analogRead(uvPin); // reads value
-
+  int v = analogRead(uvPin); // reads value
+  float uv = 5 / 1023.0 * v * 10; 
   output->print(uv);
 }
 
@@ -150,55 +176,18 @@ void read_gyro(Adafruit_BNO055* gyro, Stream* output){
 	output->print(euler.z());
 	output->print(",");
 
-	// delay(100); // Delay of 100ms TODO needed?
+	delay(100); // Delay of 100ms TODO needed?
 }
 
 //------------- GPS ---------------//
 
-//GPS must be constantly be fed characters
-void smartDelay(unsigned long ms, TinyGPSPlus* gps, Stream* input)
-{
-  unsigned long start = millis();
-  do
-  {
-    while (input->available()){
-      gps->encode(input->read());
-    }
-  } while (millis() - start < ms);
-}
-
-//prints GPS values to desired locations
-void printFloat(float val, bool valid, int len, int prec, Stream* output)
-{
-  if (!valid)
-  {
-    while (len-- > 1){
-     
-     // file->print('*');
-     // file->print(' ');
-     // output->print('*');
-     //  output->print(' ');
-     
-    }
-  }
-  else
-  {
-    output->print(val,prec);
-    int vi = abs((int)val);
-    int flen = prec + (val < 0.0 ? 2 : 1); // . and -
-    flen += vi >= 1000 ? 4 : vi >= 100 ? 3 : vi >= 10 ? 2 : 1;
-    for (int i=flen; i<len; ++i)
-      output->print(' ');
-  }
-}
+//GPS must be constantly be fed characters (done in controlling task)
 
 void read_gps(TinyGPSPlus* gps, Stream* output){
-//	printFloat(gps->location.lat(),gps->location.isValid(),11,6, output);
-	output->print(gps->location.lat());
+
+	output->print(gps->location.lat(),8);
 	output->print(",");
-	output->print(gps->location.lng());
-//	printFloat(gps->location.lng(),gps->location.isValid(),12,6, output);
-//	smartDelay(1000, gps, output); //TODO which serial port?
+	output->print(gps->location.lng(),8);
 }
 //------------ Clock ------------//
 
@@ -227,7 +216,7 @@ void read_timestamp(void* dummy, Stream* output){
 
 void print_boom(void* dummy, Stream* output)
 {
-     output->print("***************** DEPLOYING BOOM **********************");
+     output->print("\n***************** DEPLOYING BOOM **********************\n");
 }
 
 //------------ Battery ------------//
@@ -253,7 +242,7 @@ battery = (battery * .00475) * 2;
 
 // ----------------- Camera -------------- //
 void read_camera(UCAMII* camera, Stream* output){
-  short x = 0;
+ short x = 0;
   int bytes;
   if (camera->init()) {
     camera->takePicture();
