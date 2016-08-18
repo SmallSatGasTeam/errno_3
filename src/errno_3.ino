@@ -269,20 +269,32 @@ void TaskDeployBoom(void *pvParameters){
  bool deployed = false;
   
  float pressure;
+ auto iters = 0;
+ auto sum = 0;
+ auto avgPressure = 0;
+ const auto AVG_RANGE = 5;
  
  for(;;)
  {
- 
+  ++iters;
   pressure = sensor_baro.getPressure();
+  sum += pressure;
+  if (iters >= AVG_RANGE)
+  {
+    avgPressure = sum / iters;
+    sum = 0;
+    iters = 0;
+  }
+
 
 // if 'b' is pressed OR (pressure falls below 44 AND boom hasn't deployed yet)
   if(
     message_peek(input_streams, DEPLOY_BOOM, read_count, num_readers) || 
-    ((pressure <= 44 && pressure > 30) && deployed == false))
+    ((avgPressure <= 44 && avgPressure > 30) && deployed == false))
   {
 	sensor_out((void*) NULL, print_boom, file_names[8], out);
         digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
-	vTaskDelay( 3000 / portTICK_PERIOD_MS );
+	vTaskDelay( 2000 / portTICK_PERIOD_MS );
         digitalWrite(WIRE_CUTTER, LOW); // Disengage
 	vTaskDelay( 1000 / portTICK_PERIOD_MS );
         deployed = true;
