@@ -4,16 +4,16 @@
 
 class Sensor {
 public:
-  Sensor(char* sensor_name):name(sensor_name){}
+  Sensor(const char* sensor_name):name(sensor_name){}
   virtual bool read(char* buff) = 0;
   virtual bool init();
 protected:
-  char* name;
+  const char* name;
 };
 
 class TempSensor: public Sensor {
 public:
-  TempSensor(char* name, Adafruit_MCP9808* sensor, uint8_t address)
+  TempSensor(const char* name, Adafruit_MCP9808* sensor, uint8_t address)
     :Sensor(name), sensor(sensor), address(address){}
   bool read(char* buff){
     if(!buff) return false;

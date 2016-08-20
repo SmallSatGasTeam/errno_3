@@ -23,6 +23,10 @@ CoolSatBaro sensor_baro;
 TinyGPSPlus sensor_gps;
 UCAMII camera(Serial1, &Serial);
 
+TempSensor t("temp", &sensor_temp_ex, 0x18);
+
+Sensor* sensors[] = {&t};
+
 File file;
 
 // define pins
