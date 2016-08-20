@@ -195,6 +195,10 @@ void TaskDeployBoom(void *pvParameters){
     "\n****************Camera Done Taking Photo*****************\n"
   };
 
+  bool deployInitiated = false;
+  bool deployConfirmed = false;
+
+
 	for(;;)
 	{
     const auto AVG_RANGE = 7; // number of readings to use to obtain average
@@ -215,18 +219,15 @@ void TaskDeployBoom(void *pvParameters){
 			} 
 		}
 
-    bool deployInitiated = false;
-    bool deployConfirmed = false;
-
-    if ( received_message == DEPLOY_BOOM )
+       if ( received_message == DEPLOY_BOOM )
     {
       critical_out((void*) NULL, print_confirm, file_names[8], out);
       deployInitiated = true;
     }
 
-    if ( received message == CONFIRM_DEPLOY && deployInitiated == true ) deployConfirmed = true;
+    if ( received_message == CONFIRM_DEPLOY && deployInitiated == true ) deployConfirmed = true;
 
-    if ( received_message == CANCEL_DEPLOY && deployInitiated == true)
+    if ( received_message == CANCEL_DEPLOY && deployInitiated == true )
     {
       critical_out((void*) NULL, print_cancel, file_names[8], out);
       deployInitiated = false;
@@ -234,10 +235,10 @@ void TaskDeployBoom(void *pvParameters){
 
 
 
-		// if 'y' is pressed OR (pressure falls below 44 AND boom hasn't deployed yet)
-		if(
-      deployConfirmed == true || 
-      ((avgPressure <= 44 && avgPressure > 30) && deployed == false))
+		// If boom hasn't deployed yet AND ('y' was pressed OR pressure is within range) 
+    if( !deployed &&
+      (deployConfirmed == true || 
+      (avgPressure <= 44 && avgPressure > 30)))
     {
 			critical_out((void*) NULL, print_boom, file_names[8], out);
 			digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
