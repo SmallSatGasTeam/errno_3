@@ -188,7 +188,9 @@ void TaskDeployBoom(void *pvParameters){
 
 	Stream* out[] = {&Serial, &Serial3, (Stream*) NULL};      
 	Stream* camera_out[] = {(Stream*) NULL};      
-	bool deployed = false;
+
+  Data<void> boom;
+  boom.setBoomDeployed(false);
 
   char* camera_messages[] = {
     "\n****************Camera Taking Photo*****************\n",
@@ -237,14 +239,14 @@ void TaskDeployBoom(void *pvParameters){
 		// if 'y' is pressed OR (pressure falls below 44 AND boom hasn't deployed yet)
 		if(
       deployConfirmed == true || 
-      ((avgPressure <= 44 && avgPressure > 30) && deployed == false))
+      ((avgPressure <= 44 && avgPressure > 30) && boom.boomDeployed() == false))
     {
 			critical_out((void*) NULL, print_boom, file_names[8], out);
 			digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
 			vTaskDelay( 3000 / portTICK_PERIOD_MS );
 			digitalWrite(WIRE_CUTTER, LOW); // Disengage
 			vTaskDelay( 1000 / portTICK_PERIOD_MS );
-			deployed = true;
+			boom.setBoomDeployed(true);
 
       //take picture after boom deployment
       critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
