@@ -13,8 +13,9 @@
 #include <DS1307RTC.h>
 #include "sensor.h"
 #include "messages.h" // Defines incoming data header
+#include "sensor.hpp"
 
-// define sensors 
+// define sensors
 Adafruit_MCP9808 sensor_temp_ex = Adafruit_MCP9808();
 Adafruit_MCP9808 sensor_temp_in = Adafruit_MCP9808();
 Adafruit_BNO055  sensor_gyro = Adafruit_BNO055();
@@ -40,12 +41,12 @@ SemaphoreHandle_t xSDSemaphore;
 const int num_files = 10;
 
 char* file_names[] = {
-	"baro.csv",     
-	"temp_in.csv",   
+	"baro.csv",
+	"temp_in.csv",
 	"temp_ex.csv",
 	"light.csv",
 	"uv.csv",
-	"gps.csv", 
+	"gps.csv",
 	"gyro.csv",
 	"camera.csv",
 	"boom.csv",
@@ -76,14 +77,14 @@ void setup() {
 		files[i] = SD.open(file_names[i], FILE_WRITE);
 	}
 
-	// initialize Mutex  
+	// initialize Mutex
 	if (xOutputSemaphore == NULL) {
-		xOutputSemaphore = xSemaphoreCreateMutex(); 
+		xOutputSemaphore = xSemaphoreCreateMutex();
 		if(xOutputSemaphore){ xSemaphoreGive(xOutputSemaphore);}
 	}
 
 	if (xSDSemaphore == NULL) {
-		xSDSemaphore = xSemaphoreCreateMutex(); 
+		xSDSemaphore = xSemaphoreCreateMutex();
 		if(xSDSemaphore){ xSemaphoreGive(xSDSemaphore);}
 	}
 
@@ -153,13 +154,13 @@ void TaskSensorReadStandard(void *pvParameters){
 		 */
 	for(int i = 0; i < num_files; i++){ files[i].close(); }
 
-	Stream* out[] = {&Serial, &Serial3, (Stream*) NULL};      
+	Stream* out[] = {&Serial, &Serial3, (Stream*) NULL};
         message_out("barometer\ttemp-in\ttemp-ex\tlight\tuv\ttimestamp\n", out);
 	for(;;){
 		vTaskDelay( 1000 / portTICK_PERIOD_MS );
-		sensor_out(&sensor_baro, read_baro, file_names[0], out);   
+		sensor_out(&sensor_baro, read_baro, file_names[0], out);
 		sensor_out(&sensor_temp_in, read_temp,file_names[1], out);
-		sensor_out(&sensor_temp_ex, read_temp,file_names[2], out); 
+		sensor_out(&sensor_temp_ex, read_temp,file_names[2], out);
 		sensor_out((void*) NULL, read_light,file_names[3], out);
 		sensor_out((void*) NULL, read_uv, file_names[4], out);
 		sensor_out((void*) NULL, read_timestamp, file_names[9], out);
@@ -179,15 +180,15 @@ void TaskSensorReadFast(void *pvParameters)
 	for (;;) // A Task shall never return or exit.
 	{
 		sensor_out(&sensor_gyro, read_gyro, file_names[6], outputs);
-		vTaskDelay( 50 / portTICK_PERIOD_MS ); 
+		vTaskDelay( 50 / portTICK_PERIOD_MS );
 	}
 }
 
 void TaskDeployBoom(void *pvParameters){
 	(void) pvParameters;
 
-	Stream* out[] = {&Serial, &Serial3, (Stream*) NULL};      
-	Stream* camera_out[] = {(Stream*) NULL};      
+	Stream* out[] = {&Serial, &Serial3, (Stream*) NULL};
+	Stream* camera_out[] = {(Stream*) NULL};
 	bool deployed = false;
 
 	float pressure;
@@ -204,11 +205,11 @@ void TaskDeployBoom(void *pvParameters){
 		char received_message = 0;
 		// We don't expect to receive commands from two streams at the same time. So this
 		// Overwriting the message shouldn't be a problem.
-		for(char i = 0; input_streams[i] != NULL; i++){ 
+		for(char i = 0; input_streams[i] != NULL; i++){
 			if(input_streams[i]->available()){
 				received_message = input_streams[i]->read();
 				while(input_streams[i]->available()){input_streams[i]->read();} // Clear the rest of the buffer
-			} 
+			}
 		}
 
 		// if 'b' is pressed OR (pressure falls below 44 AND boom hasn't deployed yet)
@@ -222,7 +223,7 @@ void TaskDeployBoom(void *pvParameters){
 
 			//take picture after boom deployment
 			critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
-		} 
+		}
 
 
 		if(received_message == TAKE_PHOTO){
