@@ -273,7 +273,8 @@ void read_camera(UCAMII* camera, Stream* output){
 
 
 /* This function is designed to be placed within a loop to get the
-   average of n readings from a sensor.  */
+   average of n readings (defined by AVG_RANGE) from a sensor. 
+   Returns 0 until at least n readings have been collected. */
 
 template <typename T>
 T getAverage(T reading, const int AVG_RANGE) 
@@ -287,6 +288,8 @@ T getAverage(T reading, const int AVG_RANGE)
 
   static T sum;
   if (!sum) sum = 0;
+
+  sum += reading;
 
   if (iters >= AVG_RANGE)
   {
