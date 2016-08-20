@@ -197,8 +197,9 @@ void TaskDeployBoom(void *pvParameters){
 
 	for(;;)
 	{
+    const auto AVG_RANGE = 7; // number of readings to use to obtain average
     auto pressure = sensor_baro.getPressure();
-    float avgPressure = getAverage(pressure);
+    float avgPressure = getAverage(pressure, AVG_RANGE);
 
  
 		char received_message = 0;
