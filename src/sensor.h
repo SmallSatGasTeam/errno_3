@@ -1,6 +1,8 @@
 #ifndef SENSORS_H
 #define SENSORS_H
 
+#include "data.h"
+
 // ------------ FreeRTOS Handling ------------ //
 
 void read_timestamp(void* dummy, Stream* output);
@@ -109,6 +111,10 @@ void initialize_temp_in(Adafruit_MCP9808* sensor, Stream& output){
 void read_temp(Adafruit_MCP9808* sensor, Stream* output ){
   float val = sensor->readTempC();
   output->print(val);
+
+  Data<float> data;
+  if ( sensor->begin(0x18)) data.setTempEx(val);
+  else data.setTempIn(val);
 }
 
 //------------ Barometer ------------//
@@ -122,6 +128,10 @@ void read_baro(CoolSatBaro* sensor, Stream* output){
   float val = sensor->getPressure();
   float alt = sensor->getAltitude();
   output->print(val); output->print(','); output->print(alt);
+
+  Data<float> data;
+  data.setPressure(val);
+  data.setAltitude(alt);
 }
 
 //------------ Light & UV sensors ------------//
@@ -140,6 +150,9 @@ void read_light(void* dummy, Stream* output){
     lux = TOLUX * (pow(RLDR, TOLUXPWR));
 
     output->print(lux);
+
+    Data<float> data;
+    data.setLux(lux);
 }
 
 void read_uv(void* dummy, Stream* output){
@@ -147,6 +160,9 @@ void read_uv(void* dummy, Stream* output){
   int v = analogRead(uvPin); // reads value
   float uv = 5 / 1023.0 * v * 10; 
   output->print(uv);
+
+  Data<float> data;
+  data.setUV(uv);
 }
 
 //------------ Gyroscope ------------//
@@ -178,6 +194,15 @@ void read_gyro(Adafruit_BNO055* gyro, Stream* output){
 	output->print(euler.z());
 	output->print(",");
 
+  Data<double> data;
+  data.setGyro_accel(acceleration.x(),'x');
+  data.setGyro_accel(acceleration.y(),'y');
+  data.setGyro_accel(acceleration.z(),'z');
+
+  data.setGyro_euler(euler.x(),'x');
+  data.setGyro_euler(euler.y(),'y');
+  data.setGyro_euler(euler.z(),'z');
+  
 	delay(100); // Delay of 100ms TODO needed?
 }
 
@@ -190,6 +215,10 @@ void read_gps(TinyGPSPlus* gps, Stream* output){
 	output->print(gps->location.lat(),8);
 	output->print(",");
 	output->print(gps->location.lng(),8);
+
+  Data<double> data;
+  data.setGPS(gps->location.lat(),'p');
+  data.setGPS(gps->location.lng(),'l');
 }
 //------------ Clock ------------//
 
@@ -212,6 +241,11 @@ void read_timestamp(void* dummy, Stream* output){
 		printTime(tm.Second, output);
 	}
 	else output->println("Error: Failed to fetch time");
+
+  Data<uint8_t> data;
+  data.setTime(tm.Hour,'h');
+  data.setTime(tm.Minute,'m');
+  data.setTime(tm.Second,'s');
 }
 
 //------------ Boom ------------//
