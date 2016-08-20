@@ -27,6 +27,9 @@ TempSensor t("temp", &sensor_temp_ex, 0x18);
 
 Sensor* sensors[] = {&t};
 
+//TODO Add read sensor method
+//TODO figure out sprintf
+
 File file;
 
 // define pins
