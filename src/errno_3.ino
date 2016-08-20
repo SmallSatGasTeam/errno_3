@@ -190,40 +190,54 @@ void TaskDeployBoom(void *pvParameters){
 	Stream* camera_out[] = {(Stream*) NULL};      
 	bool deployed = false;
 
-	float pressure;
-        auto iters = 0;
-        auto sum = 0;
-        auto avgPressure = 0;
-        const auto AVG_RANGE = 5;
-        char* camera_messages[] = {
-          "\n****************Camera Taking Photo*****************\n",
-          "\n****************Camera Done Taking Photo*****************\n"
-        };
+  char* camera_messages[] = {
+    "\n****************Camera Taking Photo*****************\n",
+    "\n****************Camera Done Taking Photo*****************\n"
+  };
 
 	for(;;)
 	{
-          ++iters;
-          pressure = sensor_baro.getPressure();
-          sum += pressure;
-          if (iters >= AVG_RANGE)
-          {
-          avgPressure = sum / iters;
-          sum = 0;
-          iters = 0;
-          }
+    auto pressure = sensor_baro.getPressure();
+    float avgPressure = getAverage(pressure);
+
  
 		char received_message = 0;
 		// We don't expect to receive commands from two streams at the same time. So this
 		// Overwriting the message shouldn't be a problem.
-		for(char i = 0; input_streams[i] != NULL; i++){ 
-			if(input_streams[i]->available()){
+		for(char i = 0; input_streams[i] != NULL; i++)
+    { 
+			if(input_streams[i]->available())
+      {
 				received_message = input_streams[i]->read();
-				while(input_streams[i]->available()){input_streams[i]->read();} // Clear the rest of the buffer
+				while(input_streams[i]->available()){ input_streams[i]->read(); } 
+        // Clear the rest of the buffer
 			} 
 		}
 
-		// if 'b' is pressed OR (pressure falls below 44 AND boom hasn't deployed yet)
-		if(received_message == DEPLOY_BOOM || ((pressure <= 44 && pressure > 30) && deployed == false)){
+    bool deployInitiated = false;
+    bool deployConfirmed = false;
+
+    if ( received_message == DEPLOY_BOOM )
+    {
+      critical_out((void*) NULL, print_confirm, file_names[8], out);
+      deployInitiated = true;
+    }
+
+    if ( received message == CONFIRM_DEPLOY && deployInitiated == true ) deployConfirmed = true;
+
+    if ( received_message == CANCEL_DEPLOY && deployInitiated == true)
+    {
+      critical_out((void*) NULL, print_cancel, file_names[8], out);
+      deployInitiated = false;
+    }
+
+
+
+		// if 'y' is pressed OR (pressure falls below 44 AND boom hasn't deployed yet)
+		if(
+      deployConfirmed == true || 
+      ((avgPressure <= 44 && avgPressure > 30) && deployed == false))
+    {
 			critical_out((void*) NULL, print_boom, file_names[8], out);
 			digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
 			vTaskDelay( 3000 / portTICK_PERIOD_MS );
@@ -231,12 +245,15 @@ void TaskDeployBoom(void *pvParameters){
 			vTaskDelay( 1000 / portTICK_PERIOD_MS );
 			deployed = true;
 
-                	//take picture after boom deployment
-                	critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
-                    	} 
-    	if(received_message == TAKE_PHOTO){
-	 critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
-		}
+      //take picture after boom deployment
+      critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
+    } 
+
+   	if(received_message == TAKE_PHOTO)
+    {
+	    critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
+	  }
+
 	}
 }
 

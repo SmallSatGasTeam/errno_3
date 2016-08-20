@@ -1,6 +1,8 @@
 #ifndef SENSORS_H
 #define SENSORS_H
 
+// ------------ FreeRTOS Handling ------------ //
+
 void read_timestamp(void* dummy, Stream* output);
 
 bool message_peek(Stream** stream, char message, char &read_count, char num_readers){
@@ -216,7 +218,17 @@ void read_timestamp(void* dummy, Stream* output){
 
 void print_boom(void* dummy, Stream* output)
 {
-     output->print("\n***************** DEPLOYING BOOM **********************\n");
+     output->print("\n***************** !!! DEPLOYING BOOM !!! **********************\n");
+}
+
+void print_confirm(void* dummy, Stream* output)
+{
+     output->print("\n***************** DEPLOYMENT COMMAND DETECTED. PRESS 'y' TO CONFIRM OR 'n' TO CANCEL **********************\n");
+}
+
+void print_cancel(void* dummy, Stream* output)
+{
+     output->print("\n***************** Deployment cancelled **********************\n");
 }
 
 //------------ Battery ------------//
@@ -256,4 +268,37 @@ void read_camera(UCAMII* camera, Stream* output){
     output->println("\n\n\n\n");
   }
 }
+
+// ------------ Utilities ------------ //
+
+
+/* This function is designed to be placed within a loop to get the
+   average of n readings from a sensor.  */
+
+template <typename T>
+T getAverage(T reading, const int AVG_RANGE) 
+{
+  static T average;
+  if (!average) average = 0;
+  
+  static int iters;
+  if (!iters) iters = 0;
+  ++iters;
+
+  static T sum;
+  if (!sum) sum = 0;
+
+  if (iters >= AVG_RANGE)
+  {
+    average = sum / iters;
+    sum = 0;
+    iters = 0;
+  }
+
+  return average;
+}
+
+
+
+
 #endif
