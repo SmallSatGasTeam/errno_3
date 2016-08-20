@@ -25,11 +25,11 @@ protected:
   uint8_t address;
 };
 
-void read_sensor(Sensor* sensor, Stream* outputs, char* buff){
+void read_sensor(Sensor* sensor, Stream** outputs, char* buff){
   if(!sensor) return;
   sensor->read(buff);
-  for(uint8_t i = 0; outputs[i] != NULL; i++){
-    outputs[i]->print(buff)
+  for(uint8_t i = 0; outputs[i]!= NULL; i++){
+    outputs[i]->print(buff);
   }
 }
 

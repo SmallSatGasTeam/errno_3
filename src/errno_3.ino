@@ -23,9 +23,10 @@ CoolSatBaro sensor_baro;
 TinyGPSPlus sensor_gps;
 UCAMII camera(Serial1, &Serial);
 
-TempSensor t("temp", &sensor_temp_ex, 0x18);
+TempSensor temp_in("temp_in", &sensor_temp_ex, 0x18);
+TempSensor temp_out("temp_in", &sensor_temp_ex, 0x1D);
 
-Sensor* sensors[] = {&t};
+Sensor* sensors[] = {&temp_in, &temp_out};
 
 //TODO Add read sensor method
 //TODO figure out sprintf
