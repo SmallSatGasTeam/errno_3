@@ -13,9 +13,10 @@ public:
   virtual bool read(float* buff) = 0;
   virtual bool init();
   const char* getName(){return name;}
+
+  const uint8_t id;
 protected:
   const char* name;
-  const uint8_t id;
 };
 
 uint8_t Sensor::_id = 0;
@@ -39,6 +40,8 @@ protected:
 struct SensorReading{
   float* readings;
   SensorReading* next;
+  SensorReading(float* readings = NULL, SensorReading* next = NULL)
+    :readings(readings), next(next){}
 };
 
 class SensorReader{
@@ -49,19 +52,35 @@ public:
     }
   }
 
+  void validateReading(Sensor* sensor, float* buff){
+    // uint8_t buffSize = sizeof(float) * i-1;
+    // float currBuff[buffSize];
+    // SensorReading tempReading;
+    // SensorReading* currReading = malloc(sizeof)
+    //  SensorReading((float*) memcpy(currBuff, buff, buffSize));
+    // if(tempReading = values[sensor->id]){
+    //   values[sensor->id] = currReading;
+    //   currReading->next = tempReading;
+    // } else {
+    //   values[sensor->id] = currReading;
+    // }
+  }
+
   void read(Sensor* sensor, Stream** outputs, float* buff){
+
+    char* reading = "";
+    uint8_t i;
+
     // Fill buffer
     sensor->read(buff);
 
-
     //TODO log stuff
-    uint8_t i;
-    char* reading = "";
 
     char temp[20];
     for(i = 0; buff[i] != NULL && i < READING_BUFFER_LENGTH; i++){
       reading = strcat(reading, strcat(",", dtostrf(buff[i], 0, 2, temp)));
     }
+
 
     for(i = 0; outputs[i]!= NULL; i++){ outputs[i]->print(reading); }
 
