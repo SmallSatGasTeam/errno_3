@@ -48,24 +48,24 @@ protected:
 
 
 class BaroSensor: public Sensor {
-  BaroSensor(const char* name, CoolSatBaro* sensor, uint8_t address)
-    :Sensor(name), sensor(sensor), address(address){}
+  BaroSensor(const char* name, uint8_t address)
+    :Sensor(name), address(address){}
 
   bool read(float* buff){
-    sensor->readBaro();
-    buff[0] = sensor->getPressure();
-    buff[1] = sensor->getAltitude();
+    sensor.readBaro();
+    buff[0] = sensor.getPressure();
+    buff[1] = sensor.getAltitude();
     buff[2] = (float) NULL;
     return true;
   }
 
   bool init(){
-    sensor->initial(address);
+    sensor.initial(address);
     return true;
   }
 
 protected:
-  CoolSatBaro* sensor;
+  CoolSatBaro sensor;
   uint8_t address;
 };
 
@@ -110,11 +110,10 @@ protected:
 
 class GyroSensor: public Sensor{
 public:
-  GyroSensor(const char* name, Adafruit_BNO055* sensor)
-    :Sensor(name), sensor(sensor){}
+  GyroSensor(const char* name):Sensor(name){}
 
   bool read(float* buff){
-    imu::Vector<3> acceleration = sensor->getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
+    imu::Vector<3> acceleration = sensor.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
     buff[0] = acceleration.x();
     buff[1] = acceleration.y();
     buff[2] = acceleration.z();
@@ -123,13 +122,13 @@ public:
   }
 
   bool init(){
-  	if (!sensor->begin()){return false;}
-  	sensor->setExtCrystalUse(true);
+  	if (!sensor.begin()){return false;}
+  	sensor.setExtCrystalUse(true);
     return true;
   }
 
 protected:
-  Adafruit_BNO055* sensor;
+  Adafruit_BNO055 sensor;
 };
 
 class GPSSensor: public Sensor{};
