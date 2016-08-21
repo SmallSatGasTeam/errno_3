@@ -6,13 +6,19 @@
 
 class Sensor {
 public:
-  Sensor(const char* sensor_name):name(sensor_name){}
+  Sensor(const char* sensor_name):name(sensor_name), id(Sensor::nextId()){}
+  static uint8_t nextId(){ return _id++; }
+  static uint8_t _id;
+
   virtual bool read(float* buff) = 0;
   virtual bool init();
   const char* getName(){return name;}
 protected:
   const char* name;
+  const uint8_t id;
 };
+
+uint8_t Sensor::_id = 0;
 
 class TempSensor: public Sensor {
 public:
@@ -46,7 +52,7 @@ public:
   void read(Sensor* sensor, Stream** outputs, float* buff){
     // Fill buffer
     sensor->read(buff);
-    
+
 
     //TODO log stuff
     uint8_t i;
