@@ -27,7 +27,7 @@ TempSensor temp_in("temp_in", 0x18);
 TempSensor temp_out("temp_out", 0x1D);
 
 
-Sensor* sensors[] = {&temp_in, &temp_out};
+Sensor* sensors[] = {&temp_in, &temp_out, (Sensor*) NULL};
 
 //TODO Add read sensor method
 //TODO figure out sprintf
@@ -50,18 +50,18 @@ SemaphoreHandle_t xSDSemaphore;
 
 const int num_files = 10;
 
-char* file_names[] = {
-	"baro.csv",
-	"temp_in.csv",
-	"temp_ex.csv",
-	"light.csv",
-	"uv.csv",
-	"gps.csv",
-	"gyro.csv",
-	"camera.csv",
-	"boom.csv",
-	"time_stamp.csv"
-};
+// char* file_names[] = {
+// 	"baro.csv",
+// 	"temp_in.csv",
+// 	"temp_ex.csv",
+// 	"light.csv",
+// 	"uv.csv",
+// 	"gps.csv",
+// 	"gyro.csv",
+// 	"camera.csv",
+// 	"boom.csv",
+// 	"time_stamp.csv"
+// };
 
 File files[num_files];
 
@@ -83,9 +83,11 @@ void setup() {
 	}
 	Serial.println("SD Initialized");
 
-	for(int i = 0; i < num_files; i++){
-		files[i] = SD.open(file_names[i], FILE_WRITE);
-	}
+
+
+	// for(int i = 0; i < num_files; i++){
+	// 	files[i] = SD.open(file_names[i], FILE_WRITE);
+	// }
 
 	// initialize Mutex
 	if (xOutputSemaphore == NULL) {
@@ -224,7 +226,7 @@ void TaskDeployBoom(void *pvParameters){
 
 		// if 'b' is pressed OR (pressure falls below 44 AND boom hasn't deployed yet)
 		if(received_message == DEPLOY_BOOM || ((pressure <= 44 && pressure > 30) && deployed == false)){
-			critical_out((void*) NULL, print_boom, file_names[8], out);
+			// critical_out((void*) NULL, print_boom, file_names[8], out);
 			digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
 			vTaskDelay( 3000 / portTICK_PERIOD_MS );
 			digitalWrite(WIRE_CUTTER, LOW); // Disengage
