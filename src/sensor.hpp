@@ -7,6 +7,7 @@ public:
   Sensor(const char* sensor_name):name(sensor_name){}
   virtual bool read(char* buff) = 0;
   virtual bool init();
+  const char* getName(){return name;}
 protected:
   const char* name;
 };
@@ -27,9 +28,31 @@ protected:
 
 class SensorReader{
 public:
-  SensorReader(){}
+  SensorReader(Sensor** sensors, char** values):sensors(sensors), values(values){
+    for(uint8_t i = 0; sensors[i] != (Sensor*) NULL; i++){
+      // Do stuff to initialize files
+      values[i] = "*";
+    }
+  }
+
   void read(Sensor* sensor, Stream** outputs, char* buff);
-  void getValue(const char* sensor_name);
+  char* getValue(const char* sensor_name){
+    int8_t sensor_index = findSensor(sensor_name);
+    if(sensor_index > 0){ return values[sensor_index]; }
+    return "*";
+  }
+
+protected:
+  int8_t findSensor(const char* sensor_name){
+    for(uint8_t i = 0; sensors[i] != NULL; i++){
+      if(strcmp(sensors[i]->getName(), sensor_name) == 0){
+        return i;
+      }
+    }
+    return -1;
+  }
+  Sensor** sensors;
+  char** values;
 };
 
 void SensorReader::read(Sensor* sensor, Stream** outputs, char* buff){
