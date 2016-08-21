@@ -23,6 +23,8 @@
 // TinyGPSPlus sensor_gps;
 // UCAMII camera(Serial1, &Serial);
 
+float readingBuffer[20];
+
 TempSensor temp_in("temp_in", 0x18);
 TempSensor temp_out("temp_out", 0x1D);
 
@@ -83,7 +85,9 @@ void setup() {
 	}
 	Serial.println("SD Initialized");
 
-
+	for(uint8_t i = 0; sensors[i] != NULL; i++){
+		sensors[i]->init();
+	}
 
 	// for(int i = 0; i < num_files; i++){
 	// 	files[i] = SD.open(file_names[i], FILE_WRITE);
@@ -164,12 +168,19 @@ void TaskSensorReadStandard(void *pvParameters){
 		 close it for now, and have each sensor open and close it to ensure we don't
 		 corrupt our filesystem.
 		 */
-	for(int i = 0; i < num_files; i++){ files[i].close(); }
+	// for(int i = 0; i < num_files; i++){ files[i].close(); }
 
 	Stream* out[] = {&Serial, &Serial3, (Stream*) NULL};
-        message_out("barometer\ttemp-in\ttemp-ex\tlight\tuv\ttimestamp\n", out);
+  // message_out("barometer\ttemp-in\ttemp-ex\tlight\tuv\ttimestamp\n", out);
 	for(;;){
-		// vTaskDelay( 1000 / portTICK_PERIOD_MS );
+		vTaskDelay( 1000 / portTICK_PERIOD_MS );
+
+		for(uint8_t i = 0; sensors[i] != NULL; i++){
+			float* reading = sensors[i]->read(readingBuffer);
+			for(uint8_t j = 0; reading[j] != NULL; j++){
+				Serial.print(reading[j]); Serial.println(",");
+			}
+		}
 		// sensor_out(&sensor_baro, read_baro, file_names[0], out);
 		// sensor_out(&sensor_temp_in, read_temp,file_names[1], out);
 		// sensor_out(&sensor_temp_ex, read_temp,file_names[2], out);
