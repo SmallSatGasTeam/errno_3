@@ -31,18 +31,18 @@ uint8_t Sensor::_id = 0;
 
 class TempSensor: public Sensor {
 public:
-  TempSensor(const char* name, Adafruit_MCP9808* sensor, uint8_t address)
+  TempSensor(const char* name, uint8_t address)
     :Sensor(name), sensor(sensor), address(address){}
 
   bool read(float* buff){
-    buff[0] = sensor->readTempC();
+    buff[0] = sensor.readTempC();
     buff[1] = (float) NULL;
     return true;
   }
-  bool init(){return sensor->begin(address);}
+  bool init(){return sensor.begin(address);}
 
 protected:
-  Adafruit_MCP9808* sensor;
+  Adafruit_MCP9808 sensor;
   uint8_t address;
 };
 
@@ -124,7 +124,7 @@ public:
 
   bool init(){
   	if (!sensor->begin()){return false;}
-  	g->setExtCrystalUse(true);
+  	sensor->setExtCrystalUse(true);
     return true;
   }
 
