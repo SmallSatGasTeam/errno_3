@@ -1,5 +1,7 @@
 #ifndef SENSOR_H
 #define SENSOR_H
+#define READING_BUFFER_LENGTH 100
+
 #include <stdint.h>
 
 class Sensor {
@@ -28,16 +30,38 @@ protected:
   uint8_t address;
 };
 
+struct SensorReading{
+  float* readings;
+  SensorReading* next;
+};
+
 class SensorReader{
 public:
-  SensorReader(Sensor** sensors, float* values):sensors(sensors), values(values){
+  SensorReader(Sensor** sensors, SensorReading* values):sensors(sensors), values(values){
     for(uint8_t i = 0; sensors[i] != (Sensor*) NULL; i++){
       // Do stuff to initialize files
-      values[i] = -1;
     }
   }
 
-  void read(Sensor* sensor, Stream** outputs, float* buff);
+  void read(Sensor* sensor, Stream** outputs, float* buff){
+    // Fill buffer
+    sensor->read(buff);
+    
+
+    //TODO log stuff
+    uint8_t i;
+    char* reading = "";
+
+    char temp[20];
+    for(i = 0; buff[i] != NULL && i < READING_BUFFER_LENGTH; i++){
+      reading = strcat(reading, strcat(",", dtostrf(buff[i], 0, 2, temp)));
+    }
+
+    for(i = 0; outputs[i]!= NULL; i++){ outputs[i]->print(reading); }
+
+    //TODO write file
+  }
+
   // float* getValue(const char* sensor_name){
   //   int8_t sensor_index = findSensor(sensor_name);
   //   if(sensor_index > 0){return values[sensor_index];}
@@ -45,6 +69,7 @@ public:
   // }
 
 protected:
+
   int8_t findSensor(const char* sensor_name){
     for(uint8_t i = 0; sensors[i] != NULL; i++){
       if(strcmp(sensors[i]->getName(), sensor_name) == 0){
@@ -53,16 +78,18 @@ protected:
     }
     return -1;
   }
+
+
   Sensor** sensors;
-  float* values;
+  SensorReading* values;
 };
 
-void SensorReader::read(Sensor* sensor, Stream** outputs, float* buff){
-  if(!sensor) return;
-  sensor->read(buff);
-  for(uint8_t i = 0; outputs[i]!= NULL; i++){
-    // outputs[i]->print(buff);
-  }
-}
+// void SensorReader::read(Sensor* sensor, Stream** outputs, float* buff){
+//   if(!sensor) return;
+//   sensor->read(buff);
+//   for(uint8_t i = 0; outputs[i]!= NULL; i++){
+//     // outputs[i]->print(buff);
+//   }
+// }
 
 #endif
