@@ -55,6 +55,7 @@ class BaroSensor: public Sensor {
     sensor->readBaro();
     buff[0] = sensor->getPressure();
     buff[1] = sensor->getAltitude();
+    buff[2] = (float) NULL;
     return true;
   }
 
@@ -68,7 +69,28 @@ protected:
   uint8_t address;
 };
 
-class LightSensor: public Sensor {};
+class LightSensor: public Sensor {
+public:
+  LightSensor(const char* name, uint8_t pin)
+    :Sensor(name), pin(pin){}
+    
+  bool read(float* buff){
+    const float TOVOLT = .0048; //converts sensor output to volts
+    const float TOLUX = 776897.0; //converts to lux
+    const float TOLUXPWR = -1.206; //converts to lux
+    float volt = analogRead(pin) * TOVOLT;
+    float RLDR = (1000.0 * (5 - volt )) / volt;
+    float lux = TOLUX * (pow(RLDR, TOLUXPWR));
+    buff[0] = lux;
+    buff[1] = NULL;
+  }
+
+  bool init(){return true;}
+
+protected:
+  uint8_t pin;
+};
+
 class UVSensor: public Sensor {};
 class GyroSensor: public Sensor{};
 class GPSSensor: public Sensor{};
