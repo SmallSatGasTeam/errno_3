@@ -25,7 +25,14 @@ protected:
   uint8_t address;
 };
 
-void read_sensor(Sensor* sensor, Stream** outputs, char* buff){
+class SensorReader{
+public:
+  SensorReader(){}
+  void read(Sensor* sensor, Stream** outputs, char* buff);
+  void getValue(const char* sensor_name);
+};
+
+void SensorReader::read(Sensor* sensor, Stream** outputs, char* buff){
   if(!sensor) return;
   sensor->read(buff);
   for(uint8_t i = 0; outputs[i]!= NULL; i++){
