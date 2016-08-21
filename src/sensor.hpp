@@ -1,6 +1,5 @@
 #ifndef SENSOR_H
 #define SENSOR_H
-#define READING_BUFFER_LENGTH 100
 
 #include <stdint.h>
 

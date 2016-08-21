@@ -1,3 +1,5 @@
+#define READING_BUFFER_LENGTH 20
+
 #include <Arduino_FreeRTOS.h>
 #include <semphr.h>  // add the FreeRTOS functions for Semaphores (or Flags).
 #include <SD.h>
@@ -176,9 +178,9 @@ void TaskSensorReadStandard(void *pvParameters){
 		vTaskDelay( 1000 / portTICK_PERIOD_MS );
 
 		for(uint8_t i = 0; sensors[i] != NULL; i++){
-			float* reading = sensors[i]->read(readingBuffer);
-			for(uint8_t j = 0; reading[j] != NULL; j++){
-				Serial.print(reading[j]); Serial.println(",");
+			sensors[i]->read(readingBuffer);
+			for(uint8_t j = 0; readingBuffer[j] != NULL; j++){
+				Serial.print(readingBuffer[j]); Serial.println(",");
 			}
 		}
 		// sensor_out(&sensor_baro, read_baro, file_names[0], out);
