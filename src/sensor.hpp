@@ -108,7 +108,30 @@ protected:
   uint8_t pin;
 };
 
-class GyroSensor: public Sensor{};
+class GyroSensor: public Sensor{
+public:
+  GyroSensor(const char* name, Adafruit_BNO055* sensor)
+    :Sensor(name), sensor(sensor){}
+
+  bool read(float* buff){
+    imu::Vector<3> acceleration = sensor->getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
+    buff[0] = acceleration.x();
+    buff[1] = acceleration.y();
+    buff[2] = acceleration.z();
+    buff[3] = (float) NULL;
+    return true;
+  }
+
+  bool init(){
+  	if (!sensor->begin()){return false;}
+  	g->setExtCrystalUse(true);
+    return true;
+  }
+
+protected:
+  Adafruit_BNO055* sensor;
+};
+
 class GPSSensor: public Sensor{};
 
 #endif
