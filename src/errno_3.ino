@@ -54,7 +54,7 @@ char* file_names[] = {
 
 File files[num_files];
 
-Stream* input_streams[] = {&Serial, &Serial3, (Stream*) NULL };
+Stream* input_streams[] = {&Serial, &Serial3, (Stream*) nullptr };
 
 /**
  *Global setup should occur here
@@ -77,12 +77,12 @@ void setup() {
 	}
 
 	// initialize Mutex  
-	if (xOutputSemaphore == NULL) {
+	if (xOutputSemaphore == nullptr) {
 		xOutputSemaphore = xSemaphoreCreateMutex(); 
 		if(xOutputSemaphore){ xSemaphoreGive(xOutputSemaphore);}
 	}
 
-	if (xSDSemaphore == NULL) {
+	if (xSDSemaphore == nullptr) {
 		xSDSemaphore = xSemaphoreCreateMutex(); 
 		if(xSDSemaphore){ xSemaphoreGive(xSDSemaphore);}
 	}
@@ -103,33 +103,33 @@ void setup() {
 			TaskSensorReadStandard
 			,  (const portCHAR *) "ReadSensors"
 			,  700  // Stack size
-			,  NULL
+			,  nullptr
 			,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-			,  NULL );
+			,  nullptr );
 
 	xTaskCreate(
 			TaskSensorReadFast
 			,  (const portCHAR *) "ReadSensorsFast"
 			,  512  // Stack size
-			,  NULL
+			,  nullptr
 			,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-			,  NULL );
+			,  nullptr );
 
 	xTaskCreate(
 			TaskGPSRead
 			,  (const portCHAR *) "GPSRead"
 			,  512  // Stack size
-			,  NULL
+			,  nullptr
 			,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-			,  NULL );
+			,  nullptr );
 
 	xTaskCreate(
 			TaskDeployBoom
 			,  (const portCHAR *) "Deploy Boom"
 			,  1024 // Stack size
-			,  NULL
+			,  nullptr
 			,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-			,  NULL );
+			,  nullptr );
 
 
 	// Now the task scheduler, which takes over control of scheduling individual tasks, is automatically started.
@@ -153,16 +153,16 @@ void TaskSensorReadStandard(void *pvParameters){
 		 */
 	for(int i = 0; i < num_files; i++){ files[i].close(); }
 
-	Stream* out[] = {&Serial, &Serial3, (Stream*) NULL};      
+	Stream* out[] = {&Serial, &Serial3, (Stream*) nullptr};      
         message_out("barometer\ttemp-in\ttemp-ex\tlight\tuv\ttimestamp\n", out);
 	for(;;){
 		vTaskDelay( 1000 / portTICK_PERIOD_MS );
 		sensor_out(&sensor_baro, read_baro, file_names[0], out);   
 		sensor_out(&sensor_temp_in, read_temp,file_names[1], out);
 		sensor_out(&sensor_temp_ex, read_temp,file_names[2], out); 
-		sensor_out((void*) NULL, read_light,file_names[3], out);
-		sensor_out((void*) NULL, read_uv, file_names[4], out);
-		sensor_out((void*) NULL, read_timestamp, file_names[9], out);
+		sensor_out((void*) nullptr, read_light,file_names[3], out);
+		sensor_out((void*) nullptr, read_uv, file_names[4], out);
+		sensor_out((void*) nullptr, read_timestamp, file_names[9], out);
 		sensor_out(&sensor_gps,read_gps,file_names[5],out);
 		checkBattery();
                 message_out("\n", out);
@@ -173,7 +173,7 @@ void TaskSensorReadFast(void *pvParameters)
 {
 	(void) pvParameters;
 
-	Stream* outputs[] = {(Stream*) NULL};
+	Stream* outputs[] = {(Stream*) nullptr};
 	initialize_gyro(&sensor_gyro, Serial);
 
 	for (;;) // A Task shall never return or exit.
@@ -186,11 +186,10 @@ void TaskSensorReadFast(void *pvParameters)
 void TaskDeployBoom(void *pvParameters){
 	(void) pvParameters;
 
-	Stream* out[] = {&Serial, &Serial3, (Stream*) NULL};      
-	Stream* camera_out[] = {(Stream*) NULL};      
+	Stream* out[] = {&Serial, &Serial3, (Stream*) nullptr};      
+	Stream* camera_out[] = {(Stream*) nullptr};      
 
-  Data<int> boom;
-  boom.setDeployed(false);
+  boom.deployed = false;
 
   char* camera_messages[] = {
     "\n****************Camera Taking Photo*****************\n",
@@ -211,7 +210,7 @@ void TaskDeployBoom(void *pvParameters){
 		char received_message = 0;
 		// We don't expect to receive commands from two streams at the same time. So this
 		// Overwriting the message shouldn't be a problem.
-		for(char i = 0; input_streams[i] != NULL; i++)
+		for(char i = 0; input_streams[i] != nullptr; i++)
     { 
 			if(input_streams[i]->available())
       {
@@ -221,9 +220,9 @@ void TaskDeployBoom(void *pvParameters){
 			} 
 		}
 
-       if ( received_message == DEPLOY_BOOM )
+    if ( received_message == DEPLOY_BOOM )
     {
-      critical_out((void*) NULL, print_confirm, file_names[8], out);
+      critical_out((void*) nullptr, print_confirm, file_names[8], out);
       deployInitiated = true;
     }
 
@@ -231,23 +230,23 @@ void TaskDeployBoom(void *pvParameters){
 
     if ( received_message == CANCEL_DEPLOY && deployInitiated == true )
     {
-      critical_out((void*) NULL, print_cancel, file_names[8], out);
+      critical_out((void*) nullptr, print_cancel, file_names[8], out);
       deployInitiated = false;
     }
 
 
 
 		// If boom hasn't deployed yet AND ('y' was pressed OR pressure is within range) 
-    if( !boom.deployed() &&
-      (deployConfirmed == true || 
-      (avgPressure <= 44 && avgPressure > 30)))
-   {
-			critical_out((void*) NULL, print_boom, file_names[8], out);
+    if( !boom.deployed &&
+      ( deployConfirmed == true || 
+      ( avgPressure <= 44 && avgPressure > 30 )))
+    {
+			critical_out((void*) nullptr, print_boom, file_names[8], out);
 			digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
 			vTaskDelay( 3000 / portTICK_PERIOD_MS );
 			digitalWrite(WIRE_CUTTER, LOW); // Disengage
 			vTaskDelay( 1000 / portTICK_PERIOD_MS );
-			boom.setDeployed(true);
+			boom.deployed = true;
 
       //take picture after boom deployment
       critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
@@ -264,7 +263,7 @@ void TaskDeployBoom(void *pvParameters){
 void TaskGPSRead(void *pvParameters)
 {
 	(void) pvParameters;
-	Stream* outputs[] = {(Stream*) NULL};
+	Stream* outputs[] = {(Stream*) nullptr};
 	for(;;)
 	{
 		while (Serial2.available()){

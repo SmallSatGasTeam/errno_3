@@ -8,7 +8,7 @@
 void read_timestamp(void* dummy, Stream* output);
 
 bool message_peek(Stream** stream, char message, char &read_count, char num_readers){
-  for(char i = 0; stream[i] != NULL; i++){
+  for(char i = 0; stream[i] != nullptr; i++){
     if(stream[i]->peek() == message){
       while(stream[i]->available()){stream[i]->read();}
       read_count = 0;
@@ -18,7 +18,7 @@ bool message_peek(Stream** stream, char message, char &read_count, char num_read
   
   if(++read_count >= num_readers){
     read_count = 0;
-    for(char i = 0; stream[i] != NULL; i++){
+    for(char i = 0; stream[i] != nullptr; i++){
       while(stream[i]->available()){stream[i]->read();}
     }
   } 
@@ -33,7 +33,7 @@ template <typename F, typename S>
 inline void sensor_out(S sensor, F func, char* file_name, Stream** outputs, char priority = 5){
  
 	if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) priority ) == pdTRUE ){
-    for(int i = 0; outputs[i] != NULL; i++){ 
+    for(int i = 0; outputs[i] != nullptr; i++){ 
 			func(sensor, outputs[i]);
 			outputs[i]->print('\t'); 
     }
@@ -42,7 +42,7 @@ inline void sensor_out(S sensor, F func, char* file_name, Stream** outputs, char
 
   if ( xSemaphoreTake( xSDSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
     file = SD.open(file_name, FILE_WRITE);
-		read_timestamp((void*) NULL, &file);
+		read_timestamp((void*) nullptr, &file);
 		file.print(", ");
     func(sensor, &file);
     file.println();
@@ -52,15 +52,15 @@ inline void sensor_out(S sensor, F func, char* file_name, Stream** outputs, char
 }
 
 template <typename F, typename S>
-inline void critical_out(S sensor, F func, char* file_name, Stream** outputs, Stream** alert_outputs = (Stream**) NULL, char** status_messages = (char**) NULL){
+inline void critical_out(S sensor, F func, char* file_name, Stream** outputs, Stream** alert_outputs = (Stream**) nullptr, char** status_messages = (char**) NULL){
   if(status_messages && alert_outputs){
-    for(int i = 0; alert_outputs[i] != NULL; i++){
+    for(int i = 0; alert_outputs[i] != nullptr; i++){
       alert_outputs[i]->print(status_messages[0]);  
     }
   }
 
   while(xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 15 ) != pdTRUE ){;}
-    for(int i = 0; outputs[i] != NULL; i++){ 
+    for(int i = 0; outputs[i] != nullptr; i++){ 
       func(sensor, outputs[i]);
       outputs[i]->print('\t'); 
     }
@@ -68,7 +68,7 @@ inline void critical_out(S sensor, F func, char* file_name, Stream** outputs, St
 
   while( xSemaphoreTake( xSDSemaphore, ( TickType_t ) 15 ) != pdTRUE ){;}
     file = SD.open(file_name, FILE_WRITE);
-    read_timestamp((void*) NULL, &file);
+    read_timestamp((void*) nullptr, &file);
     file.print(", ");
     func(sensor, &file);
     file.println();
@@ -76,7 +76,7 @@ inline void critical_out(S sensor, F func, char* file_name, Stream** outputs, St
     xSemaphoreGive(xSDSemaphore);
 
   if(status_messages && alert_outputs){
-    for(int i = 0; alert_outputs[i] != NULL; i++){
+    for(int i = 0; alert_outputs[i] != nullptr; i++){
       alert_outputs[i]->print(status_messages[1]);  
     }
   }
@@ -86,7 +86,7 @@ inline void critical_out(S sensor, F func, char* file_name, Stream** outputs, St
 
 inline void message_out(char* message, Stream** outputs){ 
   if ( xSemaphoreTake( xOutputSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
-    for(int i = 0; outputs[i] != NULL; i++){ 
+    for(int i = 0; outputs[i] != nullptr; i++){ 
       outputs[i]->println(message); 
     }
     xSemaphoreGive(xOutputSemaphore);
@@ -112,9 +112,8 @@ void read_temp(Adafruit_MCP9808* sensor, Stream* output ){
   float val = sensor->readTempC();
   output->print(val);
 
-  Data<float> data;
-  if ( sensor->begin(0x18)) data.setTempEx(val);
-  else data.setTempIn(val);
+  if ( sensor->begin(0x18) ) temp.external = val;
+  else temp.internal = val;
 }
 
 //------------ Barometer ------------//
@@ -129,9 +128,8 @@ void read_baro(CoolSatBaro* sensor, Stream* output){
   float alt = sensor->getAltitude();
   output->print(val); output->print(','); output->print(alt);
 
-  Data<float> data;
-  data.setPressure(val);
-  data.setAltitude(alt);
+  baro.pressure = val;
+  baro.altitude = alt;
 }
 
 //------------ Light & UV sensors ------------//
@@ -151,8 +149,7 @@ void read_light(void* dummy, Stream* output){
 
     output->print(lux);
 
-    Data<float> data;
-    data.setLux(lux);
+    light.lux = lux;
 }
 
 void read_uv(void* dummy, Stream* output){
@@ -161,22 +158,22 @@ void read_uv(void* dummy, Stream* output){
   float uv = 5 / 1023.0 * v * 10; 
   output->print(uv);
 
-  Data<float> data;
-  data.setUV(uv);
+  light.uv = uv;
 }
 
 //------------ Gyroscope ------------//
 
-void initialize_gyro(Adafruit_BNO055* gyro, Stream& output){
-	if (!gyro->begin()){
+void initialize_gyro(Adafruit_BNO055* sensor_gyro, Stream& output)
+{
+	if (!sensor_gyro->begin()){
 		output.println("Couldn't detect BNO055 gyroscope ... Check your wiring or I2C ADDR!");
 	}
-	gyro->setExtCrystalUse(true);
+	sensor_gyro->setExtCrystalUse(true);
 }
 
-void read_gyro(Adafruit_BNO055* gyro, Stream* output){
-
-	imu::Vector<3> acceleration = gyro->getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
+void read_gyro(Adafruit_BNO055* sensor_gyro, Stream* output)
+{
+	imu::Vector<3> acceleration = sensor_gyro->getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
 
 	output->print(acceleration.x());
 	output->print(",");
@@ -185,7 +182,7 @@ void read_gyro(Adafruit_BNO055* gyro, Stream* output){
 	output->print(acceleration.z());
 	output->print(",");
 
-	imu::Vector<3> euler = gyro->getVector(Adafruit_BNO055::VECTOR_EULER);
+	imu::Vector<3> euler = sensor_gyro->getVector(Adafruit_BNO055::VECTOR_EULER);
 
 	output->print(euler.x());
 	output->print(",");
@@ -194,15 +191,14 @@ void read_gyro(Adafruit_BNO055* gyro, Stream* output){
 	output->print(euler.z());
 	output->print(",");
 
-  Data<double> data;
-  data.setGyro_accel(acceleration.x(),'x');
-  data.setGyro_accel(acceleration.y(),'y');
-  data.setGyro_accel(acceleration.z(),'z');
+  gyro.accelX = acceleration.x();
+  gyro.accelY = acceleration.y();
+  gyro.accelZ = acceleration.z();
 
-  data.setGyro_euler(euler.x(),'x');
-  data.setGyro_euler(euler.y(),'y');
-  data.setGyro_euler(euler.z(),'z');
-  
+  gyro.eulerX = euler.x();
+  gyro.eulerY = euler.y();
+  gyro.eulerZ = euler.z();
+
 	delay(100); // Delay of 100ms TODO needed?
 }
 
@@ -210,15 +206,14 @@ void read_gyro(Adafruit_BNO055* gyro, Stream* output){
 
 //GPS must be constantly be fed characters (done in controlling task)
 
-void read_gps(TinyGPSPlus* gps, Stream* output){
+void read_gps(TinyGPSPlus* sensor_gps, Stream* output){
 
-	output->print(gps->location.lat(),8);
+	output->print(sensor_gps->location.lat(),8);
 	output->print(",");
-	output->print(gps->location.lng(),8);
+	output->print(sensor_gps->location.lng(),8);
 
-  Data<double> data;
-  data.setGPS(gps->location.lat(),'p');
-  data.setGPS(gps->location.lng(),'l');
+  gps.lat = sensor_gps->location.lat();
+  gps.lng = sensor_gps->location.lng();
 }
 //------------ Clock ------------//
 
@@ -242,10 +237,9 @@ void read_timestamp(void* dummy, Stream* output){
 	}
 	else output->println("Error: Failed to fetch time");
 
-  Data<uint8_t> data;
-  data.setTime(tm.Hour,'h');
-  data.setTime(tm.Minute,'m');
-  data.setTime(tm.Second,'s');
+  time.hour = tm.Hour;
+  time.minute = tm.Minute;
+  time.second = tm.Second;
 }
 
 //------------ Boom ------------//
@@ -267,22 +261,23 @@ void print_cancel(void* dummy, Stream* output)
 
 //------------ Battery ------------//
 
-void checkBattery(){
-const int batteryPin = 0;
-const int powerOff = 10;
-float battery = 0.0;
+void checkBattery()
+{
+  const int batteryPin = 0;
+  const int powerOff = 10;
+  float battery = 0.0;
 
-pinMode(powerOff, OUTPUT);
-digitalWrite(powerOff, HIGH);
+  pinMode(powerOff, OUTPUT);
+  digitalWrite(powerOff, HIGH);
 
-battery = analogRead(batteryPin);
-battery = (battery * .00475) * 2;
+  battery = analogRead(batteryPin);
+  battery = (battery * .00475) * 2;
 
-    if (battery <= 6.3){
-	digitalWrite(powerOff, LOW);
-	delay(1000);
-    } 
-
+  if (battery <= 6.3)
+  {
+	  digitalWrite(powerOff, LOW);
+	  delay(1000);
+  } 
 }
 
 
