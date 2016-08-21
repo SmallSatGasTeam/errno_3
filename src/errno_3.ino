@@ -16,12 +16,12 @@
 #include "sensor.hpp"
 
 // define sensors
-Adafruit_MCP9808 sensor_temp_ex = Adafruit_MCP9808();
-Adafruit_MCP9808 sensor_temp_in = Adafruit_MCP9808();
-Adafruit_BNO055  sensor_gyro = Adafruit_BNO055();
-CoolSatBaro sensor_baro;
-TinyGPSPlus sensor_gps;
-UCAMII camera(Serial1, &Serial);
+// Adafruit_MCP9808 sensor_temp_ex = Adafruit_MCP9808();
+// Adafruit_MCP9808 sensor_temp_in = Adafruit_MCP9808();
+// Adafruit_BNO055  sensor_gyro = Adafruit_BNO055();
+// CoolSatBaro sensor_baro;
+// TinyGPSPlus sensor_gps;
+// UCAMII camera(Serial1, &Serial);
 
 TempSensor temp_in("temp_in", 0x18);
 TempSensor temp_out("temp_out", 0x1D);
@@ -102,9 +102,9 @@ void setup() {
 
 	// Initialize sensors
 	// These functions should be defined in sensor.h
-	initialize_temp_ex(&sensor_temp_ex, Serial);
-	initialize_temp_in(&sensor_temp_in, Serial);
-	initialize_baro(&sensor_baro, Serial);
+	// initialize_temp_ex(&sensor_temp_ex, Serial);
+	// initialize_temp_in(&sensor_temp_in, Serial);
+	// initialize_baro(&sensor_baro, Serial);
 
 	// Initialize switches
 	pinMode(WIRE_CUTTER, OUTPUT);
@@ -167,16 +167,16 @@ void TaskSensorReadStandard(void *pvParameters){
 	Stream* out[] = {&Serial, &Serial3, (Stream*) NULL};
         message_out("barometer\ttemp-in\ttemp-ex\tlight\tuv\ttimestamp\n", out);
 	for(;;){
-		vTaskDelay( 1000 / portTICK_PERIOD_MS );
-		sensor_out(&sensor_baro, read_baro, file_names[0], out);
-		sensor_out(&sensor_temp_in, read_temp,file_names[1], out);
-		sensor_out(&sensor_temp_ex, read_temp,file_names[2], out);
-		sensor_out((void*) NULL, read_light,file_names[3], out);
-		sensor_out((void*) NULL, read_uv, file_names[4], out);
-		sensor_out((void*) NULL, read_timestamp, file_names[9], out);
-		sensor_out(&sensor_gps,read_gps,file_names[5],out);
-		checkBattery();
-                message_out("\n", out);
+		// vTaskDelay( 1000 / portTICK_PERIOD_MS );
+		// sensor_out(&sensor_baro, read_baro, file_names[0], out);
+		// sensor_out(&sensor_temp_in, read_temp,file_names[1], out);
+		// sensor_out(&sensor_temp_ex, read_temp,file_names[2], out);
+		// sensor_out((void*) NULL, read_light,file_names[3], out);
+		// sensor_out((void*) NULL, read_uv, file_names[4], out);
+		// sensor_out((void*) NULL, read_timestamp, file_names[9], out);
+		// sensor_out(&sensor_gps,read_gps,file_names[5],out);
+		// checkBattery();
+    // message_out("\n", out);
 	}
 }
 
@@ -185,12 +185,12 @@ void TaskSensorReadFast(void *pvParameters)
 	(void) pvParameters;
 
 	Stream* outputs[] = {(Stream*) NULL};
-	initialize_gyro(&sensor_gyro, Serial);
+	// initialize_gyro(&sensor_gyro, Serial);
 
 	for (;;) // A Task shall never return or exit.
 	{
-		sensor_out(&sensor_gyro, read_gyro, file_names[6], outputs);
-		vTaskDelay( 50 / portTICK_PERIOD_MS );
+		// sensor_out(&sensor_gyro, read_gyro, file_names[6], outputs);
+		// vTaskDelay( 50 / portTICK_PERIOD_MS );
 	}
 }
 
@@ -210,7 +210,7 @@ void TaskDeployBoom(void *pvParameters){
 	for(;;)
 	{
 
-		pressure = sensor_baro.getPressure();
+		// pressure = sensor_baro.getPressure();
 
 		char received_message = 0;
 		// We don't expect to receive commands from two streams at the same time. So this
@@ -232,12 +232,12 @@ void TaskDeployBoom(void *pvParameters){
 			deployed = true;
 
 			//take picture after boom deployment
-			critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
+			// critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
 		}
 
 
 		if(received_message == TAKE_PHOTO){
-		    critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
+		    // critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
 		}
 	}
 }
@@ -249,7 +249,7 @@ void TaskGPSRead(void *pvParameters)
 	for(;;)
 	{
 		while (Serial2.available()){
-			sensor_gps.encode(Serial2.read());
+			// sensor_gps.encode(Serial2.read());
 		}
 		vTaskDelay(500/portTICK_PERIOD_MS);
 	}
