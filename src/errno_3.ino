@@ -30,6 +30,7 @@ Sensor* sensors[] = {&temp_in, &temp_out};
 
 //TODO Add read sensor method
 //TODO figure out sprintf
+//TODO test sd card writing
 
 File file;
 

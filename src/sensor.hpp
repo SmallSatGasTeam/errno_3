@@ -4,6 +4,14 @@
 
 #include <stdint.h>
 
+//NOTE currently working on adding validation method
+struct SensorReading{
+  float* readings;
+  SensorReading* next;
+  SensorReading(float* readings = NULL, SensorReading* next = NULL)
+    :readings(readings), next(next){}
+};
+
 class Sensor {
 public:
   Sensor(const char* sensor_name):name(sensor_name), id(Sensor::nextId()){}
@@ -13,6 +21,7 @@ public:
   virtual bool read(float* buff) = 0;
   virtual bool init();
   const char* getName(){return name;}
+  // virtual static SensorReading* validateReading(){} TODO
 
   const uint8_t id;
 protected:
@@ -25,23 +34,17 @@ class TempSensor: public Sensor {
 public:
   TempSensor(const char* name, Adafruit_MCP9808* sensor, uint8_t address)
     :Sensor(name), sensor(sensor), address(address){}
+
   bool read(float* buff){
-    // TODO null terminate buffer of floats
-    // if(!buff) return false;
-    // return sprintf(buff, "%f");
-    return false;
+    buff[0] = sensor->readTempC();
+    buff[1] = (float) NULL;
+    return true;
   }
   bool init(){return sensor->begin(0x18);}
+
 protected:
   Adafruit_MCP9808* sensor;
   uint8_t address;
-};
-
-struct SensorReading{
-  float* readings;
-  SensorReading* next;
-  SensorReading(float* readings = NULL, SensorReading* next = NULL)
-    :readings(readings), next(next){}
 };
 
 class SensorReader{
@@ -52,7 +55,7 @@ public:
     }
   }
 
-  void validateReading(Sensor* sensor, float* buff){
+  SensorReading* validateReading(Sensor* sensor, float* buff){
     // uint8_t buffSize = sizeof(float) * i-1;
     // float currBuff[buffSize];
     // SensorReading tempReading;
@@ -65,6 +68,8 @@ public:
     //   values[sensor->id] = currReading;
     // }
   }
+
+  void appendReading(){}
 
   void read(Sensor* sensor, Stream** outputs, float* buff){
 
@@ -80,7 +85,6 @@ public:
     for(i = 0; buff[i] != NULL && i < READING_BUFFER_LENGTH; i++){
       reading = strcat(reading, strcat(",", dtostrf(buff[i], 0, 2, temp)));
     }
-
 
     for(i = 0; outputs[i]!= NULL; i++){ outputs[i]->print(reading); }
 
