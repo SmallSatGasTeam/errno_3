@@ -66,11 +66,11 @@ void setup() {
 	Serial2.begin(9600);
 	Serial3.begin(9600);
 
-	Serial.println("Initializing SD Card");
+	Serial.println("\n\nInitializing SD card...");
 	if(!SD.begin(46)){
-		Serial.println("SD card failed to initialize!");
+		Serial.println("\nSD card failed to initialize!");
 	}
-	Serial.println("SD Initialized");
+	Serial.println("\nSD Initialized\n\n");
 
 	for(int i = 0; i < num_files; i++){
 		files[i] = SD.open(file_names[i], FILE_WRITE);
@@ -125,7 +125,7 @@ void setup() {
 
 	xTaskCreate(
 			TaskDeployBoom
-			,  (const portCHAR *) "Deploy Boom"
+			,  (const portCHAR *) "Deploy Boom and take photos"
 			,  1024 // Stack size
 			,  nullptr
 			,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
@@ -151,7 +151,7 @@ void TaskSensorReadStandard(void *pvParameters){
 		 close it for now, and have each sensor open and close it to ensure we don't
 		 corrupt our filesystem.
 		 */
-	for(int i = 0; i < num_files; i++){ files[i].close(); }
+	for(int i = 0; i < num_files; i++) { files[i].close(); }
 
 	Stream* out[] = {&Serial, &Serial3, (Stream*) nullptr};      
         message_out("barometer\ttemp-in\ttemp-ex\tlight\tuv\ttimestamp\n", out);
@@ -165,7 +165,7 @@ void TaskSensorReadStandard(void *pvParameters){
 		sensor_out((void*) nullptr, read_timestamp, file_names[9], out);
 		sensor_out(&sensor_gps,read_gps,file_names[5],out);
 		checkBattery();
-                message_out("\n", out);
+    message_out("\n", out);
 	}
 }
 
@@ -203,14 +203,14 @@ void TaskDeployBoom(void *pvParameters){
 	for(;;)
 	{
     const auto AVG_RANGE = 7; // number of readings to use to obtain average
-    auto pressure = sensor_baro.getPressure();
-    float avgPressure = getAverage(pressure, AVG_RANGE);
-
+    
+    float avgPressure = getAverage(baro.pressure, AVG_RANGE);
  
 		char received_message = 0;
 		// We don't expect to receive commands from two streams at the same time. So this
-		// Overwriting the message shouldn't be a problem.
-		for(char i = 0; input_streams[i] != nullptr; i++)
+		// overwriting of the message shouldn't be a problem.
+
+		for(char i = 0; input_streams[i] != nullptr; ++i)
     { 
 			if(input_streams[i]->available())
       {

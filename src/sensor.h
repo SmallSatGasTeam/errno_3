@@ -246,17 +246,17 @@ void read_timestamp(void* dummy, Stream* output){
 
 void print_boom(void* dummy, Stream* output)
 {
-     output->print("\n***************** !!! DEPLOYING BOOM !!! **********************\n");
+     output->print("\n\n***************** !!! DEPLOYING BOOM !!! **********************\n\n");
 }
 
 void print_confirm(void* dummy, Stream* output)
 {
-     output->print("\n***************** DEPLOYMENT COMMAND DETECTED. PRESS 'y' TO CONFIRM OR 'n' TO CANCEL **********************\n");
+     output->print("\n\n***************** DEPLOYMENT COMMAND DETECTED. PRESS 'y' TO CONFIRM OR 'n' TO CANCEL **********************\n\n");
 }
 
 void print_cancel(void* dummy, Stream* output)
 {
-     output->print("\n***************** Deployment cancelled **********************\n");
+     output->print("\n\n***************** Deployment cancelled **********************\n\n");
 }
 
 //------------ Battery ------------//
