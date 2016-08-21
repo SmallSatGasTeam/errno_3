@@ -47,7 +47,27 @@ protected:
 };
 
 
-class BaroSensor: public Sensor {};
+class BaroSensor: public Sensor {
+  BaroSensor(const char* name, CoolSatBaro* sensor, uint8_t address)
+    :Sensor(name), sensor(sensor), address(address){}
+
+  bool read(float* buff){
+    sensor->readBaro();
+    buff[0] = sensor->getPressure();
+    buff[1] = sensor->getAltitude();
+    return true;
+  }
+
+  bool init(){
+    sensor->initial(address);
+    return true;
+  }
+
+protected:
+  CoolSatBaro* sensor;
+  uint8_t address;
+};
+
 class LightSensor: public Sensor {};
 class UVSensor: public Sensor {};
 class GyroSensor: public Sensor{};
