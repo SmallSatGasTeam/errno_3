@@ -73,7 +73,7 @@ class LightSensor: public Sensor {
 public:
   LightSensor(const char* name, uint8_t pin)
     :Sensor(name), pin(pin){}
-    
+
   bool read(float* buff){
     const float TOVOLT = .0048; //converts sensor output to volts
     const float TOLUX = 776897.0; //converts to lux
@@ -91,7 +91,23 @@ protected:
   uint8_t pin;
 };
 
-class UVSensor: public Sensor {};
+class UVSensor: public Sensor {
+public:
+  UVSensor(const char* name, uint8_t pin)
+    :Sensor(name), pin(pin){}
+
+  bool read(float* buff){
+    int v = analogRead(pin); // reads value
+    float uv = 5 / 1023.0 * v * 10;
+    buff[0] = uv;
+    buff[1] = (float) NULL;
+  }
+
+  bool init(){return true;}
+protected:
+  uint8_t pin;
+};
+
 class GyroSensor: public Sensor{};
 class GPSSensor: public Sensor{};
 
