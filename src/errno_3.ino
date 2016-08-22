@@ -1,5 +1,3 @@
-#include "messages.h" // Defines incoming data header
-#include "sensor.h"
 #include <Adafruit_BNO055.h>
 #include <Adafruit_MCP9808.h>
 #include <Adafruit_Sensor.h>
@@ -13,6 +11,8 @@
 #include <Wire.h>
 #include <semphr.h> // add the FreeRTOS functions for Semaphores (or Flags).
 #include <uCamII.h>
+#include "messages.h" // Defines incoming data header
+#include "sensor.h"
 
 // define sensors
 Adafruit_MCP9808 sensor_temp_ex = Adafruit_MCP9808();

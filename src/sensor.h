@@ -69,7 +69,7 @@ inline void sensor_out(S sensor, F func, char *file_name, Stream **outputs, char
 template <typename F, typename S>
 inline void critical_out(S sensor, F func, char *file_name, Stream **outputs,
                          Stream **alert_outputs = (Stream **)nullptr,
-                         char **status_messages = (char **)nullptr)
+                         char **status_messages = (char **)NULL)
 {
   if (status_messages && alert_outputs)
   {
