@@ -1,26 +1,47 @@
 #ifndef DATA_H
 #define DATA_H
 
-struct data
+struct temp_t 
 {
   float internal;
   float external;
+} temp;
+
+struct baro_t
+{
   float pressure;
   float altitude;
+} baro; 
+
+struct light_t
+{
   float lux;
   float  uv;
-  bool deployed;
+} light;
+
+struct boom_t { bool deployed; } boom;
+
+struct gyro_t
+{
   double accelX;
   double accelY;
   double accelZ;
   double eulerX;
   double eulerY;
   double eulerZ;
+} gyro;
+
+struct gps_t
+{
   double lat;
   double lng;
+} gps;
+
+struct time
+{
   uint8_t hour;
   uint8_t minute;
   uint8_t second;
-} temp, baro, light, boom, gyro, gps, time;
+} time;
 
 #endif

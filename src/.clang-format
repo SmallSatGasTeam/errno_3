@@ -1,0 +1,8 @@
+AlwaysBreakTemplateDeclarations: true
+AllowShortLoopsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: true
+BreakBeforeBraces: Allman
+ColumnLimit: 100
+UseTab: Never
+IndentWidth: 2
+TabWidth: 2
