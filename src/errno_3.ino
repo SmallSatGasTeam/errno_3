@@ -29,9 +29,17 @@ float readingBuffer[20];
 
 TempSensor temp_in("temp_in", 0x18);
 TempSensor temp_out("temp_out", 0x1D);
+BaroSensor baro("barometer", 0x76);
+LightSensor light("light", 15);
+UVSensor uv("uv", 1);
+GyroSensor gyro("gyro");
+
+Sensor* sensors[] = {&temp_in, &temp_out, &baro, &light, &uv, &gyro, (Sensor*) NULL};
+Sensor* fast_sensors[] = {&gyro, (Sensor*) NULL};
+Sensor* standard_sensors[] = {&temp_in, &temp_out, &baro, &light, &uv, (Sensor*) NULL};
 
 
-Sensor* sensors[] = {&temp_in, &temp_out, (Sensor*) NULL};
+
 
 //TODO Add read sensor method
 //TODO figure out sprintf
@@ -177,8 +185,8 @@ void TaskSensorReadStandard(void *pvParameters){
 	for(;;){
 		vTaskDelay( 1000 / portTICK_PERIOD_MS );
 
-		for(uint8_t i = 0; sensors[i] != NULL; i++){
-			sensors[i]->read(readingBuffer);
+		for(uint8_t i = 0; standard_sensors[i] != NULL; i++){
+			standard_sensors[i]->read(readingBuffer);
 			for(uint8_t j = 0; readingBuffer[j] != NULL; j++){
 				Serial.print(readingBuffer[j]); Serial.println(",");
 			}

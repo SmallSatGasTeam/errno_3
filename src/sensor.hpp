@@ -17,7 +17,7 @@ public:
   static uint8_t _id;
 
   virtual bool read(float* buff) = 0;
-  virtual bool init();
+  virtual bool init() = 0;
   const char* getName(){return name;}
   // virtual static SensorReading* validateReading(){} TODO
 
@@ -47,6 +47,7 @@ protected:
 
 
 class BaroSensor: public Sensor {
+public:
   BaroSensor(const char* name, uint8_t address)
     :Sensor(name), address(address){}
 
@@ -107,16 +108,18 @@ protected:
   uint8_t pin;
 };
 
-class GyroSensor: public Sensor{
+class GyroSensor: public Sensor {
 public:
   GyroSensor(const char* name):Sensor(name){}
 
   bool read(float* buff){
-    imu::Vector<3> acceleration = sensor.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
+  
+  imu::Vector<3> acceleration = sensor.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
     buff[0] = acceleration.x();
     buff[1] = acceleration.y();
     buff[2] = acceleration.z();
     buff[3] = (float) NULL;
+
     return true;
   }
 
@@ -129,7 +132,5 @@ public:
 protected:
   Adafruit_BNO055 sensor;
 };
-
-class GPSSensor: public Sensor{};
 
 #endif
