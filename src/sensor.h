@@ -1,6 +1,7 @@
 #ifndef SENSORS_H
 #define SENSORS_H
 
+#include <Arduino_FreeRTOS.h>
 #include "data.h"
 
 // ------------ FreeRTOS Handling ------------ //
@@ -239,7 +240,7 @@ void read_gyro(Adafruit_BNO055 *sensor_gyro, Stream *output)
   gyro.eulerY = euler.y();
   gyro.eulerZ = euler.z();
 
-  delay(100); // Delay of 100ms TODO needed?
+  vTaskDelay(100 / portTICK_PERIOD_MS); // Delay of 100ms TODO needed? probably
 }
 
 //------------- GPS ---------------//
@@ -324,8 +325,8 @@ void checkBattery()
   if (battery <= 6.3)
   {
     digitalWrite(powerOff, LOW);
-    delay(1000);
-  }
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+ }
 }
 
 // ----------------- Camera -------------- //
