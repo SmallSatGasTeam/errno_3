@@ -22,7 +22,6 @@ public:
   // virtual static SensorReading* validateReading(){} TODO
 
   const uint8_t id;
-protected:
   const char* name;
 };
 
@@ -132,5 +131,24 @@ public:
 protected:
   Adafruit_BNO055 sensor;
 };
+
+class GPSSensor: public Sensor {
+public:
+  GPSSensor(const char* name):Sensor(name){}
+
+  bool read(float* buff){
+    buff[0] = gps.location.lat();
+    buff[1] = gps.location.lng();
+    buff[2] = (float) NULL;
+    return true;
+  }
+
+  bool init(){
+    return true;
+  }
+protected:
+  TinyGPSPlus gps;
+};
+
 
 #endif

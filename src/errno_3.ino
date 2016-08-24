@@ -83,7 +83,7 @@ Stream* input_streams[] = {&Serial, &Serial3, (Stream*) NULL };
  *Global setup should occur here
  */
 void setup() {
-
+	
 	Serial.begin(9600);
 	Serial1.begin(115200);
 	Serial2.begin(9600);
@@ -96,6 +96,10 @@ void setup() {
 	Serial.println("SD Initialized");
 
 	for(uint8_t i = 0; sensors[i] != NULL; i++){
+	   	char filename[30];
+                strcpy(filename, standard_sensors[i]->name);
+                strcat(filename, ".csv");
+ 		file = SD.open(filename, FILE_WRITE);
 		sensors[i]->init();
 	}
 
@@ -187,9 +191,16 @@ void TaskSensorReadStandard(void *pvParameters){
 
 		for(uint8_t i = 0; standard_sensors[i] != NULL; i++){
 			standard_sensors[i]->read(readingBuffer);
+   			char filename[30];
+                        strcpy(filename, standard_sensors[i]->name);
+                        strcat(filename, ".csv");
+			file.close();
+			file = SD.open(filename , FILE_WRITE);
 			for(uint8_t j = 0; readingBuffer[j] != NULL; j++){
 				Serial.print(readingBuffer[j]); Serial.println(",");
+				file.print(readingBuffer[j]); file.println(",");
 			}
+                        file.close();
 		}
 		// sensor_out(&sensor_baro, read_baro, file_names[0], out);
 		// sensor_out(&sensor_temp_in, read_temp,file_names[1], out);
