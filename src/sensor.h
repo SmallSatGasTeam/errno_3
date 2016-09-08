@@ -349,35 +349,70 @@ void read_camera(UCAMII *camera, Stream *output)
   }
 }
 
-// ------------ Utilities ------------ //
+// ------------ Data Validation ------------ //
 
-/* This function is designed to be placed within a loop to get the
-   average of n readings (defined by AVG_RANGE) from a sensor.
-   Returns 0 until at least n readings have been collected. */
-
-template <typename T>
-T getAverage(T reading, const int AVG_RANGE)
+void swap(float & a, float & b)
 {
-  static T average;
-  if (!average) average = 0;
+  auto temp = a;
+  a = b;
+  b = temp;
+}
 
-  static int iters;
-  if (!iters) iters = 0;
-  ++iters;
-
-  static T sum;
-  if (!sum) sum = 0;
-
-  sum += reading;
-
-  if (iters >= AVG_RANGE)
+int partition(LinkedList<float> & list, int start, int end, int pivot)
+{
+  swap(list[pivot], list[end - 1]);
+  int firstGreater = start;
+  for (int i = start; i < end - 1; ++i)
   {
-    average = sum / iters;
-    sum = 0;
-    iters = 0;
+    if (list[i] < = list [end - 1])
+    {
+      swap(list[i], list[firstGreater]);
+      ++firstGreater;
+    }
   }
+  swap(list[end - 1], list[firstGreater]);
+  return firstGreater;
+}
 
-  return average;
+int getPivot(LinkedList<float> & list, int start, int end)
+{
+  auto first = list[start];
+  auto last = list[end - 1];
+  auto mid = list[(start + end) / 2];
+  if ((first <= last && last <= mid) || (mid <= last && last <= first)) return end - 1;
+  else if ((last <= first && first <= mid) || (mid <= first && first <= last)) return start;
+  else if ((first <= mid && mid <= last) || (last <= mid && mid <= first)) return (start + end)/2;
+  else return mid;
+}
+
+void quickSort(LinkedList<float> & list, int start, int end)
+{
+  if (end - start <= 1) return;
+  auto pivot = getPivot(list, start, end);
+  pivot = partition(list, start, end, pivot);
+
+  quickSort(list, start, pivot);
+  quickSort(list, pivot, end);
+}
+
+float getMedian(float reading, const int RANGE)
+{
+  static LinkedList<float> list;
+  auto median = 0;
+
+  list.push_back(reading);
+  auto size = list.size();
+
+  if (size >= RANGE)
+  {
+    auto tempList = list;
+    quickSort(tempList, 0, tempList.size()); 
+    median = tempList[ size / 2 ];
+
+    list.pop_front();
+  }
+  
+  return median;
 }
 
 #endif
