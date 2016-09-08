@@ -206,9 +206,9 @@ void TaskDeployBoom(void *pvParameters)
 
   for (;;)
   {
-    const auto AVG_RANGE = 7; // number of readings to use to obtain average
+    const auto RANGE = 30; // number of readings to use to obtain median 
 
-    float avgPressure = getAverage(baro.pressure, AVG_RANGE);
+    float valPressure = getMedian(baro.pressure, RANGE);
 
     char received_message = 0;
     // We don't expect to receive commands from two streams at the same time. So this
@@ -243,7 +243,9 @@ void TaskDeployBoom(void *pvParameters)
     }
 
     // If boom hasn't deployed yet AND ('y' was pressed OR pressure is within range)
-    if (!boom.deployed && (deployConfirmed == true || (avgPressure <= 44 && avgPressure > 30)))
+    if (
+      !boom.deployed && 
+      (deployConfirmed == true || (valPressure <= 44 && valPressure > 30)))
     {
       critical_out((void *)nullptr, print_boom, file_names[8], out);
       digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION

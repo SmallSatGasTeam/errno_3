@@ -2,6 +2,7 @@
 #define SENSORS_H
 
 #include "data.h"
+#include "list.h"
 
 // ------------ FreeRTOS Handling ------------ //
 
