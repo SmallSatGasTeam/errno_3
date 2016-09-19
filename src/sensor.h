@@ -350,6 +350,7 @@ void read_camera(UCAMII *camera, Stream *output)
   }
 }
 
+
 // ------------ Data Validation ------------ //
 
 void swap(float & a, float & b)
@@ -359,13 +360,13 @@ void swap(float & a, float & b)
   b = temp;
 }
 
-int partition(LinkedList<float> & list, int start, int end, int pivot)
+int partition(LinkedList & list, int start, int end, int pivot)
 {
   swap(list[pivot], list[end - 1]);
   int firstGreater = start;
   for (int i = start; i < end - 1; ++i)
   {
-    if (list[i] < = list [end - 1])
+    if (list[i] <= list[end - 1])
     {
       swap(list[i], list[firstGreater]);
       ++firstGreater;
@@ -375,7 +376,7 @@ int partition(LinkedList<float> & list, int start, int end, int pivot)
   return firstGreater;
 }
 
-int getPivot(LinkedList<float> & list, int start, int end)
+int getPivot(LinkedList & list, int start, int end)
 {
   auto first = list[start];
   auto last = list[end - 1];
@@ -386,7 +387,7 @@ int getPivot(LinkedList<float> & list, int start, int end)
   else return mid;
 }
 
-void quickSort(LinkedList<float> & list, int start, int end)
+void quickSort(LinkedList & list, int start, int end)
 {
   if (end - start <= 1) return;
   auto pivot = getPivot(list, start, end);
@@ -398,7 +399,7 @@ void quickSort(LinkedList<float> & list, int start, int end)
 
 float getMedian(float reading, const int RANGE)
 {
-  static LinkedList<float> list;
+  static LinkedList list;
   auto median = 0;
 
   list.push_back(reading);
@@ -407,7 +408,7 @@ float getMedian(float reading, const int RANGE)
   if (size >= RANGE)
   {
     auto tempList = list;
-    quickSort(tempList, 0, tempList.size()); 
+    quickSort(tempList, 0, size); 
     median = tempList[ size / 2 ];
 
     list.pop_front();
