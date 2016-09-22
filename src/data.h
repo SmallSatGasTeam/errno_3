@@ -11,6 +11,7 @@ struct baro_t
 {
   float pressure;
   float altitude;
+  float median;
 } baro; 
 
 struct light_t

@@ -37,10 +37,10 @@ void TaskGPSRead(void *pvParameters);
 SemaphoreHandle_t xOutputSemaphore;
 SemaphoreHandle_t xSDSemaphore;
 
-const int num_files = 10;
+const int num_files = 11;
 
 char *file_names[] = {"baro.csv", "temp_in.csv", "temp_ex.csv", "light.csv", "uv.csv",
-                      "gps.csv",  "gyro.csv",    "camera.csv",  "boom.csv",  "time_stamp.csv"};
+                      "gps.csv",  "gyro.csv",    "camera.csv",  "boom.csv",  "time_stamp.csv", "median.csv"};
 
 File files[num_files];
 
@@ -101,7 +101,7 @@ void setup()
 
   // Now set up two tasks to run independently
   xTaskCreate(
-      TaskSensorReadStandard, (const portCHAR *)"ReadSensors", 700 // Stack size
+      TaskSensorReadStandard, (const portCHAR *)"ReadSensors", 1024 // Stack size
       ,
       nullptr,
       1 // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
@@ -170,6 +170,7 @@ void TaskSensorReadStandard(void *pvParameters)
     sensor_out((void *)nullptr, read_uv, file_names[4], out);
     sensor_out((void *)nullptr, read_timestamp, file_names[9], out);
     sensor_out(&sensor_gps, read_gps, file_names[5], out);
+    sensor_out((void *)nullptr, print_median, file_names[10], out);
     checkBattery();
     message_out("\n", out);
   }
@@ -206,9 +207,6 @@ void TaskDeployBoom(void *pvParameters)
 
   for (;;)
   {
-    const auto AVG_RANGE = 7; // number of readings to use to obtain average
-
-    float avgPressure = getAverage(baro.pressure, AVG_RANGE);
 
     char received_message = 0;
     // We don't expect to receive commands from two streams at the same time. So this
@@ -243,7 +241,9 @@ void TaskDeployBoom(void *pvParameters)
     }
 
     // If boom hasn't deployed yet AND ('y' was pressed OR pressure is within range)
-    if (!boom.deployed && (deployConfirmed == true || (avgPressure <= 44 && avgPressure > 30)))
+    if (
+      !boom.deployed && 
+      (deployConfirmed == true || (baro.median > 30 && baro.median <= 44))) 
     {
       critical_out((void *)nullptr, print_boom, file_names[8], out);
       digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
