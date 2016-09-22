@@ -243,7 +243,7 @@ void TaskDeployBoom(void *pvParameters)
     // If boom hasn't deployed yet AND ('y' was pressed OR pressure is within range)
     if (
       !boom.deployed && 
-      (deployConfirmed == true || (baro.median > 840 && baro.median <= 870 )))// 44 and 30 
+      (deployConfirmed == true || (baro.median > 30 && baro.median <= 44))) 
     {
       critical_out((void *)nullptr, print_boom, file_names[8], out);
       digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
