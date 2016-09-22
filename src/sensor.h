@@ -4,9 +4,13 @@
 #include "data.h"
 #include "list.h"
 
-// ------------ FreeRTOS Handling ------------ //
+float getMedian(float, const int);
 
 void read_timestamp(void *dummy, Stream *output);
+
+namespace { const auto MEDIAN_RANGE = 30; } 
+
+// ------------ FreeRTOS Handling ------------ //
 
 bool message_peek(Stream **stream, char message, char &read_count, char num_readers)
 {
@@ -169,6 +173,17 @@ void read_baro(CoolSatBaro *sensor, Stream *output)
   baro.pressure = val;
   baro.altitude = alt;
 }
+
+void print_median(void *dummy, Stream *output)
+{
+  baro.median = getMedian(baro.pressure, MEDIAN_RANGE); 
+//  output->print("\n\nPressure:\n");
+//  output->print(baro.pressure);
+//  output->print("\nMedian:\n");
+//  output->print(baro.median);
+//  output->print("\n");
+}
+
 
 //------------ Light & UV sensors ------------//
 
@@ -397,10 +412,10 @@ void quickSort(LinkedList & list, int start, int end)
   quickSort(list, pivot, end);
 }
 
-float getMedian(float reading, const int RANGE)
+float getMedian(float reading, const int RANGE) 
 {
   static LinkedList list;
-  auto median = 0;
+  auto median = -1;
 
   list.push_back(reading);
   auto size = list.size();
@@ -411,10 +426,11 @@ float getMedian(float reading, const int RANGE)
     quickSort(tempList, 0, size); 
     median = tempList[ size / 2 ];
 
+    tempList.clear();
     list.pop_front();
   }
   
-  return median;
+  return median; // Thanks Tasha
 }
 
 #endif

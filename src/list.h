@@ -18,11 +18,13 @@ public:
 	int  size() { return listSize; }
 	void push_back(float t) { push_back(t, head); }
   void pop_front();
+  void clear() { clear(head); }
 	void operator=(LinkedList const &); // COPY 
 	void operator=(LinkedList const &&); // MOVE
   float& operator[](const int);
 private:
 	void push_back(float, Node* &); 
+  void clear(Node* &);
   float& get(int const i) { return get(i, head); }
   float& get(int const, Node* &);
 	Node* clone(Node*);
@@ -31,6 +33,14 @@ private:
   int listSize;
   float dummy = 0;
 };
+
+void LinkedList::clear(Node* & list)
+{
+  if (!list) return;
+  auto next = list->next;
+  delete list;
+  clear(next);
+}
 
 void LinkedList::pop_front()
 {
