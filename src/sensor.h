@@ -380,5 +380,47 @@ T getAverage(T reading, const int AVG_RANGE)
   return average;
 }
 
-#endif
+template <typename T>
+class DataFilter {
+  DataFilter(T* timeBuff, T* valBuff, int buffLen)
+    :timeBuff(timeBuff), valBuff(valBuff), buffLen(buffLen){
+      timeCounter = 0;
+    }
 
+  void addDataPoint(){
+    int toReplace = timeBuff[timeCounter];
+    int timePosition = findInBuff(timeBuff, buffLen, toReplace);
+    int valPosition = findInBuff(valBuff, buffLen, toReplace);
+
+    replaceAtIndex(timeBuff, timePosition, toReplace);
+    replaceAtIndex(valBuff, valPosition, toReplace);
+
+    incrementCount();
+  }
+
+  T getFilteredDataPoint(){}
+
+  int inline incrementCount(){
+    ++timeCounter %= buffLen;
+  }
+
+  int findInBuff(T* buff,int buffLen, T find){
+    for(int i = 0; i < buffLen; i++){
+      if(buff[i] == find) return i;
+    }
+    return -1;
+  }
+
+  bool replaceAtIndex(T* buff, int index, T replaceVal){
+    if(index < 0) return false;
+    buff[index] = replaceVal;
+    return true;
+  }
+
+  int timeCounter;
+  int buffLen;
+  T* timeBuff;
+  T* valBuff;
+};
+
+#endif
