@@ -1,3 +1,5 @@
+#ifndef UNIT_TEST  // Enable unit tests
+
 #include <Adafruit_BNO055.h>
 #include <Adafruit_MCP9808.h>
 #include <Adafruit_Sensor.h>
@@ -277,3 +279,4 @@ void TaskGPSRead(void *pvParameters)
   }
 }
 
+#endif
