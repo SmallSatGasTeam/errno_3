@@ -398,7 +398,29 @@ class DataFilter {
     incrementCount();
   }
 
-  T getFilteredDataPoint(){}
+  T getFilteredDataPoint(){
+    sortBuffer(valBuff, buffLen);
+    int midPoint = buffLen / 2;
+    return valBuff[midPoint];
+  }
+
+  void sortBuffer(T* buff, int buffLen){
+    for(int i = 0; i < buffLen; i++){
+      T val = buff[i];
+      for(int j = i - 1; j >= 0; j--){
+        if(val > buff[j]){
+          buffSwap(buff, i, j);
+          break;
+        }
+      }
+    }
+  }
+
+  void buffSwap(T* buff, int i, int j){
+    T temp = buff[i];
+    buff[i] = buff[j];
+    buff[j] = temp;
+  }
 
   int inline incrementCount(){
     ++timeCounter %= buffLen;
