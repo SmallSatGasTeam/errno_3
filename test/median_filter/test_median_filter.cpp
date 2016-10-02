@@ -1,8 +1,6 @@
 #include <MedianFilter.h>
 #include <unity.h>
 #include <iostream>
-#include <stdlib.h>
-#include <time.h>
 
 #ifdef UNIT_TEST
 
@@ -20,8 +18,25 @@ void test_addDataPoint(void){
   MedianFilter<float> f(timeBuff, valBuff, 10);
 
   f.addDataPoint(1.0);
+
   TEST_ASSERT_EQUAL_FLOAT(timeBuff[0], 1.0);
-  TEST_ASSERT_EQUAL_FLOAT(valBuff[9], 1.0);
+  TEST_ASSERT_EQUAL_FLOAT(valBuff[0], 1.0);
+
+  f.addDataPoint(5.0);
+
+  TEST_ASSERT_EQUAL_FLOAT(timeBuff[1], 5.0);
+  TEST_ASSERT_EQUAL_FLOAT(valBuff[1], 5.0);
+
+  f.addDataPoint(-1);
+
+  TEST_ASSERT_EQUAL_FLOAT(timeBuff[2], -1);
+  TEST_ASSERT_EQUAL_FLOAT(valBuff[0], -1);
+
+  // for(int i = 0; i < buffLen; i++)
+  //   std::cout << valBuff[i] << std::endl;
+  // std::cout << std::endl;
+  // for(int i = 0; i < buffLen; i++)
+  //   std::cout << timeBuff[i] << std::endl;
 }
 
 void test_addManyPoints(void){
@@ -60,6 +75,16 @@ void test_getFilteredDataPoint(void){
   TEST_ASSERT_EQUAL_FLOAT(f.getFilteredDataPoint(), 5.0);
 }
 
+void test_getFilteredDataPoint_bufferNotFilled(void){
+  const int buffLen = 10;
+  float timeBuff[buffLen] = {0,0,0,0,0,0,0,0,0,0};
+  float valBuff[buffLen] = {0,0,0,0,0,0,0,0,0,0};
+  MedianFilter<float> f(timeBuff, valBuff, 10);
+
+  f.addDataPoint(1.0);
+  TEST_ASSERT_EQUAL_FLOAT(f.getFilteredDataPoint(), 1.0);
+}
+
 void test_incrementCount(void){
   const int buffLen = 10;
   float timeBuff[buffLen] = {0};
@@ -76,7 +101,7 @@ void test_sortBuffer(void){
   float valBuff[buffLen] = {0};
   MedianFilter<float> f(timeBuff, valBuff, 10);
 
-  float testBuff[buffLen] = {51, 23, 4, 4, 6, 12, 50, -1, 0, -1};
+  float testBuff[buffLen] = {1, 5, -1, 4, 6, 12, 50, -1, 0, -1};
 
   f.sortBuffer(testBuff, buffLen);
   // for(int i = 0; i < buffLen; i++) std::cout << testBuff[i] << std::endl;
@@ -88,11 +113,11 @@ void test_sortBuffer(void){
 
 
 
-
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(test_constructor);
     RUN_TEST(test_addDataPoint);
+    RUN_TEST(test_getFilteredDataPoint_bufferNotFilled);
     RUN_TEST(test_addManyPoints);
     RUN_TEST(test_getFilteredDataPoint);
     RUN_TEST(test_incrementCount);

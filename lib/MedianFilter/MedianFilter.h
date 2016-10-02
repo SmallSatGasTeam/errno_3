@@ -8,20 +8,30 @@ public:
   MedianFilter(T* timeBuff, T* valBuff, int buffLen)
     :timeBuff(timeBuff), valBuff(valBuff), buffLen(buffLen){
       timeCounter = 0;
+      tempBuffLen = 0;
     }
 
   void addDataPoint(T val){
-    int toReplace = timeBuff[timeCounter];
-    int timePosition = findInBuff(timeBuff, buffLen, toReplace);
-    int valPosition = findInBuff(valBuff, buffLen, toReplace);
+    int currentLength = tempBuffLen > buffLen ? buffLen : ++tempBuffLen;
 
-    if(timePosition >= 0 && timePosition < buffLen)
-      timeBuff[timePosition] = val;
-    if(valPosition >= 0 &&  valPosition < buffLen){
-      valBuff[valPosition] = val;
-      sortBuffer(valBuff, buffLen);
+    if(tempBuffLen < buffLen){
+      // Handle when buffer is not yet full
+      timeBuff[currentLength-1] = val;
+      valBuff[currentLength-1] = val;
+    } else {
+      // If our buffer is full we need to replace values
+      int toReplace = timeBuff[timeCounter];
+      int timePosition = findInBuff(timeBuff, currentLength, toReplace);
+      int valPosition = findInBuff(valBuff, currentLength, toReplace);
+
+      if(timePosition >= 0 && timePosition < currentLength)
+        timeBuff[timePosition] = val;
+      if(valPosition >= 0 &&  valPosition < currentLength){
+        valBuff[valPosition] = val;
+      }
     }
 
+    sortBuffer(valBuff, currentLength);
     timeCounter = incrementCount(timeCounter, buffLen);
   }
 
@@ -59,8 +69,8 @@ public:
   }
 
   protected:
-
   int timeCounter;
+  int tempBuffLen;
   int buffLen;
   T* timeBuff;
   T* valBuff;

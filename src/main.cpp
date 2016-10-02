@@ -207,6 +207,8 @@ void TaskDeployBoom(void *pvParameters)
   bool deployInitiated = false;
   bool deployConfirmed = false;
 
+  
+
   for (;;)
   {
     const auto AVG_RANGE = 7; // number of readings to use to obtain average
