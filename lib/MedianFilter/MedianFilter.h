@@ -1,15 +1,10 @@
 #ifndef MEDIAN_FILTER_H
 #define MEDIAN_FILTER_H
+#include <iostream>
 
 template <typename T>
 class MedianFilter {
 public:
-  // MedianFilter(){ //TODO remove
-  //   timeCounter = 0;
-  //   buffLen = 0;
-  //   timeBuff = (T*)0;
-  //   valBuff = (T*)0;
-  // }
   MedianFilter(T* timeBuff, T* valBuff, int buffLen)
     :timeBuff(timeBuff), valBuff(valBuff), buffLen(buffLen){
       timeCounter = 0;
@@ -37,12 +32,10 @@ public:
   }
 
   void sortBuffer(T* buff, int buffLen){
-    for(int i = 0; i < buffLen; i++){
-      T val = buff[i];
+    for(int i = 1; i < buffLen; i++){
       for(int j = i - 1; j >= 0; j--){
-        if(val < buff[j]){
-          buffSwap(buff, i, j);
-          break;
+        if(buff[j+1] < buff[j]){
+          buffSwap(buff, j+1, j);
         }
       }
     }
@@ -64,6 +57,8 @@ public:
     }
     return -1;
   }
+
+  protected:
 
   int timeCounter;
   int buffLen;
