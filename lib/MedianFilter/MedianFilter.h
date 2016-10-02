@@ -3,11 +3,12 @@
 
 template <typename T>
 class DataFilter {
+public:
   DataFilter(){
     timeCounter = 0;
     buffLen = 0;
-    timeBuff = NULL;
-    valBuff = NULL;
+    timeBuff = (T*)0;
+    valBuff = (T*)0;
   }
   DataFilter(T* timeBuff, T* valBuff, int buffLen)
     :timeBuff(timeBuff), valBuff(valBuff), buffLen(buffLen){

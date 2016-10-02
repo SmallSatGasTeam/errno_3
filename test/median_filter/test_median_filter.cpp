@@ -3,7 +3,8 @@
 
 #ifdef UNIT_TEST  // IMPORTANT LINE!
 
-DataFilter d;
+
+DataFilter<int> d;
 
 void test_test_1(void) {
     TEST_ASSERT_EQUAL(13, 13);
