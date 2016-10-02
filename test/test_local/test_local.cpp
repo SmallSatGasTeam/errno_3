@@ -1,5 +1,4 @@
 #include "unity.h"
-#include <CoolSatBaro.h>
 
 #ifdef UNIT_TEST  // IMPORTANT LINE!
 
