@@ -45,8 +45,13 @@ void test_addManyPoints(void){
   float valBuff[buffLen] = {0};
   MedianFilter<float> f(timeBuff, valBuff, 10);
 
-  for(int i = 0; i < 300; i++){
+  for(int i = 0; i < 9; i++){
     f.addDataPoint((float)i);
+    TEST_ASSERT_EQUAL_INT(f.getCurrentLength(), i+1);
+  }
+  for(int i = 9; i < 300; i++){
+    f.addDataPoint((float)i);
+    TEST_ASSERT_EQUAL_INT(f.getCurrentLength(), 10);
   }
 
   TEST_ASSERT_EQUAL_FLOAT(timeBuff[0], 290.0);
@@ -127,13 +132,13 @@ void test_sortBuffer(void){
 
 int main(int argc, char **argv) {
     UNITY_BEGIN();
-    // RUN_TEST(test_constructor);
-    // RUN_TEST(test_addDataPoint);
+    RUN_TEST(test_constructor);
+    RUN_TEST(test_addDataPoint);
     RUN_TEST(test_getFilteredDataPoint_bufferNotFilled);
-    // RUN_TEST(test_addManyPoints);
-    // RUN_TEST(test_getFilteredDataPoint);
-    // RUN_TEST(test_incrementCount);
-    // RUN_TEST(test_sortBuffer);
+    RUN_TEST(test_addManyPoints);
+    RUN_TEST(test_getFilteredDataPoint);
+    RUN_TEST(test_incrementCount);
+    RUN_TEST(test_sortBuffer);
     UNITY_END();
 
     return 0;
