@@ -82,7 +82,19 @@ void test_getFilteredDataPoint_bufferNotFilled(void){
   MedianFilter<float> f(timeBuff, valBuff, 10);
 
   f.addDataPoint(1.0);
-  TEST_ASSERT_EQUAL_FLOAT(f.getFilteredDataPoint(), 1.0);
+  float result = f.getFilteredDataPoint();
+  TEST_ASSERT_EQUAL_FLOAT(result, 1.0);
+  TEST_ASSERT_EQUAL_INT(f.getCurrentLength(), 1);
+
+  f.addDataPoint(-2);
+  result = f.getFilteredDataPoint();
+  TEST_ASSERT_EQUAL_FLOAT(result, 1.0);
+  TEST_ASSERT_EQUAL_INT(f.getCurrentLength(), 2);
+
+  f.addDataPoint(-5);
+  result = f.getFilteredDataPoint();
+  TEST_ASSERT_EQUAL_FLOAT(result, -2);
+  TEST_ASSERT_EQUAL_INT(f.getCurrentLength(), 3);
 }
 
 void test_incrementCount(void){
@@ -115,13 +127,13 @@ void test_sortBuffer(void){
 
 int main(int argc, char **argv) {
     UNITY_BEGIN();
-    RUN_TEST(test_constructor);
-    RUN_TEST(test_addDataPoint);
+    // RUN_TEST(test_constructor);
+    // RUN_TEST(test_addDataPoint);
     RUN_TEST(test_getFilteredDataPoint_bufferNotFilled);
-    RUN_TEST(test_addManyPoints);
-    RUN_TEST(test_getFilteredDataPoint);
-    RUN_TEST(test_incrementCount);
-    RUN_TEST(test_sortBuffer);
+    // RUN_TEST(test_addManyPoints);
+    // RUN_TEST(test_getFilteredDataPoint);
+    // RUN_TEST(test_incrementCount);
+    // RUN_TEST(test_sortBuffer);
     UNITY_END();
 
     return 0;

@@ -11,8 +11,13 @@ public:
       tempBuffLen = 0;
     }
 
+  int getCurrentLength(){
+    return tempBuffLen > buffLen ? buffLen : tempBuffLen;
+  }
+
   void addDataPoint(T val){
-    int currentLength = tempBuffLen > buffLen ? buffLen : ++tempBuffLen;
+    tempBuffLen++;
+    int currentLength = getCurrentLength();
 
     if(tempBuffLen < buffLen){
       // Handle when buffer is not yet full
@@ -36,8 +41,9 @@ public:
   }
 
   T getFilteredDataPoint(){
-    sortBuffer(valBuff, buffLen);
-    int midPoint = buffLen / 2;
+    int currentLength = getCurrentLength();
+    sortBuffer(valBuff, currentLength);
+    int midPoint = currentLength / 2;
     return valBuff[midPoint];
   }
 
