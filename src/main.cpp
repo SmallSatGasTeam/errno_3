@@ -13,7 +13,7 @@
 #include <Wire.h>
 #include <semphr.h> // add the FreeRTOS functions for Semaphores (or Flags).
 #include <uCamII.h>
-#include "MedianFilter.h"
+#include <MedianFilter.h>
 #include "messages.h" // Defines incoming data header
 #include "sensor.h"
 

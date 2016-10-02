@@ -2,28 +2,32 @@
 #define MEDIAN_FILTER_H
 
 template <typename T>
-class DataFilter {
+class MedianFilter {
 public:
-  DataFilter(){
-    timeCounter = 0;
-    buffLen = 0;
-    timeBuff = (T*)0;
-    valBuff = (T*)0;
-  }
-  DataFilter(T* timeBuff, T* valBuff, int buffLen)
+  // MedianFilter(){ //TODO remove
+  //   timeCounter = 0;
+  //   buffLen = 0;
+  //   timeBuff = (T*)0;
+  //   valBuff = (T*)0;
+  // }
+  MedianFilter(T* timeBuff, T* valBuff, int buffLen)
     :timeBuff(timeBuff), valBuff(valBuff), buffLen(buffLen){
       timeCounter = 0;
     }
 
-  void addDataPoint(){
+  void addDataPoint(T val){
     int toReplace = timeBuff[timeCounter];
     int timePosition = findInBuff(timeBuff, buffLen, toReplace);
     int valPosition = findInBuff(valBuff, buffLen, toReplace);
 
-    replaceAtIndex(timeBuff, timePosition, toReplace);
-    replaceAtIndex(valBuff, valPosition, toReplace);
+    if(timePosition >= 0 && timePosition < buffLen)
+      timeBuff[timePosition] = val;
+    if(valPosition >= 0 &&  valPosition < buffLen){
+      valBuff[valPosition] = val;
+      sortBuffer(valBuff, buffLen);
+    }
 
-    incrementCount();
+    timeCounter = incrementCount(timeCounter, buffLen);
   }
 
   T getFilteredDataPoint(){
@@ -36,7 +40,7 @@ public:
     for(int i = 0; i < buffLen; i++){
       T val = buff[i];
       for(int j = i - 1; j >= 0; j--){
-        if(val > buff[j]){
+        if(val < buff[j]){
           buffSwap(buff, i, j);
           break;
         }
@@ -50,8 +54,8 @@ public:
     buff[j] = temp;
   }
 
-  int inline incrementCount(){
-    ++timeCounter %= buffLen;
+  int inline incrementCount(int timeCounter, int buffLen){
+    return ++timeCounter %= buffLen;
   }
 
   int findInBuff(T* buff,int buffLen, T find){
@@ -59,12 +63,6 @@ public:
       if(buff[i] == find) return i;
     }
     return -1;
-  }
-
-  bool replaceAtIndex(T* buff, int index, T replaceVal){
-    if(index < 0) return false;
-    buff[index] = replaceVal;
-    return true;
   }
 
   int timeCounter;
