@@ -40,10 +40,10 @@ void TaskGPSRead(void *pvParameters);
 SemaphoreHandle_t xOutputSemaphore;
 SemaphoreHandle_t xSDSemaphore;
 
-const int num_files = 10;
+const int num_files = 11;
 
 char *file_names[] = {"baro.csv", "temp_in.csv", "temp_ex.csv", "light.csv", "uv.csv",
-                      "gps.csv",  "gyro.csv",    "camera.csv",  "boom.csv",  "time_stamp.csv"};
+                      "gps.csv",  "gyro.csv",    "camera.csv",  "boom.csv",  "time_stamp.csv", "median.csv"};
 
 File files[num_files];
 
@@ -173,6 +173,7 @@ void TaskSensorReadStandard(void *pvParameters)
     sensor_out((void *)nullptr, read_uv, file_names[4], out);
     sensor_out((void *)nullptr, read_timestamp, file_names[9], out);
     sensor_out(&sensor_gps, read_gps, file_names[5], out);
+    sensor_out((void *)nullptr, read_median, file_names[10], out);
     checkBattery();
     message_out("\n", out);
   }
@@ -214,7 +215,7 @@ void TaskDeployBoom(void *pvParameters)
   bool deployInitiated = false;
   bool deployConfirmed = false;
 
-  const int filterOrder = 10;
+  const int filterOrder = 45;
   float readingsByTime[filterOrder] = {0};
   float readingsByValue[filterOrder] = {0};
   MedianFilter<float> filter(readingsByTime, readingsByValue, filterOrder);
@@ -223,7 +224,9 @@ void TaskDeployBoom(void *pvParameters)
   {
     const auto AVG_RANGE = 7; // number of readings to use to obtain average
 
+    filter.addDataPoint(baro.pressure);
     float avgPressure = filter.getFilteredDataPoint();
+    baro.median = avgPressure;
 
     char received_message = 0;
     // We don't expect to receive commands from two streams at the same time. So this

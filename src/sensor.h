@@ -169,6 +169,15 @@ void read_baro(CoolSatBaro *sensor, Stream *output)
   baro.altitude = alt;
 }
 
+void read_median(void *dummy, Stream *output)
+{
+ output->print('\n');
+ output->print("Median: ");
+ output->print(baro.median);
+ output->print('\n');
+}
+
+
 //------------ Light & UV sensors ------------//
 
 void read_light(void *dummy, Stream *output)
@@ -302,6 +311,12 @@ void print_confirm(void *dummy, Stream *output)
                 "CANCEL **********************\n\n");
 }
 
+void print_autoDeploy(void *dummy, Stream *output)
+{
+  output->print("\n\n***************** AUTOMATIC DEPLOYMENT *****************\n\n");
+}
+
+
 void print_cancel(void *dummy, Stream *output)
 {
   output->print("\n\n***************** Deployment cancelled **********************\n\n");
@@ -330,9 +345,7 @@ void checkBattery()
 
 // ----------------- Camera -------------- //
 void read_camera(UCAMII *camera, Stream *output)
-{
-  short x = 0;
-  int bytes;
+{ short x = 0; int bytes;
   if (camera->init())
   {
     camera->takePicture();
