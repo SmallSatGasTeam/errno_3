@@ -349,6 +349,16 @@ void read_camera(UCAMII *camera, Stream *output)
   }
 }
 
+struct StackAnalyzer{
+  StackAnalyzer(char* n):task(n){}
+  char* task;
+};
+
+void read_stack(void* analyzer, Stream* output){
+  UBaseType_t uxHighWaterMark = uxTaskGetStackHighWaterMark(((StackAnalyzer*)analyzer)->task);
+  output->print(uxHighWaterMark);
+}
+
 // ------------ Utilities ------------ //
 
 /* This function is designed to be placed within a loop to get the
@@ -381,4 +391,3 @@ T getAverage(T reading, const int AVG_RANGE)
 }
 
 #endif
-

@@ -37,10 +37,10 @@ void TaskGPSRead(void *pvParameters);
 SemaphoreHandle_t xOutputSemaphore;
 SemaphoreHandle_t xSDSemaphore;
 
-const int num_files = 10;
+const int num_files = 11;
 
 char *file_names[] = {"baro.csv", "temp_in.csv", "temp_ex.csv", "light.csv", "uv.csv",
-                      "gps.csv",  "gyro.csv",    "camera.csv",  "boom.csv",  "time_stamp.csv"};
+                      "gps.csv",  "gyro.csv",    "camera.csv",  "boom.csv",  "time_stamp.csv", "stack.csv"};
 
 File files[num_files];
 
@@ -160,6 +160,10 @@ void TaskSensorReadStandard(void *pvParameters)
 
   Stream *out[] = {&Serial, &Serial3, (Stream *)nullptr};
   message_out("barometer\ttemp-in\ttemp-ex\tlight\tuv\ttimestamp\n", out);
+
+  StackAnalyzer analyze(NULL);
+  sensor_out(&analyze, read_stack, file_names[10], out);
+
   for (;;)
   {
     vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -276,4 +280,3 @@ void TaskGPSRead(void *pvParameters)
     vTaskDelay(500 / portTICK_PERIOD_MS);
   }
 }
-
