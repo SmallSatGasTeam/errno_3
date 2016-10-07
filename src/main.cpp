@@ -214,7 +214,7 @@ void TaskDeployBoom(void *pvParameters)
   bool deployInitiated = false;
   bool deployConfirmed = false;
 
-  const int filterOrder = 45;
+  const int filterOrder = 32;
   float readingsByTime[filterOrder] = {0};
   float readingsByValue[filterOrder] = {0};
   MedianFilter<float> filter(readingsByTime, readingsByValue, filterOrder);
