@@ -348,14 +348,20 @@ void read_camera(UCAMII *camera, Stream *output)
     output->println("\n\n\n\n");
   }
 }
+// ------------ Stack Analysis ------------ //
 
-struct StackAnalyzer{
-  StackAnalyzer(char* n):task(n){}
+struct StackAnalyzer
+{
+  StackAnalyzer(char* n, char* nm) :task(n), name(nm) {}
   char* task;
+  char* name;
 };
 
-void read_stack(void* analyzer, Stream* output){
+void read_stack(void* analyzer, Stream* output)
+{
   UBaseType_t uxHighWaterMark = uxTaskGetStackHighWaterMark(((StackAnalyzer*)analyzer)->task);
+  output->print(((StackAnalyzer*)analyzer)->name);
+  output->print(',');
   output->print(uxHighWaterMark);
 }
 

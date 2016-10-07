@@ -53,8 +53,6 @@ Stream *input_streams[] = {&Serial, &Serial3, (Stream *)nullptr};
  *Global setup should occur here
  */
 
-StackAnalyzer analyze(NULL);
-
 void setup()
 {
 
@@ -153,6 +151,7 @@ void loop()
 void TaskSensorReadStandard(void *pvParameters)
 {
   (void)pvParameters;
+  StackAnalyzer analyze(nullptr, "SensorReadStandard");
 
   /*
      File has to be open when task starts in order to write data to log. We will
@@ -172,7 +171,7 @@ void TaskSensorReadStandard(void *pvParameters)
   for (;;)
   {
     vTaskDelay(1000 / portTICK_PERIOD_MS);\
-//    sensor_out(&analyze, read_stack, file_names[10], out);
+    sensor_out(&analyze, read_stack, file_names[10], nullptr);
     sensor_out(&sensor_baro, read_baro, file_names[0], out);
     sensor_out(&sensor_temp_in, read_temp, file_names[1], out);
     sensor_out(&sensor_temp_ex, read_temp, file_names[2], out);
@@ -188,6 +187,7 @@ void TaskSensorReadStandard(void *pvParameters)
 void TaskSensorReadFast(void *pvParameters)
 {
   (void)pvParameters;
+  StackAnalyzer analyze(nullptr, "SensorReadFast");
 
   Stream *outputs[] = {(Stream *)nullptr};
   initialize_gyro(&sensor_gyro, Serial);
@@ -195,6 +195,7 @@ void TaskSensorReadFast(void *pvParameters)
   for (;;) // A Task shall never return or exit.
   {
     sensor_out(&sensor_gyro, read_gyro, file_names[6], outputs);
+    sensor_out(&analyze, read_stack, file_names[10], nullptr);
     vTaskDelay(50 / portTICK_PERIOD_MS);
   }
 }
@@ -206,6 +207,8 @@ void TaskSensorReadFast(void *pvParameters)
 void TaskDeployBoom(void *pvParameters)
 {
   (void)pvParameters;
+
+  StackAnalyzer analyze(nullptr, "DeployBoom");
 
   const float DEPLOY_MIN_PRESSURE = 30.0;
   const float DEPLOY_MAX_PRESSURE = 44.0;
@@ -228,6 +231,7 @@ void TaskDeployBoom(void *pvParameters)
 
   for (;;)
   {
+
     filter.addDataPoint(baro.pressure);
     float valPressure = filter.getFilteredDataPoint();
 
@@ -281,12 +285,17 @@ void TaskDeployBoom(void *pvParameters)
     {
       critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
     }
+    
+    sensor_out(&analyze, read_stack, file_names[10], nullptr);
   }
 }
 
 void TaskGPSRead(void *pvParameters)
 {
   (void)pvParameters;
+
+  StackAnalyzer analyze(nullptr, "GPSRead");
+
   Stream *outputs[] = {(Stream *)nullptr};
   for (;;)
   {
@@ -295,6 +304,7 @@ void TaskGPSRead(void *pvParameters)
       sensor_gps.encode(Serial2.read());
     }
     vTaskDelay(500 / portTICK_PERIOD_MS);
+    sensor_out(&analyze, read_stack, file_names[10], nullptr);
   }
 }
 
