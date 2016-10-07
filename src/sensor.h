@@ -381,4 +381,3 @@ T getAverage(T reading, const int AVG_RANGE)
 }
 
 #endif
-
