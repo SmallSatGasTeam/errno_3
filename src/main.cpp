@@ -1,3 +1,5 @@
+#ifndef UNIT_TEST  // Enable unit tests
+
 #include <Adafruit_BNO055.h>
 #include <Adafruit_MCP9808.h>
 #include <Adafruit_Sensor.h>
@@ -11,6 +13,7 @@
 #include <Wire.h>
 #include <semphr.h> // add the FreeRTOS functions for Semaphores (or Flags).
 #include <uCamII.h>
+#include <MedianFilter.h>
 #include "messages.h" // Defines incoming data header
 #include "sensor.h"
 
@@ -196,9 +199,16 @@ void TaskSensorReadFast(void *pvParameters)
   }
 }
 
+// bool shouldDeploy(bool hasDeployed, bool* confirmed, float pressure ){
+//   return true;
+// }
+
 void TaskDeployBoom(void *pvParameters)
 {
   (void)pvParameters;
+
+  const float DEPLOY_MIN_PRESSURE = 30.0;
+  const float DEPLOY_MAX_PRESSURE = 44.0;
 
   Stream *out[] = {&Serial, &Serial3, (Stream *)nullptr};
   Stream *camera_out[] = {(Stream *)nullptr};
@@ -211,13 +221,15 @@ void TaskDeployBoom(void *pvParameters)
   bool deployInitiated = false;
   bool deployConfirmed = false;
 
+  const int filterOrder = 32;
+  float readingsByTime[filterOrder] = {0};
+  float readingsByValue[filterOrder] = {0};
+  MedianFilter<float> filter(readingsByTime, readingsByValue, filterOrder);
+
   for (;;)
   {
-    const auto AVG_RANGE = 7; // number of readings to use to obtain average
-
-    sensor_out(&analyze, read_stack, file_names[10], out);
-
-    float avgPressure = getAverage(baro.pressure, AVG_RANGE);
+    filter.addDataPoint(baro.pressure);
+    float valPressure = filter.getFilteredDataPoint();
 
     char received_message = 0;
     // We don't expect to receive commands from two streams at the same time. So this
@@ -252,7 +264,7 @@ void TaskDeployBoom(void *pvParameters)
     }
 
     // If boom hasn't deployed yet AND ('y' was pressed OR pressure is within range)
-    if (!boom.deployed && (deployConfirmed == true || (avgPressure <= 44 && avgPressure > 30)))
+    if (!boom.deployed && (deployConfirmed == true || (valPressure <= DEPLOY_MAX_PRESSURE && valPressure > DEPLOY_MIN_PRESSURE)))
     {
       critical_out((void *)nullptr, print_boom, file_names[8], out);
       digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
@@ -285,3 +297,5 @@ void TaskGPSRead(void *pvParameters)
     vTaskDelay(500 / portTICK_PERIOD_MS);
   }
 }
+
+#endif
