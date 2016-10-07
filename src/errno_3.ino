@@ -49,6 +49,9 @@ Stream *input_streams[] = {&Serial, &Serial3, (Stream *)nullptr};
 /**
  *Global setup should occur here
  */
+
+StackAnalyzer analyze(NULL);
+
 void setup()
 {
 
@@ -161,12 +164,12 @@ void TaskSensorReadStandard(void *pvParameters)
   Stream *out[] = {&Serial, &Serial3, (Stream *)nullptr};
   message_out("barometer\ttemp-in\ttemp-ex\tlight\tuv\ttimestamp\n", out);
 
-  StackAnalyzer analyze(NULL);
-  sensor_out(&analyze, read_stack, file_names[10], out);
+ // sensor_out(&analyze, read_stack, file_names[10], out);
 
   for (;;)
   {
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);\
+//    sensor_out(&analyze, read_stack, file_names[10], out);
     sensor_out(&sensor_baro, read_baro, file_names[0], out);
     sensor_out(&sensor_temp_in, read_temp, file_names[1], out);
     sensor_out(&sensor_temp_ex, read_temp, file_names[2], out);
@@ -211,6 +214,8 @@ void TaskDeployBoom(void *pvParameters)
   for (;;)
   {
     const auto AVG_RANGE = 7; // number of readings to use to obtain average
+
+    sensor_out(&analyze, read_stack, file_names[10], out);
 
     float avgPressure = getAverage(baro.pressure, AVG_RANGE);
 
