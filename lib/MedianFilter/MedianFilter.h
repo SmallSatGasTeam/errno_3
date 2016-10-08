@@ -1,6 +1,11 @@
 #ifndef MEDIAN_FILTER_H
 #define MEDIAN_FILTER_H
 
+#include <cmath>
+#include <iostream>
+
+namespace { const float PRECISION_VALUE = 0.6; }
+
 template <typename T>
 class MedianFilter {
 public:
@@ -24,15 +29,22 @@ public:
       valBuff[currentLength-1] = val;
     } else {
       // If our buffer is full we need to replace values
-      int toReplace = timeBuff[timeCounter];
-      int timePosition = findInBuff(timeBuff, currentLength, toReplace);
+      T toReplace = timeBuff[timeCounter];
+      std::cout << "timeCounter :" << timeCounter << std::endl;
+      //int timePosition = findInBuff(timeBuff, currentLength, toReplace);
       int valPosition = findInBuff(valBuff, currentLength, toReplace);
 
-      if(timePosition >= 0 && timePosition < currentLength)
-        timeBuff[timePosition] = val;
+    //  if(timePosition >= 0 && timePosition < currentLength){
+        timeBuff[timeCounter] = val;
+      //  std::cout << "TimePosition: " << timePosition << std::endl;
+     // }
+     // else std::cout << "Something has gone terribly wrong" << std::endl;
+
       if(valPosition >= 0 &&  valPosition < currentLength){
         valBuff[valPosition] = val;
+        std::cout << "valPosition: " << valPosition << std::endl;
       }
+      else std::cout << "Something has gone terribly wrong" << std::endl;
     }
 
     sortBuffer(valBuff, currentLength);
@@ -68,7 +80,7 @@ public:
 
   int findInBuff(T* buff,int buffLen, T find){
     for(int i = 0; i < buffLen; i++){
-      if(buff[i] == find) return i;
+      if(std::abs(buff[i] - find) <= PRECISION_VALUE) return i;
     }
     return -1;
   }

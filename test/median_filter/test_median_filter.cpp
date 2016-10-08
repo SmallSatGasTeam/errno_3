@@ -1,6 +1,6 @@
 #include <MedianFilter.h>
 #include <unity.h>
-// #include <iostream>
+ #include <iostream>
 
 #ifdef UNIT_TEST
 
@@ -46,16 +46,23 @@ void test_addManyPoints(void){
   MedianFilter<float> f(timeBuff, valBuff, 10);
 
   for(int i = 0; i < 9; i++){
-    f.addDataPoint((float)i);
+    f.addDataPoint((float)i + 0.2);
     TEST_ASSERT_EQUAL_INT(f.getCurrentLength(), i+1);
   }
   for(int i = 9; i < 300; i++){
-    f.addDataPoint((float)i);
+    f.addDataPoint((float)i + 0.2);
     TEST_ASSERT_EQUAL_INT(f.getCurrentLength(), 10);
   }
 
-  TEST_ASSERT_EQUAL_FLOAT(timeBuff[0], 290.0);
-  TEST_ASSERT_EQUAL_FLOAT(valBuff[9], 299.0);
+   for(int i = 0; i < buffLen; i++)
+     std::cout << valBuff[i] << std::endl;
+   std::cout << std::endl;
+   for(int i = 0; i < buffLen; i++)
+     std::cout << timeBuff[i] << std::endl;
+
+
+  TEST_ASSERT_EQUAL_FLOAT(timeBuff[0], 290.2);
+  TEST_ASSERT_EQUAL_FLOAT(valBuff[9], 299.2);
 }
 
 void test_getFilteredDataPoint(void){
@@ -64,20 +71,26 @@ void test_getFilteredDataPoint(void){
   float valBuff[buffLen] = {0};
   MedianFilter<float> f(timeBuff, valBuff, 10);
 
-  f.addDataPoint(-2);
-  f.addDataPoint(5);
-  f.addDataPoint(4);
-  f.addDataPoint(0);
-  f.addDataPoint(10);
-  f.addDataPoint(9);
-  f.addDataPoint(3);
-  f.addDataPoint(-20);
-  f.addDataPoint(30);
-  f.addDataPoint(15);
+  for (int i = 0; i < 100; ++i)
+  {
+   f.addDataPoint(850.32);
+  }
+  
+  for (int i = 0; i < 1000; ++i)
+  {
+   f.addDataPoint(850.12);
+  }
+
+   for(int i = 0; i < buffLen; i++)
+     std::cout << valBuff[i] << std::endl;
+   std::cout << std::endl;
+   for(int i = 0; i < buffLen; i++)
+     std::cout << timeBuff[i] << std::endl;
+
 
   // -20, -2, 0, 3, 4, 5, 9, 10, 15, 30
   // for(int i = 0; i < buffLen; i++) std::cout << valBuff[i] << std::endl;
-  TEST_ASSERT_EQUAL_FLOAT(f.getFilteredDataPoint(), 5.0);
+  TEST_ASSERT_EQUAL_FLOAT(f.getFilteredDataPoint(), 850.12);
 }
 
 void test_getFilteredDataPoint_bufferNotFilled(void){

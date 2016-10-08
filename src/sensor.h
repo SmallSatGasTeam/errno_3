@@ -320,6 +320,7 @@ void checkBattery()
 
   battery = analogRead(batteryPin);
   battery = (battery * .00475) * 2;
+  batt.voltage = battery;
 
   if (battery <= 6.3)
   {
@@ -382,7 +383,9 @@ T getAverage(T reading, const int AVG_RANGE)
 
 void print_median(void *dummy, Stream *output)
 {
-  output->print("\nMedian:");
+  output->print("\nPressure:");
+  output->print(baro.pressure);
+  output->print(", Median:");
   output->print(baro.median);
   output->print("\n");
 }

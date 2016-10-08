@@ -45,4 +45,9 @@ struct time
   uint8_t second;
 } time;
 
+struct battery_t
+{
+  float voltage;
+} batt;
+
 #endif
