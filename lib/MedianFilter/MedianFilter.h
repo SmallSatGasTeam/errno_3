@@ -4,7 +4,7 @@
 #include <cmath>
 #include <iostream>
 
-namespace { const float PRECISION_VALUE = 0.6; }
+namespace { const float PRECISION_VALUE = 0.001; }
 
 template <typename T>
 class MedianFilter {
@@ -30,21 +30,14 @@ public:
     } else {
       // If our buffer is full we need to replace values
       T toReplace = timeBuff[timeCounter];
-      std::cout << "timeCounter :" << timeCounter << std::endl;
-      //int timePosition = findInBuff(timeBuff, currentLength, toReplace);
       int valPosition = findInBuff(valBuff, currentLength, toReplace);
-
-    //  if(timePosition >= 0 && timePosition < currentLength){
-        timeBuff[timeCounter] = val;
-      //  std::cout << "TimePosition: " << timePosition << std::endl;
-     // }
-     // else std::cout << "Something has gone terribly wrong" << std::endl;
+      timeBuff[timeCounter] = val;
 
       if(valPosition >= 0 &&  valPosition < currentLength){
         valBuff[valPosition] = val;
-        std::cout << "valPosition: " << valPosition << std::endl;
+      } else {
+        //TODO: Add some sort of error handling
       }
-      else std::cout << "Something has gone terribly wrong" << std::endl;
     }
 
     sortBuffer(valBuff, currentLength);

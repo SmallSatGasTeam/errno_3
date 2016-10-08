@@ -54,15 +54,32 @@ void test_addManyPoints(void){
     TEST_ASSERT_EQUAL_INT(f.getCurrentLength(), 10);
   }
 
-   for(int i = 0; i < buffLen; i++)
-     std::cout << valBuff[i] << std::endl;
-   std::cout << std::endl;
-   for(int i = 0; i < buffLen; i++)
-     std::cout << timeBuff[i] << std::endl;
-
-
   TEST_ASSERT_EQUAL_FLOAT(timeBuff[0], 290.2);
   TEST_ASSERT_EQUAL_FLOAT(valBuff[9], 299.2);
+}
+
+void test_getFilteredDataPoint__big(void){
+
+  const int buffLen = 10;
+  float timeBuff[buffLen] = {0};
+  float valBuff[buffLen] = {0};
+  MedianFilter<float> f(timeBuff, valBuff, 10);
+
+  for (int i = 0; i < 100; ++i){
+   f.addDataPoint(850.32);
+  }
+
+  for (int i = 0; i < 1000; ++i){
+   f.addDataPoint(850.12);
+  }
+   //
+  //  for(int i = 0; i < buffLen; i++)
+  //    std::cout << valBuff[i] << std::endl;
+  //  std::cout << std::endl;
+  //  for(int i = 0; i < buffLen; i++)
+  //    std::cout << timeBuff[i] << std::endl;
+
+  TEST_ASSERT_EQUAL_FLOAT(f.getFilteredDataPoint(), 850.12);
 }
 
 void test_getFilteredDataPoint(void){
@@ -71,26 +88,31 @@ void test_getFilteredDataPoint(void){
   float valBuff[buffLen] = {0};
   MedianFilter<float> f(timeBuff, valBuff, 10);
 
-  for (int i = 0; i < 100; ++i)
-  {
-   f.addDataPoint(850.32);
-  }
-  
-  for (int i = 0; i < 1000; ++i)
-  {
-   f.addDataPoint(850.12);
-  }
+  f.addDataPoint(4.12);
+  f.addDataPoint(0.6);
+  f.addDataPoint(-2.23);
+  f.addDataPoint(30.234);
+  f.addDataPoint(9.132);
+  f.addDataPoint(17.123);
+  f.addDataPoint(14.634);
+  f.addDataPoint(29.236);
+  f.addDataPoint(-19.735);
+  f.addDataPoint(-500.23);
+  f.addDataPoint(-23.1);
 
    for(int i = 0; i < buffLen; i++)
      std::cout << valBuff[i] << std::endl;
    std::cout << std::endl;
    for(int i = 0; i < buffLen; i++)
      std::cout << timeBuff[i] << std::endl;
+   std::cout << std::endl;
 
-
-  // -20, -2, 0, 3, 4, 5, 9, 10, 15, 30
+  // Note: 4.12 gets shifted off the end, and is not present in sorted array
+  // -500.23, -23.1, -19.735, -2.23, 0.6, 9.132, 14.634, 17.123, 29.236, 30.324
   // for(int i = 0; i < buffLen; i++) std::cout << valBuff[i] << std::endl;
-  TEST_ASSERT_EQUAL_FLOAT(f.getFilteredDataPoint(), 850.12);
+  float result = f.getFilteredDataPoint();
+  // std::cout << "Result: "<< result << std::endl;
+  TEST_ASSERT_EQUAL_FLOAT(result, 9.132);
 }
 
 void test_getFilteredDataPoint_bufferNotFilled(void){
@@ -150,6 +172,7 @@ int main(int argc, char **argv) {
     RUN_TEST(test_getFilteredDataPoint_bufferNotFilled);
     RUN_TEST(test_addManyPoints);
     RUN_TEST(test_getFilteredDataPoint);
+    RUN_TEST(test_getFilteredDataPoint__big);
     RUN_TEST(test_incrementCount);
     RUN_TEST(test_sortBuffer);
     UNITY_END();
