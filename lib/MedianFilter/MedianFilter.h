@@ -1,7 +1,6 @@
 #ifndef MEDIAN_FILTER_H
 #define MEDIAN_FILTER_H
 
-#include <cmath>
 #include <iostream>
 
 namespace { const float PRECISION_VALUE = 0.001; }
@@ -73,7 +72,9 @@ public:
 
   int findInBuff(T* buff,int buffLen, T find){
     for(int i = 0; i < buffLen; i++){
-      if(std::abs(buff[i] - find) <= PRECISION_VALUE) return i;
+      float diff = buff[i] - find;
+      if(diff < 0) diff *= -1;
+      if(diff <= PRECISION_VALUE) return i;
     }
     return -1;
   }
