@@ -1,6 +1,6 @@
 #include <MedianFilter.h>
 #include <unity.h>
- #include <iostream>
+ // #include <iostream>
 
 #ifdef UNIT_TEST
 
@@ -32,6 +32,7 @@ void test_addDataPoint(void){
   TEST_ASSERT_EQUAL_FLOAT(timeBuff[2], -1);
   TEST_ASSERT_EQUAL_FLOAT(valBuff[0], -1);
 
+  // Uncomment to print buffer values
   // for(int i = 0; i < buffLen; i++)
   //   std::cout << valBuff[i] << std::endl;
   // std::cout << std::endl;
@@ -100,12 +101,12 @@ void test_getFilteredDataPoint(void){
   f.addDataPoint(-500.23);
   f.addDataPoint(-23.1);
 
-   for(int i = 0; i < buffLen; i++)
-     std::cout << valBuff[i] << std::endl;
-   std::cout << std::endl;
-   for(int i = 0; i < buffLen; i++)
-     std::cout << timeBuff[i] << std::endl;
-   std::cout << std::endl;
+  //  for(int i = 0; i < buffLen; i++)
+  //    std::cout << valBuff[i] << std::endl;
+  //  std::cout << std::endl;
+  //  for(int i = 0; i < buffLen; i++)
+  //    std::cout << timeBuff[i] << std::endl;
+  //  std::cout << std::endl;
 
   // Note: 4.12 gets shifted off the end, and is not present in sorted array
   // -500.23, -23.1, -19.735, -2.23, 0.6, 9.132, 14.634, 17.123, 29.236, 30.324

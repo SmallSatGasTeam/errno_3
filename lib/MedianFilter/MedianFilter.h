@@ -1,7 +1,7 @@
 #ifndef MEDIAN_FILTER_H
 #define MEDIAN_FILTER_H
 
-#include <iostream>
+// #include <iostream>
 
 namespace { const float PRECISION_VALUE = 0.001; }
 
