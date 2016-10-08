@@ -254,7 +254,7 @@ void TaskDeployBoom(void *pvParameters)
     // bool shouldDeployBoom(bool deployed, bool initialized, bool confirmed, float pressure)
     // If boom hasn't deployed yet AND ('y' was pressed OR pressure is within range)
     // if (!boom.deployed && (deployConfirmed == true || (valPressure <= DEPLOY_MAX_PRESSURE && valPressure > DEPLOY_MIN_PRESSURE)))
-    if(shouldDeployBoom(boom.deployed, deployInitiated, deployConfirmed, valPressure))
+    if(shouldDeployBoom(boom.deployed, deployInitiated, deployConfirmed, valPressure) == true)
     {
       critical_out((void *)nullptr, print_boom, file_names[8], out);
       digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
