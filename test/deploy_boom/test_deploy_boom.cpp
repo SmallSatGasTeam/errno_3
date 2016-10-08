@@ -46,7 +46,7 @@ const float above_max = 15.0;
 
   // All bools either true or false
 results[0] = shouldDeployBoom(true, true, true, below_min);
-TEST_ASSERT_FALSE(results[0]);
+TEST_ASSERT_TRUE(results[0]);
 results[1] = shouldDeployBoom(false, false, false, below_min);
 TEST_ASSERT_FALSE(results[1]);
 
@@ -70,7 +70,7 @@ TEST_ASSERT_FALSE(results[7])
 
   //follows same pattern as above
 results[8] = shouldDeployBoom(true, true, true, in_range);
-TEST_ASSERT_FALSE(results[8]);
+TEST_ASSERT_TRUE(results[8]);
 results[9] = shouldDeployBoom(false, false, false, in_range);
 TEST_ASSERT_TRUE(results[9]);
 
@@ -92,7 +92,7 @@ TEST_ASSERT_TRUE(results[15]);
 
   //follows same pattern as above
 results[16] = shouldDeployBoom(true, true, true, above_max);
-TEST_ASSERT_FALSE(results[16]);
+TEST_ASSERT_TRUE(results[16]);
 results[17] = shouldDeployBoom(false, false, false, above_max);
 TEST_ASSERT_FALSE(results[17]);
 

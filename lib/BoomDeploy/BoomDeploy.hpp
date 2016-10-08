@@ -3,8 +3,8 @@ extern const float DEPLOY_MAX_PRESSURE;
 extern class Stream;
 
 bool shouldDeployBoom(bool deployed, bool initialized, bool confirmed, float pressure){
-  if(deployed == true) { return false; }
   if(initialized == true && confirmed == true){ return true; }
+  if(deployed == true) { return false; }
   if(pressure <= DEPLOY_MAX_PRESSURE && pressure >= DEPLOY_MIN_PRESSURE){ return true; }
 
   return false;
