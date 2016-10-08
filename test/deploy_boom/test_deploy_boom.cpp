@@ -4,8 +4,20 @@ const float DEPLOY_MAX_PRESSURE = 10.0;
 // Mock stream library
 class Stream{
 public:
-  bool available(){ return true;}
-  char read(){ return 'a';}
+  Stream(int c, char r):count(c), response(r){}
+  bool available(){
+    if(count > 0) return true;
+  }
+  char read(){
+    if(count > 0){
+      count--;
+      return response;
+    }
+    return 0;
+  }
+
+  int count;
+  char response;
 };
 
 #include <BoomDeploy.hpp>
@@ -100,12 +112,28 @@ TEST_ASSERT_FALSE(results[23]);
 }
 
 void test_getMessage(void){
-  
+  Stream a(10, 1), b(3, 2);
+  Stream* streams[] = {&a, &b, (Stream*)NULL};
+
+  char result = getMessage(streams);
+  TEST_ASSERT_EQUAL(result, 2);
+  TEST_ASSERT_FALSE(a.available()); // Clears out rest of buffer
+  TEST_ASSERT_FALSE(b.available());
+}
+
+void test_getMessage__single(void){
+  Stream a(10, 1);
+  Stream* streams[] = {&a, (Stream*)NULL};
+
+  char result = getMessage(streams);
+  TEST_ASSERT_EQUAL(result, 1);
 }
 
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(test_shouldDeployBoom);
+    RUN_TEST(test_getMessage);
+    RUN_TEST(test_getMessage__single);
     UNITY_END();
     return 0;
 }
