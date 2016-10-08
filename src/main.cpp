@@ -44,10 +44,10 @@ void TaskGPSRead(void *pvParameters);
 SemaphoreHandle_t xOutputSemaphore;
 SemaphoreHandle_t xSDSemaphore;
 
-const int num_files = 10;
+const int num_files = 11;
 
 char *file_names[] = {"baro.csv", "temp_in.csv", "temp_ex.csv", "light.csv", "uv.csv",
-                      "gps.csv",  "gyro.csv",    "camera.csv",  "boom.csv",  "time_stamp.csv"};
+                      "gps.csv",  "gyro.csv",    "camera.csv",  "boom.csv",  "time_stamp.csv", "median.csv"};
 
 File files[num_files];
 
@@ -224,6 +224,9 @@ void TaskDeployBoom(void *pvParameters)
   {
     filter.addDataPoint(baro.pressure);
     float valPressure = filter.getFilteredDataPoint();
+    baro.median = valPressure;
+
+    // sensor_out((void *)nullptr, print_median, file_names[10], out);
 
     char received_message = getMessage(out);
 

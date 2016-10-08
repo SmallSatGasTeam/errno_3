@@ -1,6 +1,10 @@
 #ifndef MEDIAN_FILTER_H
 #define MEDIAN_FILTER_H
 
+// #include <iostream>
+
+namespace { const float PRECISION_VALUE = 0.001; }
+
 template <typename T>
 class MedianFilter {
 public:
@@ -24,14 +28,14 @@ public:
       valBuff[currentLength-1] = val;
     } else {
       // If our buffer is full we need to replace values
-      int toReplace = timeBuff[timeCounter];
-      int timePosition = findInBuff(timeBuff, currentLength, toReplace);
+      T toReplace = timeBuff[timeCounter];
       int valPosition = findInBuff(valBuff, currentLength, toReplace);
+      timeBuff[timeCounter] = val;
 
-      if(timePosition >= 0 && timePosition < currentLength)
-        timeBuff[timePosition] = val;
       if(valPosition >= 0 &&  valPosition < currentLength){
         valBuff[valPosition] = val;
+      } else {
+        //TODO: Add some sort of error handling
       }
     }
 
@@ -68,7 +72,9 @@ public:
 
   int findInBuff(T* buff,int buffLen, T find){
     for(int i = 0; i < buffLen; i++){
-      if(buff[i] == find) return i;
+      float diff = buff[i] - find;
+      if(diff < 0) diff *= -1;
+      if(diff <= PRECISION_VALUE) return i;
     }
     return -1;
   }
