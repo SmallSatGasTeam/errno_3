@@ -1,6 +1,7 @@
 const float DEPLOY_MIN_PRESSURE = 5.0;
 const float DEPLOY_MAX_PRESSURE = 10.0;
 
+// Mock stream library
 class Stream{
 public:
   bool available(){ return true;}
@@ -96,6 +97,10 @@ results[22] = shouldDeployBoom(false, true, false, above_max);
 TEST_ASSERT_FALSE(results[22]);
 results[23] = shouldDeployBoom(false, false, true, above_max);
 TEST_ASSERT_FALSE(results[23]);
+}
+
+void test_getMessage(void){
+  
 }
 
 int main(int argc, char **argv) {
