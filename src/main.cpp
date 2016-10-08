@@ -200,7 +200,7 @@ void TaskDeployBoom(void *pvParameters)
 {
   (void)pvParameters;
 
-  const float DEPLOY_MIN_PRESSURE = 30.0;
+  const float DEPLOY_MIN_PRESSURE = 25.0;
   const float DEPLOY_MAX_PRESSURE = 44.0;
 
   Stream *out[] = {&Serial, &Serial3, (Stream *)nullptr};
@@ -223,6 +223,8 @@ void TaskDeployBoom(void *pvParameters)
   {
     filter.addDataPoint(baro.pressure);
     float valPressure = filter.getFilteredDataPoint();
+    baro.median = valPressure;
+
 
     char received_message = 0;
     // We don't expect to receive commands from two streams at the same time. So this
