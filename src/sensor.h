@@ -328,7 +328,8 @@ void checkBattery()
     delay(1000);
   }
 }
-void print_voltage(void *dummy, void *output)
+
+void print_voltage(void *dummy, Stream *output)
 {
   output->print(batt.voltage);
 }

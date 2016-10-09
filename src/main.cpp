@@ -166,7 +166,7 @@ void TaskSensorReadStandard(void *pvParameters)
   }
 
   Stream *out[] = {&Serial, &Serial3, (Stream *)nullptr};
-  message_out("barometer\ttemp-in\ttemp-ex\tlight\tuv\ttimestamp\nvoltage\n", out);
+  message_out("barometer\ttemp-in\ttemp-ex\tlight\tuv\ttimestamp\tvoltage\t", out);
   for (;;)
   {
     vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -176,9 +176,9 @@ void TaskSensorReadStandard(void *pvParameters)
     sensor_out((void *)nullptr, read_light, file_names[3], out);
     sensor_out((void *)nullptr, read_uv, file_names[4], out);
     sensor_out((void *)nullptr, read_timestamp, file_names[9], out);
-    sensor_out(&sensor_gps, read_gps, file_names[5], out);
     checkBattery();
     sensor_out((void *)nullptr, print_voltage, file_names[11], out);
+    sensor_out(&sensor_gps, read_gps, file_names[5], out);
     message_out("\n", out);
   }
 }
