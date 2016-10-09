@@ -275,7 +275,10 @@ void TaskDeployBoom(void *pvParameters)
       vTaskDelay(3000 / portTICK_PERIOD_MS);
       digitalWrite(WIRE_CUTTER, LOW); // Disengage
       vTaskDelay(1000 / portTICK_PERIOD_MS);
+
       boom.deployed = true;
+      deployInitiated = false;
+      deployConfirmed = false;
 
       // take picture after boom deployment
       critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
