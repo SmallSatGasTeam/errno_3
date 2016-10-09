@@ -1,6 +1,6 @@
 extern const float DEPLOY_MIN_PRESSURE;
 extern const float DEPLOY_MAX_PRESSURE;
-extern class Stream;
+//extern class Stream; //Uncomment to run local tests
 
 bool shouldDeployBoom(bool deployed, bool initialized, bool confirmed, float pressure){
   if(initialized == true && confirmed == true){ return true; }
