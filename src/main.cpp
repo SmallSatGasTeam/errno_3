@@ -222,7 +222,6 @@ void TaskDeployBoom(void *pvParameters)
 
   for (;;)
   {
-    vTaskDelay(500 / portTICK_PERIOD_MS);
     filter.addDataPoint(baro.pressure);
     float valPressure = filter.getFilteredDataPoint();
     baro.median = valPressure;
