@@ -328,6 +328,10 @@ void checkBattery()
     delay(1000);
   }
 }
+void print_voltage(void *dummy, void *output)
+{
+  output->print(batt.voltage);
+}
 
 // ----------------- Camera -------------- //
 void read_camera(UCAMII *camera, Stream *output)
