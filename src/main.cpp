@@ -1,5 +1,8 @@
 #ifndef UNIT_TEST  // Enable unit tests
 
+const float DEPLOY_MIN_PRESSURE = 30.0;
+const float DEPLOY_MAX_PRESSURE = 44.0;
+
 #include <Adafruit_BNO055.h>
 #include <Adafruit_MCP9808.h>
 #include <Adafruit_Sensor.h>
@@ -14,6 +17,7 @@
 #include <semphr.h> // add the FreeRTOS functions for Semaphores (or Flags).
 #include <uCamII.h>
 #include <MedianFilter.h>
+#include <BoomDeploy.hpp>
 #include "messages.h" // Defines incoming data header
 #include "sensor.h"
 
@@ -40,10 +44,10 @@ void TaskGPSRead(void *pvParameters);
 SemaphoreHandle_t xOutputSemaphore;
 SemaphoreHandle_t xSDSemaphore;
 
-const int num_files = 10;
+const int num_files = 12;
 
 char *file_names[] = {"baro.csv", "temp_in.csv", "temp_ex.csv", "light.csv", "uv.csv",
-                      "gps.csv",  "gyro.csv",    "camera.csv",  "boom.csv",  "time_stamp.csv"};
+                      "gps.csv",  "gyro.csv",    "camera.csv",  "boom.csv",  "time_stamp.csv", "median.csv",  "stack.csv"};
 
 File files[num_files];
 
@@ -52,6 +56,7 @@ Stream *input_streams[] = {&Serial, &Serial3, (Stream *)nullptr};
 /**
  *Global setup should occur here
  */
+
 void setup()
 {
 
@@ -150,6 +155,7 @@ void loop()
 void TaskSensorReadStandard(void *pvParameters)
 {
   (void)pvParameters;
+  StackAnalyzer analyze(nullptr, "SensorReadStandard");
 
   /*
      File has to be open when task starts in order to write data to log. We will
@@ -163,9 +169,13 @@ void TaskSensorReadStandard(void *pvParameters)
 
   Stream *out[] = {&Serial, &Serial3, (Stream *)nullptr};
   message_out("barometer\ttemp-in\ttemp-ex\tlight\tuv\ttimestamp\n", out);
+
+ // sensor_out(&analyze, read_stack, file_names[10], out);
+
   for (;;)
   {
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);\
+    sensor_out(&analyze, read_stack, file_names[11], nullptr);
     sensor_out(&sensor_baro, read_baro, file_names[0], out);
     sensor_out(&sensor_temp_in, read_temp, file_names[1], out);
     sensor_out(&sensor_temp_ex, read_temp, file_names[2], out);
@@ -181,6 +191,7 @@ void TaskSensorReadStandard(void *pvParameters)
 void TaskSensorReadFast(void *pvParameters)
 {
   (void)pvParameters;
+  StackAnalyzer analyze(nullptr, "SensorReadFast");
 
   Stream *outputs[] = {(Stream *)nullptr};
   initialize_gyro(&sensor_gyro, Serial);
@@ -188,6 +199,7 @@ void TaskSensorReadFast(void *pvParameters)
   for (;;) // A Task shall never return or exit.
   {
     sensor_out(&sensor_gyro, read_gyro, file_names[6], outputs);
+    sensor_out(&analyze, read_stack, file_names[10], nullptr);
     vTaskDelay(50 / portTICK_PERIOD_MS);
   }
 }
@@ -206,6 +218,8 @@ void TaskDeployBoom(void *pvParameters)
   Stream *out[] = {&Serial, &Serial3, (Stream *)nullptr};
   Stream *camera_out[] = {(Stream *)nullptr};
 
+  StackAnalyzer analyze(nullptr, "TaskDeployBoom");
+
   boom.deployed = false;
 
   char *camera_messages[] = {"\n****************Camera Taking Photo*****************\n",
@@ -214,73 +228,75 @@ void TaskDeployBoom(void *pvParameters)
   bool deployInitiated = false;
   bool deployConfirmed = false;
 
-  const int filterOrder = 10;
+  const int filterOrder = 32;
   float readingsByTime[filterOrder] = {0};
   float readingsByValue[filterOrder] = {0};
   MedianFilter<float> filter(readingsByTime, readingsByValue, filterOrder);
 
   for (;;)
   {
-    const auto AVG_RANGE = 7; // number of readings to use to obtain average
 
-    float avgPressure = filter.getFilteredDataPoint();
+    filter.addDataPoint(baro.pressure);
+    float valPressure = filter.getFilteredDataPoint();
+    baro.median = valPressure;
 
-    char received_message = 0;
-    // We don't expect to receive commands from two streams at the same time. So this
-    // overwriting of the message shouldn't be a problem.
+    // sensor_out((void *)nullptr, print_median, file_names[10], out);
 
-    for (char i = 0; input_streams[i] != nullptr; ++i)
-    {
-      if (input_streams[i]->available())
-      {
-        received_message = input_streams[i]->read();
-        while (input_streams[i]->available())
-        {
-          input_streams[i]->read();
+    char received_message = getMessage(out);
+
+    switch (received_message) {
+      case DEPLOY_BOOM:
+        critical_out((void *)nullptr, print_confirm, file_names[8], out);
+        deployInitiated = true;
+      break;
+
+      case CONFIRM_DEPLOY:
+        if(deployInitiated == true){
+          deployConfirmed = true;
         }
-        // Clear the rest of the buffer
-      }
+      break;
+
+      case CANCEL_DEPLOY:
+        if(deployInitiated){
+          critical_out((void *)nullptr, print_cancel, file_names[8], out);
+          deployInitiated = false;
+        }
+      break;
+
+      case TAKE_PHOTO:
+        critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
+      break;
     }
 
-    if (received_message == DEPLOY_BOOM)
-    {
-      critical_out((void *)nullptr, print_confirm, file_names[8], out);
-      deployInitiated = true;
-    }
-
-    if (received_message == CONFIRM_DEPLOY && deployInitiated == true)
-      deployConfirmed = true;
-
-    if (received_message == CANCEL_DEPLOY && deployInitiated == true)
-    {
-      critical_out((void *)nullptr, print_cancel, file_names[8], out);
-      deployInitiated = false;
-    }
-
+    // bool shouldDeployBoom(bool deployed, bool initialized, bool confirmed, float pressure)
     // If boom hasn't deployed yet AND ('y' was pressed OR pressure is within range)
-    if (!boom.deployed && (deployConfirmed == true || (avgPressure <= DEPLOY_MAX_PRESSURE && avgPressure > DEPLOY_MIN_PRESSURE)))
+    // if (!boom.deployed && (deployConfirmed == true || (valPressure <= DEPLOY_MAX_PRESSURE && valPressure > DEPLOY_MIN_PRESSURE)))
+    if(shouldDeployBoom(boom.deployed, deployInitiated, deployConfirmed, valPressure) == true)
     {
       critical_out((void *)nullptr, print_boom, file_names[8], out);
       digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
       vTaskDelay(3000 / portTICK_PERIOD_MS);
       digitalWrite(WIRE_CUTTER, LOW); // Disengage
       vTaskDelay(1000 / portTICK_PERIOD_MS);
+
       boom.deployed = true;
+      deployInitiated = false;
+      deployConfirmed = false;
 
       // take picture after boom deployment
       critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
     }
 
-    if (received_message == TAKE_PHOTO)
-    {
-      critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
-    }
+    sensor_out(&analyze, read_stack, file_names[11], nullptr);
   }
 }
 
 void TaskGPSRead(void *pvParameters)
 {
   (void)pvParameters;
+
+  StackAnalyzer analyze(nullptr, "GPSRead");
+
   Stream *outputs[] = {(Stream *)nullptr};
   for (;;)
   {
@@ -289,6 +305,7 @@ void TaskGPSRead(void *pvParameters)
       sensor_gps.encode(Serial2.read());
     }
     vTaskDelay(500 / portTICK_PERIOD_MS);
+    sensor_out(&analyze, read_stack, file_names[10], nullptr);
   }
 }
 

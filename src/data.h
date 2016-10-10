@@ -11,6 +11,7 @@ struct baro_t
 {
   float pressure;
   float altitude;
+  float median;
 } baro; 
 
 struct light_t
@@ -43,5 +44,10 @@ struct time
   uint8_t minute;
   uint8_t second;
 } time;
+
+struct battery_t
+{
+  float voltage;
+} batt;
 
 #endif

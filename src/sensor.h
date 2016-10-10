@@ -1,4 +1,4 @@
-#ifndef SENSORS_H
+#ifndef SENSORS_H 
 #define SENSORS_H
 
 #include "data.h"
@@ -320,6 +320,7 @@ void checkBattery()
 
   battery = analogRead(batteryPin);
   battery = (battery * .00475) * 2;
+  batt.voltage = battery;
 
   if (battery <= 6.3)
   {
@@ -347,6 +348,22 @@ void read_camera(UCAMII *camera, Stream *output)
     }
     output->println("\n\n\n\n");
   }
+}
+// ------------ Stack Analysis ------------ //
+
+struct StackAnalyzer
+{
+  StackAnalyzer(char* n, char* nm) :task(n), name(nm) {}
+  char* task;
+  char* name;
+};
+
+void read_stack(void* analyzer, Stream* output)
+{
+  UBaseType_t uxHighWaterMark = uxTaskGetStackHighWaterMark(((StackAnalyzer*)analyzer)->task);
+  output->print(((StackAnalyzer*)analyzer)->name);
+  output->print(',');
+  output->print(uxHighWaterMark);
 }
 
 // ------------ Utilities ------------ //
@@ -379,5 +396,15 @@ T getAverage(T reading, const int AVG_RANGE)
 
   return average;
 }
+
+void print_median(void *dummy, Stream *output)
+{
+  output->print("\nPressure:");
+  output->print(baro.pressure);
+  output->print(", Median:");
+  output->print(baro.median);
+  output->print("\n");
+}
+
 
 #endif
