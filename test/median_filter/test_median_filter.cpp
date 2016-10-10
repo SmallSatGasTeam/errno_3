@@ -1,10 +1,6 @@
 #include <MedianFilter.h>
 #include <unity.h>
-<<<<<<< HEAD
-// #include <iostream>
-=======
  // #include <iostream>
->>>>>>> b82215ca13ca02085885dd1f01ab26430c6a00d1
 
 #ifdef UNIT_TEST
 
