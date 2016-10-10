@@ -192,9 +192,16 @@ void TaskSensorReadFast(void *pvParameters)
   }
 }
 
+// bool shouldDeploy(bool hasDeployed, bool* confirmed, float pressure ){
+//   return true;
+// }
+
 void TaskDeployBoom(void *pvParameters)
 {
   (void)pvParameters;
+
+  const float DEPLOY_MIN_PRESSURE = 30.0;
+  const float DEPLOY_MAX_PRESSURE = 44.0;
 
   Stream *out[] = {&Serial, &Serial3, (Stream *)nullptr};
   Stream *camera_out[] = {(Stream *)nullptr};
@@ -207,13 +214,16 @@ void TaskDeployBoom(void *pvParameters)
   bool deployInitiated = false;
   bool deployConfirmed = false;
 
-  
+  const int filterOrder = 10;
+  float readingsByTime[filterOrder] = {0};
+  float readingsByValue[filterOrder] = {0};
+  MedianFilter<float> filter(readingsByTime, readingsByValue, filterOrder);
 
   for (;;)
   {
     const auto AVG_RANGE = 7; // number of readings to use to obtain average
 
-    float avgPressure = getAverage(baro.pressure, AVG_RANGE);
+    float avgPressure = filter.getFilteredDataPoint();
 
     char received_message = 0;
     // We don't expect to receive commands from two streams at the same time. So this
@@ -248,7 +258,7 @@ void TaskDeployBoom(void *pvParameters)
     }
 
     // If boom hasn't deployed yet AND ('y' was pressed OR pressure is within range)
-    if (!boom.deployed && (deployConfirmed == true || (avgPressure <= 44 && avgPressure > 30)))
+    if (!boom.deployed && (deployConfirmed == true || (avgPressure <= DEPLOY_MAX_PRESSURE && avgPressure > DEPLOY_MIN_PRESSURE)))
     {
       critical_out((void *)nullptr, print_boom, file_names[8], out);
       digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
