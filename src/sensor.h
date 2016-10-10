@@ -393,4 +393,12 @@ T getAverage(T reading, const int AVG_RANGE)
   return average;
 }
 
+void print_median(void *dummy, Stream *output)
+{
+  output->print("\nMedian:");
+  output->print(baro.median);
+  output->print("\n");
+}
+
+
 #endif
