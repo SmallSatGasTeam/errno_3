@@ -147,7 +147,7 @@ void read_temp_in(Adafruit_MCP9808 *sensor, Stream *output)
 
   float val = sensor->readTempC();
   output->print(val);
-//  delay(200);
+  delay(250);
   sensor->shutdown_wake(1);
 }
 
@@ -158,7 +158,7 @@ void read_temp_ex(Adafruit_MCP9808 *sensor, Stream *output)
   float val = sensor->readTempC();
   output->print(val);
 
-  delay(150);
+  delay(250);
   sensor->shutdown_wake(1);
 }
 
