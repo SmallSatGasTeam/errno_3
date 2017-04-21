@@ -1,12 +1,8 @@
 #ifndef MEDIAN_FILTER_H
 #define MEDIAN_FILTER_H
-<<<<<<< HEAD
-=======
-
 // #include <iostream>
 
 namespace { const float PRECISION_VALUE = 0.001; }
->>>>>>> b82215ca13ca02085885dd1f01ab26430c6a00d1
 
 template <typename T>
 class MedianFilter {

@@ -174,8 +174,8 @@ void TaskSensorReadStandard(void *pvParameters)
     vTaskDelay(1000 / portTICK_PERIOD_MS);\
     sensor_out(&analyze, read_stack, file_names[11], nullptr);
     sensor_out(&sensor_baro, read_baro, file_names[0], out);
-    sensor_out(&sensor_temp_in, read_temp, file_names[1], out);
-    sensor_out(&sensor_temp_ex, read_temp, file_names[2], out);
+    sensor_out(&sensor_temp_in, read_temp_in, file_names[1], out);
+    sensor_out(&sensor_temp_ex, read_temp_ex, file_names[2], out);
     sensor_out((void *)nullptr, read_light, file_names[3], out);
     sensor_out((void *)nullptr, read_uv, file_names[4], out);
     sensor_out((void *)nullptr, read_timestamp, file_names[9], out);

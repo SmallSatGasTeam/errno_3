@@ -127,7 +127,7 @@ inline void message_out(char *message, Stream **outputs)
 
 void initialize_temp_ex(Adafruit_MCP9808 *sensor, Stream &output)
 {
-  if (!sensor->begin(0x18))
+  if (!sensor->begin2())
   {
     output.println("Couldn't find external MCP9808!");
   }
@@ -135,21 +135,31 @@ void initialize_temp_ex(Adafruit_MCP9808 *sensor, Stream &output)
 
 void initialize_temp_in(Adafruit_MCP9808 *sensor, Stream &output)
 {
-  if (!sensor->begin(0x1D))
+  if (!sensor->begin())
   {
     output.println("Couldn't find internal MCP9808!");
   }
 }
 
-void read_temp(Adafruit_MCP9808 *sensor, Stream *output)
+void read_temp_in(Adafruit_MCP9808 *sensor, Stream *output)
 {
+  sensor->shutdown_wake(0);
+
+  float val = sensor->readTempC();
+  output->print(val);
+//  delay(200);
+  sensor->shutdown_wake(1);
+}
+
+void read_temp_ex(Adafruit_MCP9808 *sensor, Stream *output)
+{
+  sensor->shutdown_wake(0);
+
   float val = sensor->readTempC();
   output->print(val);
 
-  if (sensor->begin(0x18))
-    temp.external = val;
-  else
-    temp.internal = val;
+  delay(150);
+  sensor->shutdown_wake(1);
 }
 
 //------------ Barometer ------------//
