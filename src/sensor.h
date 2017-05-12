@@ -123,6 +123,19 @@ inline void message_out(char *message, Stream **outputs)
   }
 }
 
+// TODO: print state of the boom switch
+inline void boomswitch_out(char *message, Stream **outputs)
+{
+  if (xSemaphoreTake(xOutputSemaphore, (TickType_t)5) == pdTRUE)
+  {
+    for (int i = 0; outputs[i] != nullptr; i++) 
+    {
+      outputs[i]->print(message);
+    }
+    xSemaphoreGive(xOutputSemaphore);
+  }
+}
+
 //----------- Temperature sensors ------------//
 
 void initialize_temp_ex(Adafruit_MCP9808 *sensor, Stream &output)
@@ -306,6 +319,11 @@ void print_boom(void *dummy, Stream *output)
   output->print("\n\n***************** !!! DEPLOYING BOOM !!! **********************\n\n");
 }
 
+void print_boom_failure(void *dummy, Stream *output)
+{
+  output->print("\n\n **************** !!! FAILURE TO DEPLOY BOOM !!! *******************\n\n");
+}
+
 void print_confirm(void *dummy, Stream *output)
 {
   output->print("\n\n***************** DEPLOYMENT COMMAND DETECTED. PRESS 'y' TO CONFIRM OR 'n' TO "
@@ -342,6 +360,27 @@ void checkBattery()
 void print_voltage(void *dummy, Stream *output)
 {
   output->print(batt.voltage);
+}
+
+// --------------- Boom Switch ---------------- //
+
+void checkBoomSwitch()
+{
+  const int boomSwitchPin = 30;
+  int boomswitch = -1;
+
+  pinMode(boomSwitchPin, INPUT);
+
+  boomswitch = digitalRead(boomSwitchPin);
+  
+  if (boomswitch == 0) // boom switch is open if 0
+  {
+    bswitch.opened = true;
+  }
+  else
+  {
+    bswitch.opened = false;
+  }
 }
 
 // ----------------- Camera -------------- //
