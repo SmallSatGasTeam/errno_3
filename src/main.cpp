@@ -34,6 +34,7 @@ File file;
 // define pins
 const int WIRE_CUTTER = 12;
 // const int SECONDARY_WIRE_CUTTER = 8; // TODO: define the pin here for a secondary wire cutter
+const int BOOM_SWITCH = 30;
 
 // define tasks
 void TaskSensorReadStandard(void *pvParameters);
@@ -47,11 +48,11 @@ void cutWire(int delay, int wirePin, Stream **out);
 SemaphoreHandle_t xOutputSemaphore;
 SemaphoreHandle_t xSDSemaphore;
 
-const int num_files = 13;
+const int num_files = 14;
 
 char *file_names[] = {"baro.csv", "temp_in.csv", "temp_ex.csv", "light.csv", "uv.csv",
                       "gps.csv",  "gyro.csv",    "camera.csv",  "boom.csv",  "time_stamp.csv", 
-                      "median.csv",  "stack.csv", "voltage.csv"};
+                      "median.csv",  "stack.csv", "voltage.csv", "boomswitch.csv"};
 
 File files[num_files];
 
@@ -111,6 +112,7 @@ void setup()
   // Initialize switches
   pinMode(WIRE_CUTTER, OUTPUT);
   // pinMode(SECONDARY_WIRE_CUTTER, OUTPUT); // TODO: secondary wire cutter
+  pinMode(BOOM_SWITCH, INPUT);
 
   // Now set up two tasks to run independently
   xTaskCreate(
@@ -188,14 +190,13 @@ void TaskSensorReadStandard(void *pvParameters)
     sensor_out((void *)nullptr, print_voltage, file_names[12], out);
     sensor_out(&sensor_gps, read_gps, file_names[5], out);
     
-    checkBoomSwitch(); // check if boom switch is "open" or "closed"
-    if (bswitch.opened)
+    if (checkBoomSwitch(BOOM_SWITCH))
     {
-      boomswitch_out("open", out);
+      sensor_out("open", print_boom_switch, file_names[13], out);
     }
     else 
     {
-      boomswitch_out("closed", out);
+      sensor_out("closed", print_boom_switch, file_names[13], out);
     }
 
     message_out("\n", out);
@@ -290,7 +291,7 @@ void TaskDeployBoom(void *pvParameters)
       bool primaryCutter = true;
       int delay = 3000;
 
-      while (bswitch.opened == false && delay <= 5000)
+      while (checkBoomSwitch(BOOM_SWITCH) == false && delay <= 5000)
       {
         if (primaryCutter)
         {
@@ -301,9 +302,7 @@ void TaskDeployBoom(void *pvParameters)
           // cutWire(delay, SECONDARY_WIRE_CUTTER, out); // TODO: implement secondary wire cutter
         }
 
-        // unsure, but might need a delay?
-        checkBoomSwitch();
-        if (bswitch.opened == false && primaryCutter == false)
+        if (checkBoomSwitch(BOOM_SWITCH) == false && primaryCutter == false)
         {
           delay += 500; // increment by half a second more
         }
@@ -311,7 +310,7 @@ void TaskDeployBoom(void *pvParameters)
         primaryCutter = !primaryCutter; // boolean toggle
       }
 
-      if (bswitch.opened == false && delay > 5000)
+      if (checkBoomSwitch(BOOM_SWITCH) == false && delay > 5000)
       {
         critical_out((void *)nullptr, print_boom_failure, file_names[8], out);
       }
@@ -319,7 +318,7 @@ void TaskDeployBoom(void *pvParameters)
       {
         critical_out((void *)nullptr, print_boom, file_names[8], out);
 
-        // take picture after boom deployment - if boom deploys
+        // take picture after boom deployment
         critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
       }
 

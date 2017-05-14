@@ -123,19 +123,6 @@ inline void message_out(char *message, Stream **outputs)
   }
 }
 
-// TODO: print state of the boom switch
-inline void boomswitch_out(char *message, Stream **outputs)
-{
-  if (xSemaphoreTake(xOutputSemaphore, (TickType_t)5) == pdTRUE)
-  {
-    for (int i = 0; outputs[i] != nullptr; i++) 
-    {
-      outputs[i]->print(message);
-    }
-    xSemaphoreGive(xOutputSemaphore);
-  }
-}
-
 //----------- Temperature sensors ------------//
 
 void initialize_temp_ex(Adafruit_MCP9808 *sensor, Stream &output)
@@ -364,23 +351,23 @@ void print_voltage(void *dummy, Stream *output)
 
 // --------------- Boom Switch ---------------- //
 
-void checkBoomSwitch()
+bool checkBoomSwitch(const int boomSwitchPin)
 {
-  const int boomSwitchPin = 30;
-  int boomswitch = -1;
-
-  pinMode(boomSwitchPin, INPUT);
-
-  boomswitch = digitalRead(boomSwitchPin);
+  int boomswitch = digitalRead(boomSwitchPin);
   
   if (boomswitch == 0) // boom switch is open if 0
   {
-    bswitch.opened = true;
+    return true;
   }
   else
   {
-    bswitch.opened = false;
+    return false;
   }
+}
+
+void print_boom_switch(const char *message, Stream *output)
+{
+  output->print(message);
 }
 
 // ----------------- Camera -------------- //

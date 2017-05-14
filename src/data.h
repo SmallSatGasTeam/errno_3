@@ -52,9 +52,4 @@ struct battery_t
   float voltage;
 } batt;
 
-struct bswitch_t
-{
-  bool opened;
-} bswitch;
-
 #endif
