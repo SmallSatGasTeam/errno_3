@@ -48,11 +48,11 @@ void cutWire(int delay, int wirePin, Stream **out);
 SemaphoreHandle_t xOutputSemaphore;
 SemaphoreHandle_t xSDSemaphore;
 
-const int num_files = 14;
+const int num_files = 13;
 
 char *file_names[] = {"baro.csv", "temp_in.csv", "temp_ex.csv", "light.csv", "uv.csv",
                       "gps.csv",  "gyro.csv",    "camera.csv",  "boom.csv",  "time_stamp.csv", 
-                      "median.csv",  "stack.csv", "voltage.csv", "boomswitch.csv"};
+                      "median.csv",  "stack.csv", "voltage.csv"};
 
 File files[num_files];
 
@@ -175,7 +175,7 @@ void TaskSensorReadStandard(void *pvParameters)
   }
 
   Stream *out[] = {&Serial, &Serial3, (Stream *)nullptr};
-  message_out("barometer\ttemp-in\ttemp-ex\tlight\tuv\ttimestamp\tvoltage\t", out);
+  message_out("\n barometer\ttemp-in\ttemp-ex\tlight\tuv\ttimestamp\tvoltage\t", out);
   for (;;)
   {
     vTaskDelay(1000 / portTICK_PERIOD_MS);\
@@ -192,14 +192,14 @@ void TaskSensorReadStandard(void *pvParameters)
     
     if (checkBoomSwitch(BOOM_SWITCH))
     {
-      sensor_out("open", print_boom_switch, file_names[13], out);
+      message_out("open", out);
     }
     else 
     {
-      sensor_out("closed", print_boom_switch, file_names[13], out);
+      message_out("closed", out);
     }
 
-    message_out("\n", out);
+    message_out("", out); // for correct spacing, since it uses println()
   }
 }
 
