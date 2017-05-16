@@ -20,7 +20,9 @@ struct light_t
   float  uv;
 } light;
 
-struct boom_t { bool deployed; } boom;
+struct boom_t { 
+  bool deployed; 
+} boom;
 
 struct gyro_t
 {

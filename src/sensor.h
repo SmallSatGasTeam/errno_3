@@ -306,6 +306,11 @@ void print_boom(void *dummy, Stream *output)
   output->print("\n\n***************** !!! DEPLOYING BOOM !!! **********************\n\n");
 }
 
+void print_boom_failure(void *dummy, Stream *output)
+{
+  output->print("\n\n **************** !!! FAILURE TO DEPLOY BOOM !!! *******************\n\n");
+}
+
 void print_confirm(void *dummy, Stream *output)
 {
   output->print("\n\n***************** DEPLOYMENT COMMAND DETECTED. PRESS 'y' TO CONFIRM OR 'n' TO "
@@ -342,6 +347,27 @@ void checkBattery()
 void print_voltage(void *dummy, Stream *output)
 {
   output->print(batt.voltage);
+}
+
+// --------------- Boom Switch ---------------- //
+
+bool checkBoomSwitch(const int boomSwitchPin)
+{
+  int boomswitch = digitalRead(boomSwitchPin);
+  
+  if (boomswitch == 0) // boom switch is open if 0
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
+void print_boom_switch(const char *message, Stream *output)
+{
+  output->print(message);
 }
 
 // ----------------- Camera -------------- //

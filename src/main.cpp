@@ -1,6 +1,6 @@
 #ifndef UNIT_TEST  // Enable unit tests
 
-const float DEPLOY_MIN_PRESSURE = 30.0;
+const float DEPLOY_MIN_PRESSURE = 10.0;
 const float DEPLOY_MAX_PRESSURE = 44.0;
 
 #include <Adafruit_BNO055.h>
@@ -33,12 +33,16 @@ File file;
 
 // define pins
 const int WIRE_CUTTER = 12;
+// const int SECONDARY_WIRE_CUTTER = 8; // TODO: define the pin here for a secondary wire cutter
+const int BOOM_SWITCH = 30;
 
 // define tasks
 void TaskSensorReadStandard(void *pvParameters);
 void TaskSensorReadFast(void *pvParameters);
 void TaskDeployBoom(void *pvParameters);
 void TaskGPSRead(void *pvParameters);
+
+void cutWire(int delay, int wirePin, Stream **out);
 
 // define semaphores
 SemaphoreHandle_t xOutputSemaphore;
@@ -47,7 +51,8 @@ SemaphoreHandle_t xSDSemaphore;
 const int num_files = 13;
 
 char *file_names[] = {"baro.csv", "temp_in.csv", "temp_ex.csv", "light.csv", "uv.csv",
-                      "gps.csv",  "gyro.csv",    "camera.csv",  "boom.csv",  "time_stamp.csv", "median.csv",  "stack.csv", "voltage.csv"};
+                      "gps.csv",  "gyro.csv",    "camera.csv",  "boom.csv",  "time_stamp.csv", 
+                      "median.csv",  "stack.csv", "voltage.csv"};
 
 File files[num_files];
 
@@ -106,6 +111,8 @@ void setup()
 
   // Initialize switches
   pinMode(WIRE_CUTTER, OUTPUT);
+  // pinMode(SECONDARY_WIRE_CUTTER, OUTPUT); // TODO: secondary wire cutter
+  pinMode(BOOM_SWITCH, INPUT);
 
   // Now set up two tasks to run independently
   xTaskCreate(
@@ -168,7 +175,7 @@ void TaskSensorReadStandard(void *pvParameters)
   }
 
   Stream *out[] = {&Serial, &Serial3, (Stream *)nullptr};
-  message_out("barometer\ttemp-in\ttemp-ex\tlight\tuv\ttimestamp\tvoltage\t", out);
+  message_out("\n barometer\ttemp-in\ttemp-ex\tlight\tuv\ttimestamp\tvoltage\t", out);
   for (;;)
   {
     vTaskDelay(1000 / portTICK_PERIOD_MS);\
@@ -182,7 +189,17 @@ void TaskSensorReadStandard(void *pvParameters)
     checkBattery();
     sensor_out((void *)nullptr, print_voltage, file_names[12], out);
     sensor_out(&sensor_gps, read_gps, file_names[5], out);
-    message_out("\n", out);
+    
+    if (checkBoomSwitch(BOOM_SWITCH))
+    {
+      message_out("open", out);
+    }
+    else 
+    {
+      message_out("closed", out);
+    }
+
+    message_out("", out); // for correct spacing, since it uses println()
   }
 }
 
@@ -270,23 +287,56 @@ void TaskDeployBoom(void *pvParameters)
     // If boom hasn't deployed yet AND ('y' was pressed OR pressure is within range)
     // if (!boom.deployed && (deployConfirmed == true || (valPressure <= DEPLOY_MAX_PRESSURE && valPressure > DEPLOY_MIN_PRESSURE)))
     if(shouldDeployBoom(boom.deployed, deployInitiated, deployConfirmed, valPressure) == true)
-    {
-      critical_out((void *)nullptr, print_boom, file_names[8], out);
-      digitalWrite(WIRE_CUTTER, HIGH); // INITIATE THERMAL INCISION
-      vTaskDelay(3000 / portTICK_PERIOD_MS);
-      digitalWrite(WIRE_CUTTER, LOW); // Disengage
-      vTaskDelay(1000 / portTICK_PERIOD_MS);
+    { 
+      bool primaryCutter = true;
+      int delay = 3000;
+
+      while (checkBoomSwitch(BOOM_SWITCH) == false && delay <= 5000)
+      {
+        if (primaryCutter)
+        {
+          cutWire(delay, WIRE_CUTTER, out);
+        }
+        else
+        {
+          // cutWire(delay, SECONDARY_WIRE_CUTTER, out); // TODO: implement secondary wire cutter
+        }
+
+        if (checkBoomSwitch(BOOM_SWITCH) == false && primaryCutter == false)
+        {
+          delay += 500; // increment by half a second more
+        }
+        
+        primaryCutter = !primaryCutter; // boolean toggle
+      }
+
+      if (checkBoomSwitch(BOOM_SWITCH) == false && delay > 5000)
+      {
+        critical_out((void *)nullptr, print_boom_failure, file_names[8], out);
+      }
+      else
+      {
+        critical_out((void *)nullptr, print_boom, file_names[8], out);
+
+        // take picture after boom deployment
+        critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
+      }
 
       boom.deployed = true;
       deployInitiated = false;
       deployConfirmed = false;
-
-      // take picture after boom deployment
-      critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
     }
 
     sensor_out(&analyze, read_stack, file_names[11], nullptr);
   }
+}
+
+void cutWire(int delay, int wirePin, Stream **out)
+{
+  digitalWrite(wirePin, HIGH); // INITIATE THERMAL INCISION
+  vTaskDelay(delay / portTICK_PERIOD_MS);
+  digitalWrite(wirePin, LOW); // Disengage
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
 }
 
 void TaskGPSRead(void *pvParameters)
