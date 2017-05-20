@@ -33,7 +33,7 @@ File file;
 
 // define pins
 const int WIRE_CUTTER = 12;
-// const int SECONDARY_WIRE_CUTTER = 8; // TODO: define the pin here for a secondary wire cutter
+const int SECONDARY_WIRE_CUTTER = 6; // TODO: define the pin here for a secondary wire cutter
 const int BOOM_SWITCH = 30;
 
 // define tasks
@@ -111,7 +111,7 @@ void setup()
 
   // Initialize switches
   pinMode(WIRE_CUTTER, OUTPUT);
-  // pinMode(SECONDARY_WIRE_CUTTER, OUTPUT); // TODO: secondary wire cutter
+  pinMode(SECONDARY_WIRE_CUTTER, OUTPUT); // TODO: secondary wire cutter
   pinMode(BOOM_SWITCH, INPUT);
 
   // Now set up two tasks to run independently
@@ -288,29 +288,32 @@ void TaskDeployBoom(void *pvParameters)
     // if (!boom.deployed && (deployConfirmed == true || (valPressure <= DEPLOY_MAX_PRESSURE && valPressure > DEPLOY_MIN_PRESSURE)))
     if(shouldDeployBoom(boom.deployed, deployInitiated, deployConfirmed, valPressure) == true)
     { 
-      bool primaryCutter = true;
-      int delay = 3000;
+      bool primaryCutter = false;
+      int delayTime = 3000;
 
-      while (checkBoomSwitch(BOOM_SWITCH) == false && delay <= 5000)
+      // making sure it heats up primary wire at least once
+      cutWire(delayTime, WIRE_CUTTER, out);
+
+      while (checkBoomSwitch(BOOM_SWITCH) == false && delayTime <= 5000)
       {
         if (primaryCutter)
         {
-          cutWire(delay, WIRE_CUTTER, out);
+          cutWire(delayTime, WIRE_CUTTER, out);
         }
         else
         {
-          // cutWire(delay, SECONDARY_WIRE_CUTTER, out); // TODO: implement secondary wire cutter
+          cutWire(delayTime, SECONDARY_WIRE_CUTTER, out); // TODO: implement secondary wire cutter
         }
 
         if (checkBoomSwitch(BOOM_SWITCH) == false && primaryCutter == false)
         {
-          delay += 500; // increment by half a second more
+          delayTime += 500; // increment by half a second more
         }
         
         primaryCutter = !primaryCutter; // boolean toggle
       }
 
-      if (checkBoomSwitch(BOOM_SWITCH) == false && delay > 5000)
+      if (checkBoomSwitch(BOOM_SWITCH) == false && delayTime > 5000)
       {
         critical_out((void *)nullptr, print_boom_failure, file_names[8], out);
       }
