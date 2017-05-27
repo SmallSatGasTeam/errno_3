@@ -48,11 +48,11 @@ void cutWire(int delay, int wirePin, Stream **out);
 SemaphoreHandle_t xOutputSemaphore;
 SemaphoreHandle_t xSDSemaphore;
 
-const int num_files = 13;
+const int num_files = 15;
 
 char *file_names[] = {"baro.csv", "temp_in.csv", "temp_ex.csv", "light.csv", "uv.csv",
                       "gps.csv",  "gyro.csv",    "camera.csv",  "boom.csv",  "time_stamp.csv", 
-                      "median.csv",  "stack.csv", "voltage.csv"};
+                      "median.csv",  "stack.csv", "voltage.csv", "camera2.csv", "camera3.csv"};
 
 File files[num_files];
 
@@ -323,6 +323,10 @@ void TaskDeployBoom(void *pvParameters)
 
         // take picture after boom deployment
         critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
+
+				//second and third pictures, taken to see fully deployed boom
+        critical_out(&camera, read_camera, file_names[13], camera_out, out, camera_messages);
+        critical_out(&camera, read_camera, file_names[14], camera_out, out, camera_messages);
       }
 
       boom.deployed = true;
