@@ -229,7 +229,7 @@ void TaskDeployBoom(void *pvParameters)
   (void)pvParameters;
 
   // again, pressure range for boom deployment
-  const float DEPLOY_MIN_PRESSURE = 15.0;
+  const float DEPLOY_MIN_PRESSURE = 10.0;
   const float DEPLOY_MAX_PRESSURE = 30.0;
 
   Stream *out[] = {&Serial, &Serial3, (Stream *)nullptr};
