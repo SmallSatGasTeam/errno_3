@@ -1,5 +1,6 @@
 #ifndef UNIT_TEST  // Enable unit tests
 
+// pressure range for boom deployment
 const float DEPLOY_MIN_PRESSURE = 10.0;
 const float DEPLOY_MAX_PRESSURE = 30.0;
 
@@ -227,8 +228,9 @@ void TaskDeployBoom(void *pvParameters)
 {
   (void)pvParameters;
 
-  const float DEPLOY_MIN_PRESSURE = 30.0;
-  const float DEPLOY_MAX_PRESSURE = 44.0;
+  // again, pressure range for boom deployment
+  const float DEPLOY_MIN_PRESSURE = 15.0;
+  const float DEPLOY_MAX_PRESSURE = 30.0;
 
   Stream *out[] = {&Serial, &Serial3, (Stream *)nullptr};
   Stream *camera_out[] = {(Stream *)nullptr};
