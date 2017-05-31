@@ -1,7 +1,7 @@
 #ifndef UNIT_TEST  // Enable unit tests
 
 const float DEPLOY_MIN_PRESSURE = 10.0;
-const float DEPLOY_MAX_PRESSURE = 44.0;
+const float DEPLOY_MAX_PRESSURE = 30.0;
 
 #include <Adafruit_BNO055.h>
 #include <Adafruit_MCP9808.h>
