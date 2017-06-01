@@ -123,6 +123,7 @@ void makeArchive()
   if (archived)
   {
     Serial.println("\nFinished archiving attempt for every file!\n");
+    ++num_archives;
   }
   else
   {
