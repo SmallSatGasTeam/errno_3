@@ -49,6 +49,7 @@ SemaphoreHandle_t xOutputSemaphore;
 SemaphoreHandle_t xSDSemaphore;
 
 const int num_files = 13;
+int num_archives = 0;
 
 char *file_names[] = {"baro.csv", "temp_in.csv", "temp_ex.csv", "light.csv", "uv.csv",
                       "gps.csv",  "gyro.csv",    "camera.csv",  "boom.csv",  "time_stamp.csv", 
@@ -57,6 +58,78 @@ char *file_names[] = {"baro.csv", "temp_in.csv", "temp_ex.csv", "light.csv", "uv
 File files[num_files];
 
 Stream *input_streams[] = {&Serial, &Serial3, (Stream *)nullptr};
+
+void makeArchive()
+{
+  bool archived = false;
+  for (int i = 0; i < num_files; ++i)
+  {
+    // Get the current file name
+    String readFile_name = String(file_names[i]);
+
+    // Continue if it exists
+    if (SD.exists(readFile_name))
+    {
+      archived = true;
+      File readFile;
+      File writeFile;
+
+      byte ibuffer[3000];
+      int ibufferspace = sizeof(buffer);
+
+      String writeFile_name = readFile_name + "-archive" + num_archives;
+
+      readFile = SD.open(readFile_name);
+      if (readFile)
+      {
+        Serial.println("\nOpening file for archiving: " + readFile_name + "\n");
+      }
+      else
+      {
+        Serial.println("\nError opening " + readFile_name + ". Aborting archiving...\n");
+      }
+
+      if(readFile)
+      {
+        writeFile = SD.open(writeFile_name, FILE_WRITE);
+        if (writeFile)
+        {
+          Serial.println("\nCopying data to " + writeFile_name + "...\n");
+          int i = 0;
+          while (readFile.available() > 0)
+          {
+            ibuffer = readFile.read();
+            ++i;
+            if (i == ibufferspace)
+            {
+              writeFile.write(ibuffer, ibufferspace);
+              i = 0;
+            }
+          }
+          readFile.write(ibuffer, i-1);
+        }
+        else
+        {
+          Serial.println("\nError opening " + writeFile_name + " to write to. Aborting...\n");
+        }
+
+        Serial.println("\nDone archiving " + readFile_name + "\n");
+        readFile.close();
+        writeFile.close();
+      }
+    }
+  }
+
+  if (archived)
+  {
+    Serial.println("\nFinished archiving attempt for every file!\n");
+  }
+  else
+  {
+    Serial.println("\nNo files to archive. Proceeding...\n");
+  }
+}
+
 
 /**
  *Global setup should occur here
@@ -76,6 +149,8 @@ void setup()
     Serial.println("\nSD card failed to initialize!");
   }
   Serial.println("\nSD Initialized\n\n");
+
+  makeArchive();
 
   for (int i = 0; i < num_files; i++)
   {
