@@ -15,7 +15,7 @@ const float DEPLOY_MAX_PRESSURE = 44.0;
 #include <TinyGPS++.h>
 #include <Wire.h>
 #include <semphr.h> // add the FreeRTOS functions for Semaphores (or Flags).
-#include <uCamII.h>
+//#include <uCamII.h>
 #include <MedianFilter.h>
 #include <BoomDeploy.hpp>
 #include "messages.h" // Defines incoming data header
@@ -27,7 +27,7 @@ Adafruit_MCP9808 sensor_temp_in = Adafruit_MCP9808();
 Adafruit_BNO055 sensor_gyro = Adafruit_BNO055();
 CoolSatBaro sensor_baro;
 TinyGPSPlus sensor_gps;
-UCAMII camera(Serial1, &Serial);
+//UCAMII camera(Serial1, &Serial);
 
 File file;
 
@@ -44,7 +44,7 @@ void TaskGPSRead(void *pvParameters);
 
 void cutWire(int delay, int wirePin, Stream **out);
 
-// define semaphores
+// define semaphores (mutex)
 SemaphoreHandle_t xOutputSemaphore;
 SemaphoreHandle_t xSDSemaphore;
 
@@ -61,7 +61,7 @@ Stream *input_streams[] = {&Serial, &Serial3, (Stream *)nullptr};
 /**
  *Global setup should occur here
  */
-
+// the setup function runs once when you press reset or power the board
 void setup()
 {
 
@@ -70,12 +70,12 @@ void setup()
   Serial2.begin(9600);
   Serial3.begin(9600);
 
-  Serial.println("\n\nInitializing SD card...");
+  // Serial.println("\n\nInitializing SD card...");
   if (!SD.begin(46))
   {
-    Serial.println("\nSD card failed to initialize!");
+    // Serial.println("\nSD card failed to initialize!");
   }
-  Serial.println("\nSD Initialized\n\n");
+  // Serial.println("\nSD Initialized\n\n");
 
   for (int i = 0; i < num_files; i++)
   {
@@ -101,7 +101,7 @@ void setup()
     }
   }
 
-  Wire.begin(); // Begining everying on our I2C Bus
+  Wire.begin(); // Beginning everying on our I2C Bus
 
   // Initialize sensors
   // These functions should be defined in sensor.h
@@ -114,15 +114,16 @@ void setup()
   pinMode(SECONDARY_WIRE_CUTTER, OUTPUT); // TODO: secondary wire cutter
   pinMode(BOOM_SWITCH, INPUT);
 
-  // Now set up two tasks to run independently
+  // Now set up multiple tasks to run independently
   xTaskCreate(
-      TaskSensorReadStandard, (const portCHAR *)"ReadSensors", 700 // Stack size
+      TaskSensorReadStandard, (const portCHAR *)"ReadSensors", 1212 // Stack size
       ,
       nullptr,
       1 // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
       ,
       nullptr);
 
+      /*
   xTaskCreate(
       TaskSensorReadFast, (const portCHAR *)"ReadSensorsFast", 512 // Stack size
       ,
@@ -130,6 +131,7 @@ void setup()
       1 // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
       ,
       nullptr);
+      */
 
   xTaskCreate(
       TaskGPSRead, (const portCHAR *)"GPSRead", 512 // Stack size
@@ -174,11 +176,16 @@ void TaskSensorReadStandard(void *pvParameters)
     files[i].close();
   }
 
-  Stream *out[] = {&Serial, &Serial3, (Stream *)nullptr};
+  initialize_gyro(&sensor_gyro, Serial);
+
+  // Stream *out[] = {&Serial, &Serial3, (Stream *)nullptr};
+  Stream *out[] = {&Serial3, (Stream *)nullptr, (Stream *)nullptr};
+
+  
   message_out("\n barometer\ttemp-in\ttemp-ex\tlight\tuv\ttimestamp\tvoltage\t", out);
   for (;;)
   {
-    vTaskDelay(1000 / portTICK_PERIOD_MS);\
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
     sensor_out(&analyze, read_stack, file_names[11], nullptr);
     sensor_out(&sensor_baro, read_baro, file_names[0], out);
     sensor_out(&sensor_temp_in, read_temp_in, file_names[1], out);
@@ -189,6 +196,7 @@ void TaskSensorReadStandard(void *pvParameters)
     checkBattery();
     sensor_out((void *)nullptr, print_voltage, file_names[12], out);
     sensor_out(&sensor_gps, read_gps, file_names[5], out);
+    sensor_out(&sensor_gyro, read_gyro, file_names[6], out);
     
     if (checkBoomSwitch(BOOM_SWITCH))
     {
@@ -203,6 +211,7 @@ void TaskSensorReadStandard(void *pvParameters)
   }
 }
 
+/*
 void TaskSensorReadFast(void *pvParameters)
 {
   (void)pvParameters;
@@ -218,6 +227,7 @@ void TaskSensorReadFast(void *pvParameters)
     vTaskDelay(50 / portTICK_PERIOD_MS);
   }
 }
+*/
 
 // bool shouldDeploy(bool hasDeployed, bool* confirmed, float pressure ){
 //   return true;
@@ -230,15 +240,16 @@ void TaskDeployBoom(void *pvParameters)
   const float DEPLOY_MIN_PRESSURE = 30.0;
   const float DEPLOY_MAX_PRESSURE = 44.0;
 
-  Stream *out[] = {&Serial, &Serial3, (Stream *)nullptr};
-  Stream *camera_out[] = {(Stream *)nullptr};
+  // Stream *out[] = {&Serial, &Serial3, (Stream *)nullptr};
+  Stream *out[] = {&Serial3, (Stream *)nullptr, (Stream *)nullptr};
+  //Stream *camera_out[] = {(Stream *)nullptr};
 
   StackAnalyzer analyze(nullptr, "TaskDeployBoom");
 
   boom.deployed = false;
 
-  char *camera_messages[] = {"\n****************Camera Taking Photo*****************\n",
-                             "\n****************Camera Done Taking Photo*****************\n"};
+  //char *camera_messages[] = {"\n****************Camera Taking Photo*****************\n",
+  //                           "\n****************Camera Done Taking Photo*****************\n"};
 
   bool deployInitiated = false;
   bool deployConfirmed = false;
@@ -250,7 +261,6 @@ void TaskDeployBoom(void *pvParameters)
 
   for (;;)
   {
-
     filter.addDataPoint(baro.pressure);
     float valPressure = filter.getFilteredDataPoint();
     baro.median = valPressure;
@@ -278,9 +288,12 @@ void TaskDeployBoom(void *pvParameters)
         }
       break;
 
+      /*
       case TAKE_PHOTO:
-        critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
+        Serial.println("picture");
+      //   critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
       break;
+      */
     }
 
     // bool shouldDeployBoom(bool deployed, bool initialized, bool confirmed, float pressure)
@@ -322,7 +335,7 @@ void TaskDeployBoom(void *pvParameters)
         critical_out((void *)nullptr, print_boom, file_names[8], out);
 
         // take picture after boom deployment
-        critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
+        // critical_out(&camera, read_camera, file_names[7], camera_out, out, camera_messages);
       }
 
       boom.deployed = true;
@@ -340,10 +353,12 @@ void cutWire(int delay, int wirePin, Stream **out)
   vTaskDelay(delay / portTICK_PERIOD_MS);
   digitalWrite(wirePin, LOW); // Disengage
   vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+  Serial.println("Picture");
 }
 
 void TaskGPSRead(void *pvParameters)
-{
+{ 
   (void)pvParameters;
 
   StackAnalyzer analyze(nullptr, "GPSRead");

@@ -1,5 +1,5 @@
 /*
-    FreeRTOS V8.2.3 - Copyright (C) 2015 Real Time Engineers Ltd.
+    FreeRTOS V9.0.0 - Copyright (C) 2016 Real Time Engineers Ltd.
     All rights reserved
 
     VISIT http://www.FreeRTOS.org TO ENSURE YOU ARE USING THE LATEST VERSION.
@@ -91,6 +91,7 @@ task.h is included from an application file. */
 
 #undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE
 
+#if( configSUPPORT_DYNAMIC_ALLOCATION > 0 )
 /*-----------------------------------------------------------*/
 
 void *pvPortMalloc( size_t xWantedSize )
@@ -131,5 +132,6 @@ void vPortFree( void *pv )
 	}
 }
 
+#endif /* ( configSUPPORT_DYNAMIC_ALLOCATION > 0 ) */
 
 

@@ -239,8 +239,9 @@ void read_gyro(Adafruit_BNO055 *sensor_gyro, Stream *output)
   output->print(euler.y());
   output->print(",");
   output->print(euler.z());
-  output->print(",");
+  output->print(" ");
 
+  /*
   gyro.accelX = acceleration.x();
   gyro.accelY = acceleration.y();
   gyro.accelZ = acceleration.z();
@@ -248,8 +249,9 @@ void read_gyro(Adafruit_BNO055 *sensor_gyro, Stream *output)
   gyro.eulerX = euler.x();
   gyro.eulerY = euler.y();
   gyro.eulerZ = euler.z();
+  */
 
-  delay(100); // Delay of 100ms TODO needed?
+  //delay(100); // Delay of 100ms TODO needed?
 }
 
 //------------- GPS ---------------//
@@ -371,25 +373,25 @@ void print_boom_switch(const char *message, Stream *output)
 }
 
 // ----------------- Camera -------------- //
-void read_camera(UCAMII *camera, Stream *output)
-{
-  short x = 0;
-  int bytes;
-  if (camera->init())
-  {
-    camera->takePicture();
-    while (bytes = camera->getData())
-    {
-      for (x = 0; x < bytes; x++)
-      {
-        output->print("0x");
-        output->print(camera->imgBuffer[x], HEX);
-        output->print(" ");
-      }
-    }
-    output->println("\n\n\n\n");
-  }
-}
+// void read_camera(UCAMII *camera, Stream *output)
+// {
+//   short x = 0;
+//   int bytes;
+//   if (camera->init())
+//   {
+//     camera->takePicture();
+//     while (bytes = camera->getData())
+//     {
+//       for (x = 0; x < bytes; x++)
+//       {
+//         output->print("0x");
+//         output->print(camera->imgBuffer[x], HEX);
+//         output->print(" ");
+//       }
+//     }
+//     output->println("\n\n\n\n");
+//   }
+// }
 // ------------ Stack Analysis ------------ //
 
 struct StackAnalyzer

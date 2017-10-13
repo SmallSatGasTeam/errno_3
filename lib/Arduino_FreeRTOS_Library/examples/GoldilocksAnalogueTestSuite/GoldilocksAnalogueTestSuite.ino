@@ -17,13 +17,10 @@
 
 // From Library: FreeRTOS
 #include <Arduino_FreeRTOS.h>
-#include <list.h>
-#include <queue.h>
 #include <semphr.h>
-#include <task.h>
-#include <timers.h>
 
 // From Library: AVR Standard C Time Library
+#include <ephemera_common.h>
 #include <time.h>
 
 // From Library: Goldilocks Analogue DAC Library
@@ -151,8 +148,7 @@ void setup() {
   // Now we will try to open the 'volume'/'partition' - it should be FAT16 or FAT32
   if (!volume.init(card)) {
     Serial.println(F("Could not find FAT16/FAT32 partition.\nMake sure you've formatted the card"));
-    return;
-  }
+  } else {
 
   // print the type and size of the first FAT-type volume
   uint32_t volumesize;
@@ -177,6 +173,7 @@ void setup() {
 
   // list all files in the card with date and size
   root.ls(LS_R | LS_DATE | LS_SIZE);
+  }
 
   // Now set up two tasks to help us with testing.
   xTaskCreate(
